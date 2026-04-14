@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
+using EShop.Core.Features.Products.Handlers;
 
 // Configure Serilog early
 Log.Logger = new LoggerConfiguration()
@@ -100,6 +101,11 @@ try
 
     // FluentValidation
     builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
+
+    // MediatR - scans EShop.Core for all Handlers automatically
+    builder.Services.AddMediatR(cfg =>
+        cfg.RegisterServicesFromAssembly(
+            typeof(GetAllProductsHandler).Assembly));
 
     // Repositories & Services
     builder.Services.AddScoped<IProductRepository, ProductRepository>();

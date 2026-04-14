@@ -1,8 +1,8 @@
-using EShop.Core.Entities;
-using EShop.Core.Interfaces;
+using EShop.Core.Features.Products.Commands;
+using EShop.Core.Features.Products.Queries;
 using EShop.Shared.Common;
 using EShop.Shared.DTOs;
-using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,121 +13,82 @@ namespace EShop.API.Controllers
     [Authorize]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductRepository _productRepository;
-        private readonly IValidator<CreateProductDto> _createValidator;
-        private readonly IValidator<UpdateProductDto> _updateValidator;
+        private readonly IMediator _mediator;
 
-        public ProductsController(
-            IProductRepository productRepository,
-            IValidator<CreateProductDto> createValidator,
-            IValidator<UpdateProductDto> updateValidator)
+        // Only ONE dependency now!
+        // Before we had: IProductRepository, IValidator x2
+        // Now just IMediator handles everything
+        public ProductsController(IMediator mediator)
         {
-            _productRepository = productRepository;
-            _createValidator = createValidator;
-            _updateValidator = updateValidator;
+            _mediator = mediator;
         }
 
+        // GET: api/Products
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetAll()
         {
-            var products = await _productRepository.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(products.Select(MapToDto), "Products retrieved successfully"));
+            var result = await _mediator.Send(new GetAllProductsQuery());
+            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(result));
         }
 
+        // GET: api/Products/5
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<ProductDto>>> GetById(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound(ApiResponse<ProductDto>.Fail($"Product with ID {id} not found"));
+            var result = await _mediator.Send(new GetProductByIdQuery(id));
+            if (result == null)
+                return NotFound(ApiResponse<ProductDto>.Fail($"Product {id} not found"));
 
-            return Ok(ApiResponse<ProductDto>.Ok(MapToDto(product)));
+            return Ok(ApiResponse<ProductDto>.Ok(result));
         }
 
+        // GET: api/Products/category/Electronics
         [HttpGet("category/{category}")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetByCategory(string category)
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetByCategory(
+            string category)
         {
-            var products = await _productRepository.GetByCategoryAsync(category);
-            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(products.Select(MapToDto), $"Products in '{category}'"));
+            var result = await _mediator.Send(new GetProductsByCategoryQuery(category));
+            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(result));
         }
 
+        // POST: api/Products
         [HttpPost]
         [Authorize(Roles = "Admin,User")]
-        public async Task<ActionResult<ApiResponse<ProductDto>>> Create([FromBody] CreateProductDto createDto)
+        public async Task<ActionResult<ApiResponse<ProductDto>>> Create(
+            [FromBody] CreateProductCommand command)
         {
-            var validation = await _createValidator.ValidateAsync(createDto);
-            if (!validation.IsValid)
-            {
-                var errors = validation.Errors.Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse<ProductDto>.Fail("Validation failed", errors));
-            }
-
-            var product = new Product
-            {
-                Name = createDto.Name,
-                Description = createDto.Description,
-                Price = createDto.Price,
-                Stock = createDto.Stock,
-                Category = createDto.Category
-            };
-
-            var created = await _productRepository.CreateAsync(product);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id },
-                ApiResponse<ProductDto>.Ok(MapToDto(created), "Product created successfully"));
+            var result = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id },
+                ApiResponse<ProductDto>.Ok(result, "Product created successfully"));
         }
 
+        // PUT: api/Products/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,User")]
-        public async Task<ActionResult<ApiResponse<ProductDto>>> Update(int id, [FromBody] UpdateProductDto updateDto)
+        public async Task<ActionResult<ApiResponse<ProductDto>>> Update(
+            int id, [FromBody] UpdateProductCommand command)
         {
-            var validation = await _updateValidator.ValidateAsync(updateDto);
-            if (!validation.IsValid)
-            {
-                var errors = validation.Errors.Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse<ProductDto>.Fail("Validation failed", errors));
-            }
+            command.Id = id;
+            var result = await _mediator.Send(command);
+            if (result == null)
+                return NotFound(ApiResponse<ProductDto>.Fail($"Product {id} not found"));
 
-            var product = new Product
-            {
-                Name = updateDto.Name,
-                Description = updateDto.Description,
-                Price = updateDto.Price,
-                Stock = updateDto.Stock,
-                Category = updateDto.Category,
-                IsActive = updateDto.IsActive
-            };
-
-            var updated = await _productRepository.UpdateAsync(id, product);
-            if (updated == null)
-                return NotFound(ApiResponse<ProductDto>.Fail($"Product with ID {id} not found"));
-
-            return Ok(ApiResponse<ProductDto>.Ok(MapToDto(updated), "Product updated successfully"));
+            return Ok(ApiResponse<ProductDto>.Ok(result, "Product updated successfully"));
         }
 
+        // DELETE: api/Products/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<bool>>> Delete(int id)
         {
-            var result = await _productRepository.DeleteAsync(id);
+            var result = await _mediator.Send(new DeleteProductCommand(id));
             if (!result)
-                return NotFound(ApiResponse<bool>.Fail($"Product with ID {id} not found"));
+                return NotFound(ApiResponse<bool>.Fail($"Product {id} not found"));
 
             return Ok(ApiResponse<bool>.Ok(true, "Product deleted successfully"));
         }
-
-        private static ProductDto MapToDto(Product product) => new()
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            Stock = product.Stock,
-            Category = product.Category,
-            CreatedAt = product.CreatedAt,
-            IsActive = product.IsActive
-        };
     }
 }

@@ -5,5 +5,7 @@
     <Project Path="EShop.Infrastructure/EShop.Infrastructure.csproj" Id="9df218b9-4042-471c-a5e1-b04e394fe7aa" />
     <Project Path="EShop.Shared/EShop.Shared.csproj" Id="a22f040e-30b5-487c-b71e-5d086e59d07c" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="EShop.Tests/EShop.Tests.csproj" Id="97028663-0172-44e5-9eea-ee0a9c515f73" />
+  </Folder>
 </Solution>
