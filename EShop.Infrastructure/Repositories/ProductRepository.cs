@@ -1,51 +1,51 @@
 using EShop.Core.Entities;
 using EShop.Core.Interfaces;
+using EShop.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace EShop.Infrastructure.Repositories
 {
     public class ProductRepository : IProductRepository
     {
-        private static List<Product> _products = new()
-        {
-            new Product { Id = 1, Name = "Laptop", Description = "High performance laptop", Price = 999.99m, Stock = 10, Category = "Electronics", CreatedAt = DateTime.UtcNow },
-            new Product { Id = 2, Name = "Wireless Mouse", Description = "Ergonomic wireless mouse", Price = 29.99m, Stock = 50, Category = "Electronics", CreatedAt = DateTime.UtcNow },
-            new Product { Id = 3, Name = "Standing Desk", Description = "Adjustable standing desk", Price = 499.99m, Stock = 5, Category = "Furniture", CreatedAt = DateTime.UtcNow },
-            new Product { Id = 4, Name = "Mechanical Keyboard", Description = "RGB mechanical keyboard", Price = 149.99m, Stock = 20, Category = "Electronics", CreatedAt = DateTime.UtcNow },
-            new Product { Id = 5, Name = "Office Chair", Description = "Ergonomic office chair", Price = 299.99m, Stock = 8, Category = "Furniture", CreatedAt = DateTime.UtcNow },
-        };
+        private readonly AppDbContext _context;
 
-        private static int _nextId = 6;
-
-        public Task<IEnumerable<Product>> GetAllAsync()
+        public ProductRepository(AppDbContext context)
         {
-            return Task.FromResult(_products.Where(p => p.IsActive).AsEnumerable());
+            _context = context;
         }
 
-        public Task<Product?> GetByIdAsync(int id)
+        public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return Task.FromResult(_products.FirstOrDefault(p => p.Id == id));
+            return await _context.Products
+                .Where(p => p.IsActive)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<Product>> GetByCategoryAsync(string category)
+        public async Task<Product?> GetByIdAsync(int id)
         {
-            var result = _products
-                .Where(p => p.Category.Equals(category, StringComparison.OrdinalIgnoreCase) && p.IsActive)
-                .AsEnumerable();
-            return Task.FromResult(result);
+            return await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public Task<Product> CreateAsync(Product product)
+        public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
         {
-            product.Id = _nextId++;
+            return await _context.Products
+                .Where(p => p.Category.ToLower() == category.ToLower() && p.IsActive)
+                .ToListAsync();
+        }
+
+        public async Task<Product> CreateAsync(Product product)
+        {
             product.CreatedAt = DateTime.UtcNow;
-            _products.Add(product);
-            return Task.FromResult(product);
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            return product;
         }
 
-        public Task<Product?> UpdateAsync(int id, Product product)
+        public async Task<Product?> UpdateAsync(int id, Product product)
         {
-            var existing = _products.FirstOrDefault(p => p.Id == id);
-            if (existing == null) return Task.FromResult<Product?>(null);
+            var existing = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            if (existing == null) return null;
 
             existing.Name = product.Name;
             existing.Description = product.Description;
@@ -54,16 +54,18 @@ namespace EShop.Infrastructure.Repositories
             existing.Category = product.Category;
             existing.IsActive = product.IsActive;
 
-            return Task.FromResult<Product?>(existing);
+            await _context.SaveChangesAsync();
+            return existing;
         }
 
-        public Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            if (product == null) return Task.FromResult(false);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            if (product == null) return false;
 
             product.IsActive = false; // Soft delete
-            return Task.FromResult(true);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
