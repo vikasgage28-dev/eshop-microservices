@@ -2,32 +2,41 @@ using EShop.Core.Entities;
 using EShop.Core.Interfaces;
 using EShop.Shared.Common;
 using EShop.Shared.DTOs;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EShop.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProductsController : ControllerBase
     {
         private readonly IProductRepository _productRepository;
+        private readonly IValidator<CreateProductDto> _createValidator;
+        private readonly IValidator<UpdateProductDto> _updateValidator;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(
+            IProductRepository productRepository,
+            IValidator<CreateProductDto> createValidator,
+            IValidator<UpdateProductDto> updateValidator)
         {
             _productRepository = productRepository;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
-        // GET: api/products
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetAll()
         {
             var products = await _productRepository.GetAllAsync();
-            var dtos = products.Select(MapToDto);
-            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(dtos, "Products retrieved successfully"));
+            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(products.Select(MapToDto), "Products retrieved successfully"));
         }
 
-        // GET: api/products/5
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<ProductDto>>> GetById(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -37,19 +46,25 @@ namespace EShop.API.Controllers
             return Ok(ApiResponse<ProductDto>.Ok(MapToDto(product)));
         }
 
-        // GET: api/products/category/Electronics
         [HttpGet("category/{category}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<ProductDto>>>> GetByCategory(string category)
         {
             var products = await _productRepository.GetByCategoryAsync(category);
-            var dtos = products.Select(MapToDto);
-            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(dtos, $"Products in category '{category}'"));
+            return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(products.Select(MapToDto), $"Products in '{category}'"));
         }
 
-        // POST: api/products
         [HttpPost]
+        [Authorize(Roles = "Admin,User")]
         public async Task<ActionResult<ApiResponse<ProductDto>>> Create([FromBody] CreateProductDto createDto)
         {
+            var validation = await _createValidator.ValidateAsync(createDto);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors.Select(e => e.ErrorMessage).ToList();
+                return BadRequest(ApiResponse<ProductDto>.Fail("Validation failed", errors));
+            }
+
             var product = new Product
             {
                 Name = createDto.Name,
@@ -64,10 +79,17 @@ namespace EShop.API.Controllers
                 ApiResponse<ProductDto>.Ok(MapToDto(created), "Product created successfully"));
         }
 
-        // PUT: api/products/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,User")]
         public async Task<ActionResult<ApiResponse<ProductDto>>> Update(int id, [FromBody] UpdateProductDto updateDto)
         {
+            var validation = await _updateValidator.ValidateAsync(updateDto);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors.Select(e => e.ErrorMessage).ToList();
+                return BadRequest(ApiResponse<ProductDto>.Fail("Validation failed", errors));
+            }
+
             var product = new Product
             {
                 Name = updateDto.Name,
@@ -85,8 +107,8 @@ namespace EShop.API.Controllers
             return Ok(ApiResponse<ProductDto>.Ok(MapToDto(updated), "Product updated successfully"));
         }
 
-        // DELETE: api/products/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<bool>>> Delete(int id)
         {
             var result = await _productRepository.DeleteAsync(id);
@@ -96,19 +118,16 @@ namespace EShop.API.Controllers
             return Ok(ApiResponse<bool>.Ok(true, "Product deleted successfully"));
         }
 
-        private static ProductDto MapToDto(Product product)
+        private static ProductDto MapToDto(Product product) => new()
         {
-            return new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock,
-                Category = product.Category,
-                CreatedAt = product.CreatedAt,
-                IsActive = product.IsActive
-            };
-        }
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            Category = product.Category,
+            CreatedAt = product.CreatedAt,
+            IsActive = product.IsActive
+        };
     }
 }
