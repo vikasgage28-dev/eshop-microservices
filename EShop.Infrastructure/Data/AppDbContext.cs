@@ -1,9 +1,11 @@
 using EShop.Core.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace EShop.Infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<IdentityUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -24,7 +26,6 @@ namespace EShop.Infrastructure.Data
                 entity.Property(p => p.Category).IsRequired().HasMaxLength(50);
                 entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-                // Seed data
                 entity.HasData(
                     new Product { Id = 1, Name = "Laptop", Description = "High performance laptop", Price = 999.99m, Stock = 10, Category = "Electronics", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
                     new Product { Id = 2, Name = "Wireless Mouse", Description = "Ergonomic wireless mouse", Price = 29.99m, Stock = 50, Category = "Electronics", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
