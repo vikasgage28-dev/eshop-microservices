@@ -10,5 +10,10 @@ namespace EShop.Core.Interfaces
         Task<Product> CreateAsync(Product product);
         Task<Product?> UpdateAsync(int id, Product product);
         Task<bool> DeleteAsync(int id);
+        Task<(IEnumerable<Product> Products, int TotalCount)> GetPagedAsync(
+                int page,
+                int pageSize,
+                string? search = null,
+                string? category = null);
     }
 }
