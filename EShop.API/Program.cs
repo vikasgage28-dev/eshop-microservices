@@ -13,6 +13,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 using EShop.Core.Features.Products.Handlers;
+using Asp.Versioning;
 
 // Configure Serilog early
 Log.Logger = new LoggerConfiguration()
@@ -28,37 +29,61 @@ try
     builder.Host.UseSerilog();
 
     builder.Services.AddControllers();
+
+    // API Versioning
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+    }).AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
+
     builder.Services.AddEndpointsApiExplorer();
 
-    // Swagger with JWT Bearer button
-    builder.Services.AddSwaggerGen(c =>
+    // Swagger with versioning support
+    builder.Services.AddSwaggerGen(options =>
     {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "EShop API", Version = "v1" });
+        options.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "EShop API",
+            Version = "v1",
+            Description = "EShop API Version 1"
+        });
+        options.SwaggerDoc("v2", new OpenApiInfo
+        {
+            Title = "EShop API",
+            Version = "v2",
+            Description = "EShop API Version 2 - Includes Stock Status"
+        });
 
-        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        // JWT Auth in Swagger
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
             Name = "Authorization",
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Enter: Bearer {your JWT token}"
+            Description = "Enter: Bearer {your token}"
         });
-
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
+            new OpenApiSecurityScheme
             {
-                new OpenApiSecurityScheme
+                Reference = new OpenApiReference
                 {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
-        });
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
     });
 
     // DbContext
@@ -127,7 +152,11 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
-        app.UseSwaggerUI();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "EShop API v1");
+            options.SwaggerEndpoint("/swagger/v2/swagger.json", "EShop API v2");
+        });
     }
 
     app.UseMiddleware<ExceptionMiddleware>();
