@@ -1,4 +1,4 @@
-using EShop.Core.Features.Products.Commands;
+﻿using EShop.Core.Features.Products.Commands;
 using EShop.Core.Features.Products.Queries;
 using EShop.Shared.Common;
 using EShop.Shared.DTOs;
@@ -15,9 +15,6 @@ namespace EShop.API.Controllers
     {
         private readonly IMediator _mediator;
 
-        // Only ONE dependency now!
-        // Before we had: IProductRepository, IValidator x2
-        // Now just IMediator handles everything
         public ProductsController(IMediator mediator)
         {
             _mediator = mediator;
@@ -30,6 +27,27 @@ namespace EShop.API.Controllers
         {
             var result = await _mediator.Send(new GetAllProductsQuery());
             return Ok(ApiResponse<IEnumerable<ProductDto>>.Ok(result));
+        }
+
+        // GET: api/Products/paged?page=1&pageSize=10&search=laptop&category=Electronics
+        [HttpGet("paged")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<PagedResult<ProductDto>>>> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] string? category = null)
+        {
+            var query = new GetProductsQuery
+            {
+                Page = page,
+                PageSize = pageSize,
+                Search = search,
+                Category = category
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(ApiResponse<PagedResult<ProductDto>>.Ok(result));
         }
 
         // GET: api/Products/5
