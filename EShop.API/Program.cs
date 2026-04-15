@@ -86,6 +86,22 @@ try
     });
     });
 
+    // CORS - read allowed origins from appsettings.json
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? Array.Empty<string>();
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("EShopCorsPolicy", policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+    });
+
     // DbContext
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -160,8 +176,9 @@ try
     }
 
     app.UseMiddleware<ExceptionMiddleware>();
-    app.UseSerilogRequestLogging();
+    app.UseSerilogRequestLogging();    
     app.UseHttpsRedirection();
+    app.UseCors("EShopCorsPolicy");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
