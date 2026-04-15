@@ -67,5 +67,48 @@ namespace EShop.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<(IEnumerable<Product> Products, int TotalCount)> GetPagedAsync(
+                                                                     int page,
+                                                                     int pageSize,
+                                                                     string? search = null,
+                                                                     string? category = null)
+        {
+            // Start with base query - active products only
+            var query = _context.Products
+                .Where(p => p.IsActive)
+                .AsQueryable();
+
+            // Apply search filter if provided
+            // Searches in Name AND Description
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    p.Description.Contains(search));
+            }
+
+            // Apply category filter if provided
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                query = query.Where(p =>
+                    p.Category.ToLower() == category.ToLower());
+            }
+
+            // Get total count BEFORE pagination
+            // This is needed to calculate TotalPages
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            // Skip = how many records to skip
+            // Take = how many records to take
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (products, totalCount);
+        }
     }
 }
