@@ -1,4 +1,4 @@
-# 🚀 EShop Learning Project — Session Progress Tracker
+﻿# 🚀 EShop Learning Project — Session Progress Tracker
 
 > **HOW TO USE THIS FILE:**
 > At the start of every new AI session, paste this entire file content.
@@ -73,7 +73,7 @@ eshop-microservices/
 
 ### Where We Stopped
 ```
-Currently in Module 3 — Dockerfile (about to start)
+Completed docker-compose.yml with SQL Server + EShop API services
 
 Completed so far in Stage 13:
   ✅ Module 1 — Docker Fundamentals
@@ -95,40 +95,81 @@ Completed so far in Stage 13:
        → sdk:10.0 = 1.26GB (full build tools)
        → Why multi-stage builds save ~1GB!
 
-  🔜 Module 3 — Dockerfile (NEXT TO START)
+  ✅ Module 3 — Dockerfile
        → What is a Dockerfile
        → All instructions: FROM, WORKDIR, COPY, RUN,
          ENV, ARG, EXPOSE, ENTRYPOINT, CMD
        → Layer ordering and caching
-       → .dockerignore file
-       → Single stage vs Multi-stage
-       → Write EShop API Dockerfile!
-```
+       → .dockerignore file created
+       → Single stage vs Multi-stage Dockerfile
+       → Written multi-stage Dockerfile for EShop API
+       → Stage 1: Build with SDK image
+       → Stage 2: Runtime with aspnet image
+       → Built image: eshop-api:v1
+
+  ✅ Module 4 — Running Containers
+       → docker run with environment variables (-e flag)
+       → Port mapping (-p 8080:80)
+       → host.docker.internal explained
+       → docker logs, docker rm -f
+       → SQL Server sa account setup (TCP/IP enabled)
+       → Container connected to SQL Server successfully!
+       → Fixed DB migration (db.Database.Migrate())
+       → Fixed Swagger in Production mode
+
+
+  ✅ Module 5 — Volumes and Data
+       → What are Docker volumes
+       → Named volumes vs bind mounts
+       → sqlserver_data volume created
+       → /var/opt/mssql = SQL Server data path inside container
+       → Data persists even after container deleted!
+       → Defined in volumes: section of compose
+
+  ✅ Module 6 — Networking
+       → What is Docker networking
+       → Bridge network driver explained
+       → eshop-network created
+       → Containers on same network talk by service name!
+       → sqlserver hostname resolves automatically!
+       → Outside world accesses only via exposed ports!
+
+  ✅ Module 7 — Docker Compose
+       → What is docker-compose and why we need it
+       → Written docker-compose.yml
+       → SQL Server service with healthcheck + volume
+       → EShop API service with depends_on
+       → Docker networking (eshop-network)
+       → Docker volumes (sqlserver_data - data persists!)
+       → Server=sqlserver (service name as hostname!)
+       → depends_on with service_healthy condition
+       → version, services, volumes, networks explained```
 
 ### Docker Modules Plan
 ```
 ✅ Module 1 → Docker Fundamentals
 ✅ Module 2 → Images & Containers
-🔜 Module 3 → Dockerfile (NEXT!)
-⏳ Module 4 → Running Containers
-⏳ Module 5 → Volumes & Data
-⏳ Module 6 → Networking
-⏳ Module 7 → Docker Compose
+✅ Module 3 → Dockerfile
+✅ Module 4 → Running Containers
+✅ Module 5 → Volumes & Data
+✅ Module 6 → Networking
+✅ Module 7 → Docker Compose
 ⏳ Module 8 → Registry (Azure Container Registry)
 ⏳ Module 9 → Best Practices
 ```
 
 ### What We Will Build in Stage 13
 ```
-→ .dockerignore file
-→ Multi-stage Dockerfile for EShop.API
-→ docker-compose.yml (API + SQL Server + Volumes + Network)
-→ .env file for compose
-→ Health checks
-→ Azure Container Registry (ACR)
-→ Push image to ACR
-→ Non-root user (security)
-→ Optimized image size (~150MB target)
+✅ .dockerignore file
+✅ Multi-stage Dockerfile for EShop.API
+✅ docker-compose.yml (API + SQL Server + Volumes + Network)
+✅ Health checks
+✅ Docker Volumes (data persistence)
+✅ Docker Networking (bridge network)
+⏳ .env file for compose
+⏳ Azure Container Registry (ACR)
+⏳ Push image to ACR
+⏳ Non-root user (security)
 ```
 
 ---
@@ -152,7 +193,7 @@ Completed so far in Stage 13:
 Environments: DEV → STAGING → PROD
 Workflow: feature branch → PR → CI checks → merge → auto deploy
 Azure: Personal free account ($200 credit + free tier)
-Tools: GitHub Actions, Azure CLI, Docker Desktop
+Tools: GitHub Actions, Azure CLI, Docker Compose
 ```
 
 ---
@@ -161,10 +202,10 @@ Tools: GitHub Actions, Azure CLI, Docker Desktop
 ```
 ✅ .NET 10 SDK
 ✅ Visual Studio 2026 / VS Code
-✅ SQL Server (local)
+✅ SQL Server 2025 (local)
 ✅ Git + GitHub account (vikasgage28-dev)
-✅ Docker Desktop v4.69.0 (WSL2 backend)
-✅ Docker Engine v29.4.0
+✅ Docker Compose (via docker-compose.yml)
+❌ Docker Desktop (uninstalled - office policy)
 ⏳ Azure CLI (needed for Stage 15)
 ⏳ Azure Account (needed for Stage 15)
 ```
@@ -180,8 +221,11 @@ Tools: GitHub Actions, Azure CLI, Docker Desktop
 → GitFlow branching (feature/xxx → develop → main)
 → One feature branch per stage
 → Learning style: Concept first → Analogy → Implement → Verify
-→ Following eshop-learning-plan.html as base roadmap
-→ Extending features as needed beyond the plan
+→ Docker Desktop removed - office policy - using CI/CD for builds
+→ SQL Server 2025 (image: mssql/server:2025-latest)
+→ sa account enabled with Password123!
+→ db.Database.Migrate() added in Program.cs for auto DB creation
+→ Swagger enabled in all environments (not just Development)
 ```
 
 ---
@@ -192,11 +236,15 @@ Tools: GitHub Actions, Azure CLI, Docker Desktop
 2. DO NOT re-explain completed stages
 3. Continue from "Where We Stopped" section
 4. Always explain concept BEFORE implementing
-5. Use simple analogies (developer is a beginner)
+5. Developer has 11+ years .NET experience - no basic explanations!
 6. Announce clearly when moving to next Module/Stage
 7. Go step by step, wait for user confirmation
-8. Update this file at end of session
-9. Commit updates to GitHub
-10. User is learning Docker from SCRATCH
-    Be patient and thorough with explanations
+8. Update this file at end of every session
+9. Commit updates to GitHub before ending session
+10. Developer: 11+ years .NET, AZ-900, AZ-204 certified
+    Azure: SQL, Key Vault, Storage, Blobs, Logic Apps
+    Goal: Principal Cloud Architect
+11. User creates feature branch BEFORE any coding starts
+12. User does implementation, AI guides with explanation
+13. User is NOT a beginner - treat as experienced developer!
 ```
