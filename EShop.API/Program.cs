@@ -154,6 +154,13 @@ try
 
     var app = builder.Build();
 
+    // Apply migrations and create database automatically
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+    }
+
     // Seed roles
     using (var scope = app.Services.CreateScope())
     {
@@ -165,15 +172,15 @@ try
         }
     }
 
-    if (app.Environment.IsDevelopment())
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "EShop API v1");
-            options.SwaggerEndpoint("/swagger/v2/swagger.json", "EShop API v2");
-        });
-    }
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "EShop API v1");
+        options.SwaggerEndpoint("/swagger/v2/swagger.json", "EShop API v2");
+    });
+
+
+
 
     app.UseMiddleware<ExceptionMiddleware>();
     app.UseSerilogRequestLogging();    
@@ -193,3 +200,5 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+
