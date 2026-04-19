@@ -23,8 +23,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
+      - name: Build Eshop API
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run Tests
+      - name: Run Unit Tests
         run: dotnet test --no-build --configuration Release --verbosity normal
