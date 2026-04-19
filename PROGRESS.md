@@ -247,8 +247,9 @@ Completed so far in Stage 13:
 |---|-------|------|--------|
 | 16 | Azure Container Registry (ACR) | 🟡 $5 | ⏳ |
 | 17 | Azure App Service (learn first) | 🟢 Free | ⏳ |
-| 18 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
-| 19 | CD Pipeline (deploy-to-azure.yml) | 🟢 Free | ⏳ |
+| 18 | Azure Deployment Slots (staging → prod swap, zero downtime) | 🟢 Free | ⏳ |
+| 19 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
+| 20 | CD Pipeline (deploy-to-azure.yml) | 🟢 Free | ⏳ |
 
 ### 🔀 Phase 7 — Microservices + Databases
 | # | Topic | Cost | Status |
@@ -373,6 +374,9 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → CI pipeline (GitHub Actions) - build-and-test.yml
 → Branch protection rules on develop + main
 → Pipeline must pass before PR can be merged
+→ Environments: Local = DEV, Azure = PROD
+→ Deployment Slots for staging concept (zero extra cost!)
+→ No separate staging environment (cost saving for learning)
 ```
 
 ---
