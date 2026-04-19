@@ -7,6 +7,11 @@
 *.user
 *.suo
 
+# IDE files
+**/.vscode/
+**/.idea/
+*.swp
+
 # Git
 .git
 .gitignore
@@ -26,6 +31,28 @@
 # Test projects
 **/EShop.Tests/
 
-# README and docs
+# Documentation
 README.md
 PROGRESS.md
+
+# OS files
+**/Thumbs.db
+**/.DS_Store
+**/desktop.ini
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# CI/CD files
+.github/
+
+# Temp files
+**/*.tmp
+**/*.bak
+
+# Package manager
+**/nuget.config
+**/packages/
