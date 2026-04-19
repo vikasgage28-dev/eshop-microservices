@@ -191,12 +191,26 @@ Completed so far in Stage 13:
 
 ---
 
+## ✅ Stage 14 — CI/CD Pipeline (GitHub Actions)
+
+### Completed
+```
+✅ build-and-test.yml workflow created
+✅ Triggers: push to develop + PR to develop/main
+✅ Steps: checkout → setup .NET 10 → restore → build → test
+✅ Branch protection rules on develop + main
+✅ Pipeline verified GREEN ✅
+✅ PR: feature/cicd-pipeline → develop → main merged
+```
+
+---
+
 ## 🔜 Upcoming Stages
 
 | Stage | Topic |
 |-------|-------|
-| 13 | ✅ Docker + Containerization (ALMOST DONE - ACR pending) |
-| 14 | ⏳ CI/CD Pipeline (GitHub Actions) |
+| 13 | ✅ Docker + Containerization (ACR deferred to Stage 15) |
+| 14 | ✅ CI/CD Pipeline (GitHub Actions) |
 | 15 | ⏳ Azure Deployment + ACR + Key Vault + Managed Identity |
 | 16 | ⏳ Split to Microservices (Product/Order/Customer) |
 | 17 | ⏳ API Gateway (Ocelot + Rate Limiting) |
@@ -249,6 +263,9 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → .env.example template shared with team
 → Docker image labels follow OCI standard
 → Module 8 (ACR) deferred to Stage 15 (Azure)
+→ CI pipeline (GitHub Actions) - build-and-test.yml
+→ Branch protection rules on develop + main
+→ Pipeline must pass before PR can be merged
 ```
 
 ---
