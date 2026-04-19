@@ -30,6 +30,10 @@ try
 
     builder.Services.AddControllers();
 
+    // Health Checks
+    builder.Services.AddHealthChecks()
+        .AddDbContextCheck<AppDbContext>("database");
+
     // API Versioning
     builder.Services.AddApiVersioning(options =>
     {
@@ -189,6 +193,8 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+    // Map health endpoint
+    app.MapHealthChecks("/health");
 
     app.Run();
 }

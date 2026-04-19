@@ -143,7 +143,22 @@ Completed so far in Stage 13:
        → Docker volumes (sqlserver_data - data persists!)
        → Server=sqlserver (service name as hostname!)
        → depends_on with service_healthy condition
-       → version, services, volumes, networks explained```
+       → version, services, volumes, networks explained
+
+  ✅ Module 9 — Best Practices
+       → Non-root user (groupadd + useradd + USER)
+       → Security: COPY with --chown flag
+       → .dockerignore optimized (IDE, OS, Docker files)
+       → Health checks added (Dockerfile + docker-compose)
+       → /health endpoint in Program.cs (AddDbContextCheck)
+       → curl installed for health checks
+       → .env file for secrets (not in Git!)
+       → .env.example template for team
+       → docker-compose uses env variables
+       → Docker image labels (OCI standard)
+       → Layer caching optimized (csproj copied first)
+       → Multi-stage build verified (saves ~1GB)
+```
 
 ### Docker Modules Plan
 ```
@@ -155,7 +170,7 @@ Completed so far in Stage 13:
 ✅ Module 6 → Networking
 ✅ Module 7 → Docker Compose
 ⏳ Module 8 → Registry (Azure Container Registry)
-⏳ Module 9 → Best Practices
+✅ Module 9 → Best Practices
 ```
 
 ### What We Will Build in Stage 13
@@ -163,13 +178,15 @@ Completed so far in Stage 13:
 ✅ .dockerignore file
 ✅ Multi-stage Dockerfile for EShop.API
 ✅ docker-compose.yml (API + SQL Server + Volumes + Network)
-✅ Health checks
+✅ Health checks (Dockerfile + compose)
 ✅ Docker Volumes (data persistence)
 ✅ Docker Networking (bridge network)
-⏳ .env file for compose
+✅ .env file for compose
+✅ Non-root user (security)
+✅ Docker image labels (OCI standard)
+✅ Layer caching optimized
 ⏳ Azure Container Registry (ACR)
 ⏳ Push image to ACR
-⏳ Non-root user (security)
 ```
 
 ---
@@ -178,9 +195,9 @@ Completed so far in Stage 13:
 
 | Stage | Topic |
 |-------|-------|
-| 13 | 🔄 Docker + Containerization (IN PROGRESS) |
+| 13 | ✅ Docker + Containerization (ALMOST DONE - ACR pending) |
 | 14 | ⏳ CI/CD Pipeline (GitHub Actions) |
-| 15 | ⏳ Azure Deployment + Key Vault + Managed Identity |
+| 15 | ⏳ Azure Deployment + ACR + Key Vault + Managed Identity |
 | 16 | ⏳ Split to Microservices (Product/Order/Customer) |
 | 17 | ⏳ API Gateway (Ocelot + Rate Limiting) |
 | 18 | ⏳ Service Communication (Azure Service Bus) |
@@ -226,6 +243,12 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → sa account enabled with Password123!
 → db.Database.Migrate() added in Program.cs for auto DB creation
 → Swagger enabled in all environments (not just Development)
+→ Non-root user (appuser) runs container for security
+→ /health endpoint added with AddDbContextCheck
+→ .env file used for secrets (not committed to Git)
+→ .env.example template shared with team
+→ Docker image labels follow OCI standard
+→ Module 8 (ACR) deferred to Stage 15 (Azure)
 ```
 
 ---
