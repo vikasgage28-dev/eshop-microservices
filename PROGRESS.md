@@ -69,13 +69,14 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 13: Docker + Containerization
+## 📍 CURRENT STAGE — Stage 16: Azure Phase 3 — Networking
 
 ### Where We Stopped
 ```
-Completed docker-compose.yml with SQL Server + EShop API services
+Completed Azure Phase 1 (Foundation) and Phase 2 (Security).
+Currently starting Phase 3 — Networking (VNet, NSG, Private Endpoints)
 
-Completed so far in Stage 13:
+Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
        → What is Docker, why it exists
        → VM vs Container
@@ -169,11 +170,11 @@ Completed so far in Stage 13:
 ✅ Module 5 → Volumes & Data
 ✅ Module 6 → Networking
 ✅ Module 7 → Docker Compose
-⏳ Module 8 → Registry (Azure Container Registry)
+✅ Module 8 → Registry (Azure Container Registry) — done in Stage 18, Phase 5
 ✅ Module 9 → Best Practices
 ```
 
-### What We Will Build in Stage 13
+### What We Built in Stage 13
 ```
 ✅ .dockerignore file
 ✅ Multi-stage Dockerfile for EShop.API
@@ -185,8 +186,7 @@ Completed so far in Stage 13:
 ✅ Non-root user (security)
 ✅ Docker image labels (OCI standard)
 ✅ Layer caching optimized
-⏳ Azure Container Registry (ACR)
-⏳ Push image to ACR
+✅ Azure Container Registry (ACR) — covered in Phase 5 Hosting
 ```
 
 ---
@@ -205,109 +205,142 @@ Completed so far in Stage 13:
 
 ---
 
-## 🗺️ Azure Master Plan — Complete Roadmap (39 Topics)
+## 🗺️ Azure Master Plan — Complete Roadmap (Sequential)
+
+> **Order matters!** Foundation → Security → Networking → Hosting → Data → Messaging → Observability → Advanced
+
+---
 
 ### 📚 Phase 1 — Foundation
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 1 | Azure Account + Portal + CLI | 🟢 Free | ⏳ |
-| 2 | Resource Groups + Naming + Tagging + Cost Management | 🟢 Free | ⏳ |
+| 1 | Azure Account + Portal + CLI | 🟢 Free | ✅ Done |
+| 2 | Resource Groups + Naming + Tagging + Cost Management | 🟢 Free | ✅ Done |
 
-### 🔒 Phase 2 — Security First
+---
+
+### 🔒 Phase 2 — Security (Identity, secrets and access — before anything else!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 3 | Azure Key Vault | 🟢 Free | ⏳ |
-| 4 | Managed Identity | 🟢 Free | ⏳ |
-| 5 | Azure RBAC | 🟢 Free | ⏳ |
-| 6 | Azure Defender for Cloud | 🟢 Free | ⏳ |
+| 3 | Azure AD / Entra ID + Service Principal | 🟢 Free | ✅ Done |
+| 4 | Azure Key Vault (secrets storage) | 🟢 Free | ✅ Done |
+| 5 | Azure RBAC (who can access what) | 🟢 Free | ✅ Done |
+| 6 | Azure Defender for Cloud | 🟢 Free | ✅ Done |
 
-### 🌐 Phase 3 — Networking
+---
+
+### 🌐 Phase 3 — Networking (BEFORE hosting — app needs a network to live in!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 7 | Azure Virtual Network (VNet) | 🟢 Free | ⏳ |
-| 8 | Azure Private Endpoints | 🔴 Delete! | ⏳ |
-| 9 | Azure Application Gateway (WAF + SSL) | 🔴 Delete! | ⏳ |
-| 10 | Azure DNS | 🟡 $0.50 | ⏳ |
+| 7 | Azure Virtual Network (VNet) + Subnets | 🟢 Free | ⏳ Next |
+| 8 | Network Security Groups (NSG) | 🟢 Free | ⏳ |
+| 9 | Azure Private Endpoints | 🔴 Delete! | ⏳ |
+| 10 | Azure Application Gateway (WAF + SSL) | 🔴 Delete! | ⏳ |
+| 11 | Azure DNS | 🟡 $0.50 | ⏳ |
 
-### 🗄️ Phase 4 — Storage
+---
+
+### 📦 Phase 4 — Storage (independent of hosting — learn early!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 11 | Azure Blob Storage | 🟢 Free | ⏳ |
-| 12 | Azure CDN | 🟢 Free | ⏳ |
+| 12 | Azure Blob Storage | 🟢 Free | ⏳ |
+| 13 | Azure CDN | 🟢 Free | ⏳ |
 
-### ⚡ Phase 5 — Serverless & Automation
+---
+
+### 🚀 Phase 5 — Hosting (network exists → now host the app!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 13 | Azure Functions | 🟢 Free | ⏳ |
-| 14 | Azure Logic Apps | 🟢 Free | ⏳ |
-| 15 | Azure Runbooks | 🟢 Free | ⏳ |
-
-### 📦 Phase 6 — Containers in Cloud
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 16 | Azure Container Registry (ACR) | 🟡 $5 | ⏳ |
-| 17 | Azure App Service (learn first) | 🟢 Free | ⏳ |
-| 18 | Azure Deployment Slots (staging → prod swap, zero downtime) | 🟢 Free | ⏳ |
+| 14 | Azure Container Registry (ACR) — build & push image | 🟡 $5 | ⏳ |
+| 15 | Azure App Service + App Service Plan | 🟢 Free | ⏳ |
+| 16 | Managed Identity — enable on App Service, grant Key Vault access | 🟢 Free | ⏳ |
+| 17 | App Settings + Key Vault References (app reads secrets, zero passwords!) | 🟢 Free | ⏳ |
+| 18 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ⏳ |
 | 19 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
-| 20 | CD Pipeline (deploy-to-azure.yml) | 🟢 Free | ⏳ |
+| 20 | CD Pipeline — deploy-to-azure.yml (GitHub Actions auto deploy) | 🟢 Free | ⏳ |
 
-### 🔀 Phase 7 — Microservices + Databases
+---
+
+### 🗄️ Phase 6 — Databases (app hosted → now give it a database!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 20 | Product Service + Azure SQL DB | 🟢 Free | ⏳ |
-| 21 | Order Service + Azure SQL DB | 🟢 Free | ⏳ |
-| 22 | Customer Service + Azure SQL DB | 🟢 Free | ⏳ |
-| 23 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
-| 24 | Azure Cosmos DB | 🟢 Free | ⏳ |
+| 21 | Azure SQL Database (Catalog Service) | 🟢 Free | ⏳ |
+| 22 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
+| 23 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
+| 24 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
+| 25 | Azure Cosmos DB | 🟢 Free | ⏳ |
 
-### 🔍 Phase 8 — Search & AI
+---
+
+### ⚡ Phase 7 — Serverless & Automation
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 25 | Azure Cognitive Search | 🟢 Free | ⏳ |
-| 26 | Azure OpenAI (product recommendations) | 🟡 $1-2 | ⏳ |
+| 26 | Azure Functions | 🟢 Free | ⏳ |
+| 27 | Azure Logic Apps | 🟢 Free | ⏳ |
+| 28 | Azure Runbooks (automation) | 🟢 Free | ⏳ |
 
-### 📡 Phase 9 — Messaging & Events
+---
+
+### 📡 Phase 8 — Messaging & Events (microservices need to talk!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 27 | Azure Service Bus | 🟢 Free | ⏳ |
-| 28 | Azure Event Grid | 🟢 Free | ⏳ |
-| 29 | Azure Queue Storage | 🟢 Free | ⏳ |
-| 30 | Azure Redis Cache | 🔴 Delete! | ⏳ |
+| 29 | Azure Service Bus (async messaging) | 🟢 Free | ⏳ |
+| 30 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
+| 31 | Azure Queue Storage | 🟢 Free | ⏳ |
+| 32 | Azure Redis Cache | 🔴 Delete! | ⏳ |
 
-### 🚪 Phase 10 — API Gateway
+---
+
+### 🚪 Phase 9 — API Gateway (route all traffic through one door!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 31 | Ocelot API Gateway (.NET) | 🟢 Free | ⏳ |
-| 32 | Azure API Management (APIM) | 🟢 Free | ⏳ |
+| 33 | Ocelot API Gateway (.NET) | 🟢 Free | ⏳ |
+| 34 | Azure API Management (APIM) | 🟢 Free | ⏳ |
 
-### 📊 Phase 11 — Observability
+---
+
+### 📊 Phase 10 — Observability (app is live → now monitor it!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 33 | Application Insights | 🟢 Free | ⏳ |
-| 34 | Azure Monitor + Alerts | 🟢 Free | ⏳ |
 | 35 | Log Analytics Workspace | 🟢 Free | ⏳ |
-| 36 | Azure Load Testing | 🟢 Free | ⏳ |
+| 36 | Application Insights | 🟢 Free | ⏳ |
+| 37 | Azure Monitor + Alerts | 🟢 Free | ⏳ |
+| 38 | Azure Load Testing | 🟢 Free | ⏳ |
+
+---
+
+### 🔍 Phase 11 — Search & AI
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 39 | Azure Cognitive Search | 🟢 Free | ⏳ |
+| 40 | Azure OpenAI (product recommendations) | 🟡 $1-2 | ⏳ |
+
+---
 
 ### 🔑 Phase 12 — Identity
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 37 | Azure AD B2C | 🟢 Free | ⏳ |
+| 41 | Azure AD B2C | 🟢 Free | ⏳ |
+
+---
 
 ### 🌍 Phase 13 — Architect Level
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 38 | Azure Front Door | 🔴 Delete! | ⏳ |
-| 39 | Azure App Configuration | 🟢 Free | ⏳ |
-| 40 | .NET Aspire | 🟢 Free | ⏳ |
+| 42 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
+| 43 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
+| 44 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
+
+---
 
 ```
-Total Topics   →  40
-🟢 Free        →  30 topics (75%)
-🟡 Cheap       →   5 topics (~$11/month)
+Total Topics   →  44
+🟢 Free        →  35 topics (80%)
+🟡 Cheap       →   4 topics (~$9/month)
 🔴 Delete!     →   5 topics (create → learn → delete same session)
 ─────────────────────────────────────────────
-Monthly Cost   →  ~$11/month
-$200 Credit    →  18+ months 🚀
+Monthly Cost   →  ~$9/month
+$200 Credit    →  22+ months 🚀
 ```
 
 ---
@@ -318,12 +351,19 @@ $200 Credit    →  18+ months 🚀
 |-------|-------|--------|
 | 13 | Docker + Containerization | ✅ Done |
 | 14 | CI/CD Pipeline (GitHub Actions) | ✅ Done |
-| 15 | Azure Foundation + Security + Networking | ⏳ Next |
-| 16 | Storage + Serverless + Containers in Cloud | ⏳ |
-| 17 | Microservices Split + Databases | ⏳ |
-| 18 | Search + AI + Messaging + Events | ⏳ |
-| 19 | API Gateway + Observability | ⏳ |
-| 20 | Identity + Architect Level | ⏳ |
+| 15 | Azure Phase 1 — Foundation (Account, CLI, Resource Groups, Tagging) | ✅ Done |
+| 16 | Azure Phase 2 — Security (AD, Service Principal, Key Vault, RBAC, Defender) | ✅ Done |
+| 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway, DNS) | ⏳ **Next** |
+| 18 | Azure Phase 4 — Storage (Blob Storage, CDN) | ⏳ |
+| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD) | ⏳ |
+| 20 | Azure Phase 6 — Databases (Azure SQL ×3, Elastic Pool, Cosmos DB) | ⏳ |
+| 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
+| 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
+| 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
+| 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
+| 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
+| 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
+| 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
 
 ---
 
@@ -345,8 +385,8 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 ✅ Git + GitHub account (vikasgage28-dev)
 ✅ Docker Compose (via docker-compose.yml)
 ❌ Docker Desktop (uninstalled - office policy)
-⏳ Azure CLI (needed for Stage 15)
-⏳ Azure Account (needed for Stage 15)
+✅ Azure CLI (installed + logged in)
+✅ Azure Account (active — vikasgage28@outlook.com)
 ```
 
 ---
@@ -370,7 +410,7 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → .env file used for secrets (not committed to Git)
 → .env.example template shared with team
 → Docker image labels follow OCI standard
-→ Module 8 (ACR) deferred to Stage 15 (Azure)
+→ Module 8 (ACR) done in Stage 19, Phase 5 (Hosting)
 → CI pipeline (GitHub Actions) - build-and-test.yml
 → Branch protection rules on develop + main
 → Pipeline must pass before PR can be merged
