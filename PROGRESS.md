@@ -69,12 +69,12 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 16: Azure Phase 3 — Networking
+## 📍 CURRENT STAGE — Stage 18: Azure Phase 4 — Storage
 
 ### Where We Stopped
 ```
-Completed Azure Phase 1 (Foundation) and Phase 2 (Security).
-Currently starting Phase 3 — Networking (VNet, NSG, Private Endpoints)
+Completed Azure Phase 1 (Foundation), Phase 2 (Security) and Phase 3 (Networking).
+Currently starting Phase 4 — Storage (Blob Storage, CDN)
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -232,11 +232,11 @@ Completed so far in Stage 13 (Docker):
 ### 🌐 Phase 3 — Networking (BEFORE hosting — app needs a network to live in!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 7 | Azure Virtual Network (VNet) + Subnets | 🟢 Free | ⏳ Next |
-| 8 | Network Security Groups (NSG) | 🟢 Free | ⏳ |
-| 9 | Azure Private Endpoints | 🔴 Delete! | ⏳ |
-| 10 | Azure Application Gateway (WAF + SSL) | 🔴 Delete! | ⏳ |
-| 11 | Azure DNS | 🟡 $0.50 | ⏳ |
+| 7 | Azure Virtual Network (VNet) + Subnets | 🟢 Free | ✅ Done |
+| 8 | Network Security Groups (NSG) | 🟢 Free | ✅ Done |
+| 9 | Azure Private Endpoints | 🔴 Delete! | ✅ Done (created → learned → deleted) |
+| 10 | Azure Application Gateway (WAF + SSL) | 🔴 Delete! | ✅ Done (created → learned → deleted) |
+| 11 | Azure DNS | 🟡 $0.50 | ✅ Moved to Phase 5 (needs real IP first!) |
 
 ---
 
@@ -258,6 +258,7 @@ Completed so far in Stage 13 (Docker):
 | 18 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ⏳ |
 | 19 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
 | 20 | CD Pipeline — deploy-to-azure.yml (GitHub Actions auto deploy) | 🟢 Free | ⏳ |
+| 21 | Azure DNS — point api.eshop.com to real Public IP | 🟡 $0.50 | ⏳ |
 
 ---
 
@@ -353,9 +354,9 @@ $200 Credit    →  22+ months 🚀
 | 14 | CI/CD Pipeline (GitHub Actions) | ✅ Done |
 | 15 | Azure Phase 1 — Foundation (Account, CLI, Resource Groups, Tagging) | ✅ Done |
 | 16 | Azure Phase 2 — Security (AD, Service Principal, Key Vault, RBAC, Defender) | ✅ Done |
-| 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway, DNS) | ⏳ **Next** |
-| 18 | Azure Phase 4 — Storage (Blob Storage, CDN) | ⏳ |
-| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD) | ⏳ |
+| 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway) | ✅ Done |
+| 18 | Azure Phase 4 — Storage (Blob Storage, CDN) | ⏳ **Next** |
+| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD, DNS) | ⏳ |
 | 20 | Azure Phase 6 — Databases (Azure SQL ×3, Elastic Pool, Cosmos DB) | ⏳ |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
