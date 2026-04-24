@@ -69,12 +69,12 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 18: Azure Phase 4 — Storage
+## 📍 CURRENT STAGE — Stage 19: Azure Phase 5 — Hosting
 
 ### Where We Stopped
 ```
-Completed Azure Phase 1 (Foundation), Phase 2 (Security) and Phase 3 (Networking).
-Currently starting Phase 4 — Storage (Blob Storage, CDN)
+Completed Azure Phase 1 (Foundation), Phase 2 (Security), Phase 3 (Networking) and Phase 4 (Storage).
+Currently starting Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD Pipeline, DNS)
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -243,8 +243,8 @@ Completed so far in Stage 13 (Docker):
 ### 📦 Phase 4 — Storage (independent of hosting — learn early!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 12 | Azure Blob Storage | 🟢 Free | ⏳ |
-| 13 | Azure CDN | 🟢 Free | ⏳ |
+| 12 | Azure Blob Storage | 🟢 Free | ✅ Done (steshopprod + product-images container) |
+| 13 | Azure CDN | 🟢 Free | ✅ Replaced by Azure Front Door in Phase 13 (CDN Classic deprecated!) |
 
 ---
 
@@ -355,8 +355,8 @@ $200 Credit    →  22+ months 🚀
 | 15 | Azure Phase 1 — Foundation (Account, CLI, Resource Groups, Tagging) | ✅ Done |
 | 16 | Azure Phase 2 — Security (AD, Service Principal, Key Vault, RBAC, Defender) | ✅ Done |
 | 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway) | ✅ Done |
-| 18 | Azure Phase 4 — Storage (Blob Storage, CDN) | ⏳ **Next** |
-| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD, DNS) | ⏳ |
+| 18 | Azure Phase 4 — Storage (Blob Storage, CDN → replaced by Front Door) | ✅ Done |
+| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD, DNS) | ⏳ **Next** |
 | 20 | Azure Phase 6 — Databases (Azure SQL ×3, Elastic Pool, Cosmos DB) | ⏳ |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
