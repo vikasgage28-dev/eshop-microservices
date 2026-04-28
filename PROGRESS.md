@@ -380,14 +380,78 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
+### ⭐ Microservices Split — BEFORE Phases 14, 15, 16!
+> Learn Terraform + AKS ONCE on real microservices! Not twice!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 45 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
+| 46 | Split monolith → Catalog Service (.NET) | 🟢 Free | ⏳ |
+| 47 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
+| 48 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
+| 49 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
+| 50 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
+| 51 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
+
+---
+
+### 🏗️ Phase 14 — Infrastructure as Code (Terraform)
+> Learn ONCE on real microservices infrastructure! Not on monolith!
+> Real world: Nobody clicks portal! Everything is code!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 52 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
+| 53 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
+| 54 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
+| 55 | Terraform — Full EShop microservices infra in one command! | 🟢 Free | ⏳ |
+| 56 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
+| 57 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
+
+---
+
+### 🌎 Phase 15 — Multiple Environments (DEV / STAGING / PROD)
+> Real world: Always 3 environments! Never deploy direct to PROD!
+> ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
+> Smart approach: Learn concepts + simulate using FREE tools!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 58 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
+| 59 | Local Docker Compose = DEV environment (already done!) | 🟢 Free | ✅ Done |
+| 60 | Azure Deployment Slots = STAGING (same App Service, zero cost!) | 🟢 Free | ⏳ |
+| 61 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
+| 62 | Environment-specific appsettings.json (Dev/Staging/Production) | 🟢 Free | ⏳ |
+| 63 | Terraform workspaces for multi-env (concept + implement) | 🟢 Free | ⏳ |
+| 64 | Promote build: DEV(local) → STAGING(slot) → PROD(swap!) | 🟢 Free | ⏳ |
+
+---
+
+### ☸️ Phase 16 — Kubernetes (AKS)
+> Deploy ALL microservices to AKS — this is real world! ✅
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 65 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
+| 66 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
+| 67 | Deploy ALL microservices to AKS | 🟡 ~$5 | ⏳ |
+| 68 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
+| 69 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
+| 70 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
+| 71 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
+| 72 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
+| 73 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+
+---
+
 ```
-Total Topics   →  44
-🟢 Free        →  35 topics (80%)
-🟡 Cheap       →   4 topics (~$9/month)
-🔴 Delete!     →   5 topics (create → learn → delete same session)
+Total Topics   →  73 (was 44, added 29!)
+🟢 Free        →  62 topics
+🟡 Cheap       →   5 topics (~$10/month)
+🔴 Delete!     →   6 topics (create → learn → delete)
 ─────────────────────────────────────────────
-Monthly Cost   →  ~$9/month
-$200 Credit    →  22+ months 🚀
+Order          →  Azure Phases 6-13 → Microservices Split
+               →  Terraform → Multi-env → AKS
+               →  Learn Terraform ONCE on real microservices!
+Multi-env      →  FREE! (slots + local Docker, no extra Azure cost!)
+Monthly Cost   →  ~$10/month (only while learning AKS)
+$200 Credit    →  20+ months 🚀
 ```
 
 ---
@@ -411,6 +475,10 @@ $200 Credit    →  22+ months 🚀
 | 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
 | 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
 | 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
+| 28 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 29 | Azure Phase 14 — Terraform / IaC (on real microservices!) | ⏳ |
+| 30 | Azure Phase 15 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
+| 31 | Azure Phase 16 — Kubernetes / AKS (all microservices on K8s!) | ⏳ |
 
 ---
 
