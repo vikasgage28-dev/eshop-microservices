@@ -98,11 +98,24 @@ Phase 5 completed so far:
    → ASPNETCORE_HTTP_PORTS → 80
    → WEBSITES_PORT → 80
 
-❌ App NOT running yet — needs Azure SQL Database first!
-   Root cause: db.Database.Migrate() fails → no SQL Server in Azure!
-   Container exits with code 0 in < 300ms → startup exception caught!
+✅ App is LIVE in Production!
+   URL: https://app-eshop-prod.azurewebsites.net
+   Health: https://app-eshop-prod.azurewebsites.net/health → Healthy!
+   Swagger: https://app-eshop-prod.azurewebsites.net/swagger → Working!
 
-⏳ NEXT: Create Azure SQL Server + Database (FREE tier) → then app will work!
+✅ Azure SQL Server + Database created (FREE tier)
+   Server: sql-eshop-prod (Central India, rg-eshop-shared)
+   Database: EShopDb (Free General Purpose, auto-pause)
+   Admin: eshopadmin
+
+✅ Dockerfile fixed — non-root user home directory permissions
+   mkdir -p /home/appuser/ASP.NET/DataProtection-Keys
+   chown -R appuser:appgroup /home/appuser
+
+✅ Key Vault connection string updated with correct credentials
+✅ Key Vault URI changed to versionless (no version GUID)
+✅ DB migrations ran automatically on startup
+✅ Admin + User roles seeded automatically
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -296,9 +309,9 @@ Completed so far in Stage 13 (Docker):
 > App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ⏳ **Next!** |
-| 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ⏳ |
-| 26 | Verify app starts + health endpoint works | 🟢 Free | ⏳ |
+| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ✅ Done |
+| 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ✅ Done |
+| 26 | Verify app starts + health endpoint works | 🟢 Free | ✅ Done |
 | 27 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
 | 28 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
 | 29 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
@@ -458,6 +471,64 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → App container exits code 0 in <300ms without DB = db.Database.Migrate() fails!
 → Key Vault references resolve correctly (Pull reference values = green ✅)
 → ASPNETCORE_HTTP_PORTS=80 + WEBSITES_PORT=80 set in App Service env vars
+→ Always create Database BEFORE deploying app! (app needs DB to start!)
+→ Always enable App Service logging before diagnosing container issues!
+→ Key Vault URI must be versionless (no GUID) → always reads latest secret!
+→ Non-root Docker user needs home directory created explicitly in Dockerfile!
+→ Exit code 0 quickly = startup exception caught, NOT success for web apps!
+→ Microsoft.Sql provider needs manual registration in Azure subscription!
+→ Azure SQL Free tier auto-pauses when idle → $0 cost when not used!
+→ db.Database.Migrate() runs automatically on startup → creates tables in Azure SQL!
+```
+
+---
+
+## 🔍 Production Issues Diagnosed & Resolved
+
+### Issue 1 — F1 Quota Exhausted
+```
+Symptom  → Browser: "Error 403 - This web app is stopped"
+Cause    → F1 free tier = 60 min/day compute limit
+           Container startup itself uses quota (no requests needed!)
+Detected → az webapp show --query state → "QuotaExceeded"
+Fix      → Upgraded to B1 (free for 12 months!)
+           az appservice plan update --sku B1
+```
+
+### Issue 2 — No Azure SQL Server Existed!
+```
+Symptom  → Container exits with code 0 in < 300ms
+Cause    → db.Database.Migrate() fails → exception caught → app exits cleanly!
+           Phase order was wrong: Hosting before Database!
+Detected → Clues: exit code 0 + dies in 88ms + az sql server list = empty!
+Fix      → Created Azure SQL Server + Database (FREE tier)
+           Registered Microsoft.Sql provider first!
+           Added firewall rule: AllowAzureServices (0.0.0.0 - 0.0.0.0)
+```
+
+### Issue 3 — Key Vault Secret Version Pinned!
+```
+Symptom  → Error 18456: SQL Login Failed
+Cause    → App Settings had specific version GUID in Key Vault URI:
+           .../SqlConnectionString/6c9808d1029b4b09add2c3f5cea3c004
+           Updated secret → new version → app still read OLD version!
+Detected → Error 18456 in default_docker.log after enabling app logging
+Fix      → Changed to versionless URI:
+           .../SqlConnectionString/  (no GUID = always latest!) ✅
+```
+
+### Issue 4 — Non-root User Permission Denied!
+```
+Symptom  → System.UnauthorizedAccessException: /home/appuser is denied
+Cause    → Non-root appuser had no write access to home directory
+           ASP.NET Data Protection needs to write keys to /home/appuser/
+           Dockerfile never created home directory for appuser!
+Detected → Visible in default_docker.log (after enabling app logging)
+Fix      → Updated Dockerfile:
+           useradd -m appuser (create with home dir)
+           mkdir -p /home/appuser/ASP.NET/DataProtection-Keys
+           chown -R appuser:appgroup /home/appuser
+           Rebuilt + pushed image via GitHub Actions → merged to main!
 ```
 
 ---
