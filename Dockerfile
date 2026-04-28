@@ -43,8 +43,10 @@ LABEL org.opencontainers.image.source="https://github.com/vikasgage28-dev/eshop-
 RUN apt-get update && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+# Create non-root user with home directory for security
+RUN groupadd -r appgroup && useradd -r -g appgroup -m appuser && \
+    mkdir -p /home/appuser/ASP.NET/DataProtection-Keys && \
+    chown -R appuser:appgroup /home/appuser
 
 # Copy published files with correct ownership
 COPY --from=build --chown=appuser:appgroup /app/publish .
