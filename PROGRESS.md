@@ -69,12 +69,40 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 19: Azure Phase 5 — Hosting
+## 📍 CURRENT STAGE — Stage 19: Azure Phase 5 + 6 (DB first!)
 
 ### Where We Stopped
 ```
 Completed Azure Phase 1 (Foundation), Phase 2 (Security), Phase 3 (Networking) and Phase 4 (Storage).
-Currently starting Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD Pipeline, DNS)
+Phase 5 Hosting PARTIALLY done — App Service created but app not running yet.
+
+⚠️ PLAN ORDER CHANGE DISCOVERED:
+Original plan: Phase 5 (Hosting) → Phase 6 (Database)
+Reality: App crashes on startup without DB (db.Database.Migrate() fails!)
+Corrected order: Create Azure SQL FIRST → then complete Phase 5 hosting!
+
+Phase 5 completed so far:
+✅ Docker Hub account created (vikasgage28)
+✅ DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets added to GitHub
+✅ build-and-push.yml workflow created → builds + pushes image on merge to main
+✅ Image pushed → vikasgage28/eshop-api:latest on Docker Hub
+✅ App Service Plan created (asp-eshop-prod, B1, Linux, Central India)
+✅ App Service created (app-eshop-prod, pulls from Docker Hub)
+✅ Managed Identity enabled on App Service
+✅ Key Vault Secrets User role assigned to Managed Identity
+✅ App Settings configured with Key Vault references:
+   → ConnectionStrings__DefaultConnection → KV SqlConnectionString
+   → JwtSettings__SecretKey → KV JwtSecret
+   → JwtSettings__Issuer → KV JwtIssuer
+   → ASPNETCORE_ENVIRONMENT → Production
+   → ASPNETCORE_HTTP_PORTS → 80
+   → WEBSITES_PORT → 80
+
+❌ App NOT running yet — needs Azure SQL Database first!
+   Root cause: db.Database.Migrate() fails → no SQL Server in Azure!
+   Container exits with code 0 in < 300ms → startup exception caught!
+
+⏳ NEXT: Create Azure SQL Server + Database (FREE tier) → then app will work!
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -251,25 +279,30 @@ Completed so far in Stage 13 (Docker):
 ### 🚀 Phase 5 — Hosting (network exists → now host the app!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 14 | Azure Container Registry (ACR) — build & push image | 🟡 $5 | ⏳ |
-| 15 | Azure App Service + App Service Plan | 🟢 Free | ⏳ |
-| 16 | Managed Identity — enable on App Service, grant Key Vault access | 🟢 Free | ⏳ |
-| 17 | App Settings + Key Vault References (app reads secrets, zero passwords!) | 🟢 Free | ⏳ |
-| 18 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ⏳ |
-| 19 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
-| 20 | CD Pipeline — deploy-to-azure.yml (GitHub Actions auto deploy) | 🟢 Free | ⏳ |
-| 21 | Azure DNS — point api.eshop.com to real Public IP | 🟡 $0.50 | ⏳ |
+| 14 | Azure Container Registry (ACR) — skipped, using Docker Hub instead | 🟡 $5 | ✅ Using Docker Hub (FREE!) |
+| 15 | Docker Hub setup + build-and-push.yml pipeline | 🟢 Free | ✅ Done |
+| 16 | Azure App Service Plan (asp-eshop-prod, B1, Linux) | 🟢 Free | ✅ Done |
+| 17 | Azure App Service (app-eshop-prod) pulling from Docker Hub | 🟢 Free | ✅ Done |
+| 18 | Managed Identity + Key Vault access (RBAC role assigned) | 🟢 Free | ✅ Done |
+| 19 | App Settings + Key Vault References | 🟢 Free | ✅ Done |
+| 20 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ⏳ After DB! |
+| 21 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
+| 22 | CD Pipeline — deploy-to-azure.yml (GitHub Actions auto deploy) | 🟢 Free | ⏳ |
+| 23 | Azure DNS — point api.eshop.com to real Public IP | 🟡 $0.50 | ⏳ |
 
 ---
 
-### 🗄️ Phase 6 — Databases (app hosted → now give it a database!)
+### 🗄️ Phase 6 — Databases ⚠️ MOVED BEFORE PHASE 5 COMPLETION!
+> App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 21 | Azure SQL Database (Catalog Service) | 🟢 Free | ⏳ |
-| 22 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
-| 23 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
-| 24 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
-| 25 | Azure Cosmos DB | 🟢 Free | ⏳ |
+| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ⏳ **Next!** |
+| 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ⏳ |
+| 26 | Verify app starts + health endpoint works | 🟢 Free | ⏳ |
+| 27 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
+| 28 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
+| 29 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
+| 30 | Azure Cosmos DB | 🟢 Free | ⏳ |
 
 ---
 
@@ -356,8 +389,8 @@ $200 Credit    →  22+ months 🚀
 | 16 | Azure Phase 2 — Security (AD, Service Principal, Key Vault, RBAC, Defender) | ✅ Done |
 | 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway) | ✅ Done |
 | 18 | Azure Phase 4 — Storage (Blob Storage, CDN → replaced by Front Door) | ✅ Done |
-| 19 | Azure Phase 5 — Hosting (ACR, App Service, Managed Identity, Slots, Container Apps, CD, DNS) | ⏳ **Next** |
-| 20 | Azure Phase 6 — Databases (Azure SQL ×3, Elastic Pool, Cosmos DB) | ⏳ |
+| 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs) | 🔄 In Progress (needs DB!) |
+| 20 | Azure Phase 6 — Databases (Azure SQL — moved before Phase 5 completes!) | ⏳ **Next!** |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
@@ -411,13 +444,20 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → .env file used for secrets (not committed to Git)
 → .env.example template shared with team
 → Docker image labels follow OCI standard
-→ Module 8 (ACR) done in Stage 19, Phase 5 (Hosting)
-→ CI pipeline (GitHub Actions) - build-and-test.yml
+→ Module 8 (ACR) skipped — using Docker Hub (FREE) instead of ACR ($5/month)
+→ CI pipeline (GitHub Actions) - build-and-test.yml (runs on PR)
+→ CD pipeline (GitHub Actions) - build-and-push.yml (runs on merge to main)
 → Branch protection rules on develop + main
 → Pipeline must pass before PR can be merged
 → Environments: Local = DEV, Azure = PROD
 → Deployment Slots for staging concept (zero extra cost!)
 → No separate staging environment (cost saving for learning)
+→ Azure CDN Classic deprecated → replaced by Front Door in Phase 13
+→ App Service F1 free tier has 60min/day limit → upgraded to B1 (free 12 months)
+→ Phase order changed: Azure SQL BEFORE finishing Phase 5 (app needs DB to start!)
+→ App container exits code 0 in <300ms without DB = db.Database.Migrate() fails!
+→ Key Vault references resolve correctly (Pull reference values = green ✅)
+→ ASPNETCORE_HTTP_PORTS=80 + WEBSITES_PORT=80 set in App Service env vars
 ```
 
 ---
