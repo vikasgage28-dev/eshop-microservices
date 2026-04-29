@@ -300,17 +300,20 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🗄️ Phase 6 — Databases ⚠️ MOVED BEFORE PHASE 5 COMPLETION!
+### 🗄️ Phase 6 — Databases
 > App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
+> ⚠️ Plan Decision: OrderDb + CustomerDb created AFTER microservices split (no code uses them yet!)
+> Smart approach: Learn Elastic Pool concept + add Cosmos DB with real feature (product reviews)!
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ✅ Done |
+| 24 | Azure SQL Server + Database (EShopDb — monolith) | 🟢 Free | ✅ Done |
 | 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ✅ Done |
 | 26 | Verify app starts + health endpoint works | 🟢 Free | ✅ Done |
-| 27 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
-| 28 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
-| 29 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
-| 30 | Azure Cosmos DB | 🟢 Free | ⏳ |
+| 27 | Azure SQL Elastic Pool (learn concept → delete!) | 🔴 Delete! | ⏳ Next! |
+| 28 | Azure Cosmos DB (free tier — product reviews feature!) | 🟢 Free | ⏳ |
+| 29 | Add /reviews endpoint to monolith using Cosmos DB | 🟢 Free | ⏳ |
+| 30 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ After microservices split! |
+| 31 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ After microservices split! |
 
 ---
 
