@@ -98,11 +98,24 @@ Phase 5 completed so far:
    → ASPNETCORE_HTTP_PORTS → 80
    → WEBSITES_PORT → 80
 
-❌ App NOT running yet — needs Azure SQL Database first!
-   Root cause: db.Database.Migrate() fails → no SQL Server in Azure!
-   Container exits with code 0 in < 300ms → startup exception caught!
+✅ App is LIVE in Production!
+   URL: https://app-eshop-prod.azurewebsites.net
+   Health: https://app-eshop-prod.azurewebsites.net/health → Healthy!
+   Swagger: https://app-eshop-prod.azurewebsites.net/swagger → Working!
 
-⏳ NEXT: Create Azure SQL Server + Database (FREE tier) → then app will work!
+✅ Azure SQL Server + Database created (FREE tier)
+   Server: sql-eshop-prod (Central India, rg-eshop-shared)
+   Database: EShopDb (Free General Purpose, auto-pause)
+   Admin: eshopadmin
+
+✅ Dockerfile fixed — non-root user home directory permissions
+   mkdir -p /home/appuser/ASP.NET/DataProtection-Keys
+   chown -R appuser:appgroup /home/appuser
+
+✅ Key Vault connection string updated with correct credentials
+✅ Key Vault URI changed to versionless (no version GUID)
+✅ DB migrations ran automatically on startup
+✅ Admin + User roles seeded automatically
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -296,9 +309,9 @@ Completed so far in Stage 13 (Docker):
 > App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ⏳ **Next!** |
-| 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ⏳ |
-| 26 | Verify app starts + health endpoint works | 🟢 Free | ⏳ |
+| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ✅ Done |
+| 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ✅ Done |
+| 26 | Verify app starts + health endpoint works | 🟢 Free | ✅ Done |
 | 27 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
 | 28 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
 | 29 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
@@ -367,14 +380,78 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
+### ⭐ Microservices Split — BEFORE Phases 14, 15, 16!
+> Learn Terraform + AKS ONCE on real microservices! Not twice!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 45 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
+| 46 | Split monolith → Catalog Service (.NET) | 🟢 Free | ⏳ |
+| 47 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
+| 48 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
+| 49 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
+| 50 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
+| 51 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
+
+---
+
+### 🏗️ Phase 14 — Infrastructure as Code (Terraform)
+> Learn ONCE on real microservices infrastructure! Not on monolith!
+> Real world: Nobody clicks portal! Everything is code!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 52 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
+| 53 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
+| 54 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
+| 55 | Terraform — Full EShop microservices infra in one command! | 🟢 Free | ⏳ |
+| 56 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
+| 57 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
+
+---
+
+### 🌎 Phase 15 — Multiple Environments (DEV / STAGING / PROD)
+> Real world: Always 3 environments! Never deploy direct to PROD!
+> ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
+> Smart approach: Learn concepts + simulate using FREE tools!
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 58 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
+| 59 | Local Docker Compose = DEV environment (already done!) | 🟢 Free | ✅ Done |
+| 60 | Azure Deployment Slots = STAGING (same App Service, zero cost!) | 🟢 Free | ⏳ |
+| 61 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
+| 62 | Environment-specific appsettings.json (Dev/Staging/Production) | 🟢 Free | ⏳ |
+| 63 | Terraform workspaces for multi-env (concept + implement) | 🟢 Free | ⏳ |
+| 64 | Promote build: DEV(local) → STAGING(slot) → PROD(swap!) | 🟢 Free | ⏳ |
+
+---
+
+### ☸️ Phase 16 — Kubernetes (AKS)
+> Deploy ALL microservices to AKS — this is real world! ✅
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 65 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
+| 66 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
+| 67 | Deploy ALL microservices to AKS | 🟡 ~$5 | ⏳ |
+| 68 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
+| 69 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
+| 70 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
+| 71 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
+| 72 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
+| 73 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+
+---
+
 ```
-Total Topics   →  44
-🟢 Free        →  35 topics (80%)
-🟡 Cheap       →   4 topics (~$9/month)
-🔴 Delete!     →   5 topics (create → learn → delete same session)
+Total Topics   →  73 (was 44, added 29!)
+🟢 Free        →  62 topics
+🟡 Cheap       →   5 topics (~$10/month)
+🔴 Delete!     →   6 topics (create → learn → delete)
 ─────────────────────────────────────────────
-Monthly Cost   →  ~$9/month
-$200 Credit    →  22+ months 🚀
+Order          →  Azure Phases 6-13 → Microservices Split
+               →  Terraform → Multi-env → AKS
+               →  Learn Terraform ONCE on real microservices!
+Multi-env      →  FREE! (slots + local Docker, no extra Azure cost!)
+Monthly Cost   →  ~$10/month (only while learning AKS)
+$200 Credit    →  20+ months 🚀
 ```
 
 ---
@@ -398,6 +475,10 @@ $200 Credit    →  22+ months 🚀
 | 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
 | 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
 | 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
+| 28 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 29 | Azure Phase 14 — Terraform / IaC (on real microservices!) | ⏳ |
+| 30 | Azure Phase 15 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
+| 31 | Azure Phase 16 — Kubernetes / AKS (all microservices on K8s!) | ⏳ |
 
 ---
 
@@ -458,6 +539,64 @@ Tools: GitHub Actions, Azure CLI, Docker Compose
 → App container exits code 0 in <300ms without DB = db.Database.Migrate() fails!
 → Key Vault references resolve correctly (Pull reference values = green ✅)
 → ASPNETCORE_HTTP_PORTS=80 + WEBSITES_PORT=80 set in App Service env vars
+→ Always create Database BEFORE deploying app! (app needs DB to start!)
+→ Always enable App Service logging before diagnosing container issues!
+→ Key Vault URI must be versionless (no GUID) → always reads latest secret!
+→ Non-root Docker user needs home directory created explicitly in Dockerfile!
+→ Exit code 0 quickly = startup exception caught, NOT success for web apps!
+→ Microsoft.Sql provider needs manual registration in Azure subscription!
+→ Azure SQL Free tier auto-pauses when idle → $0 cost when not used!
+→ db.Database.Migrate() runs automatically on startup → creates tables in Azure SQL!
+```
+
+---
+
+## 🔍 Production Issues Diagnosed & Resolved
+
+### Issue 1 — F1 Quota Exhausted
+```
+Symptom  → Browser: "Error 403 - This web app is stopped"
+Cause    → F1 free tier = 60 min/day compute limit
+           Container startup itself uses quota (no requests needed!)
+Detected → az webapp show --query state → "QuotaExceeded"
+Fix      → Upgraded to B1 (free for 12 months!)
+           az appservice plan update --sku B1
+```
+
+### Issue 2 — No Azure SQL Server Existed!
+```
+Symptom  → Container exits with code 0 in < 300ms
+Cause    → db.Database.Migrate() fails → exception caught → app exits cleanly!
+           Phase order was wrong: Hosting before Database!
+Detected → Clues: exit code 0 + dies in 88ms + az sql server list = empty!
+Fix      → Created Azure SQL Server + Database (FREE tier)
+           Registered Microsoft.Sql provider first!
+           Added firewall rule: AllowAzureServices (0.0.0.0 - 0.0.0.0)
+```
+
+### Issue 3 — Key Vault Secret Version Pinned!
+```
+Symptom  → Error 18456: SQL Login Failed
+Cause    → App Settings had specific version GUID in Key Vault URI:
+           .../SqlConnectionString/6c9808d1029b4b09add2c3f5cea3c004
+           Updated secret → new version → app still read OLD version!
+Detected → Error 18456 in default_docker.log after enabling app logging
+Fix      → Changed to versionless URI:
+           .../SqlConnectionString/  (no GUID = always latest!) ✅
+```
+
+### Issue 4 — Non-root User Permission Denied!
+```
+Symptom  → System.UnauthorizedAccessException: /home/appuser is denied
+Cause    → Non-root appuser had no write access to home directory
+           ASP.NET Data Protection needs to write keys to /home/appuser/
+           Dockerfile never created home directory for appuser!
+Detected → Visible in default_docker.log (after enabling app logging)
+Fix      → Updated Dockerfile:
+           useradd -m appuser (create with home dir)
+           mkdir -p /home/appuser/ASP.NET/DataProtection-Keys
+           chown -R appuser:appgroup /home/appuser
+           Rebuilt + pushed image via GitHub Actions → merged to main!
 ```
 
 ---
