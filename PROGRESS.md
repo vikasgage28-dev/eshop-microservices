@@ -304,6 +304,7 @@ Completed so far in Stage 13 (Docker):
 > App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
 > ⚠️ Plan Decision: OrderDb + CustomerDb created AFTER microservices split (no code uses them yet!)
 > Smart approach: Learn Elastic Pool concept + add Cosmos DB with real feature (product reviews)!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 24 | Azure SQL Server + Database (EShopDb — monolith) | 🟢 Free | ✅ Done |
