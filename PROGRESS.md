@@ -381,6 +381,7 @@ Completed so far in Stage 13 (Docker):
 
 ### ⭐ Microservices Split — BEFORE Phases 14, 15, 16!
 > Learn Terraform + AKS ONCE on real microservices! Not twice!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 45 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
@@ -396,6 +397,7 @@ Completed so far in Stage 13 (Docker):
 ### 🏗️ Phase 14 — Infrastructure as Code (Terraform)
 > Learn ONCE on real microservices infrastructure! Not on monolith!
 > Real world: Nobody clicks portal! Everything is code!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 52 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
@@ -411,6 +413,7 @@ Completed so far in Stage 13 (Docker):
 > Real world: Always 3 environments! Never deploy direct to PROD!
 > ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
 > Smart approach: Learn concepts + simulate using FREE tools!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 58 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
@@ -425,6 +428,7 @@ Completed so far in Stage 13 (Docker):
 
 ### ☸️ Phase 16 — Kubernetes (AKS)
 > Deploy ALL microservices to AKS — this is real world! ✅
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 65 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
