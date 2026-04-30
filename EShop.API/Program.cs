@@ -7,6 +7,7 @@ using EShop.Infrastructure.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -155,6 +156,14 @@ try
     // Repositories & Services
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<ITokenService, TokenService>();
+
+    // Cosmos DB
+    builder.Services.AddSingleton<CosmosClient>(sp =>
+    {
+        var connectionString = builder.Configuration["CosmosDb__ConnectionString"];
+        return new CosmosClient(connectionString);
+    });
+    builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
     var app = builder.Build();
 
