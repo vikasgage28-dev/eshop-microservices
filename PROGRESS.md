@@ -69,19 +69,14 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 19: Azure Phase 5 + 6 (DB first!)
+## 📍 CURRENT STAGE — Stage 20: Azure Phase 6 (Databases)
 
 ### Where We Stopped
 ```
-Completed Azure Phase 1 (Foundation), Phase 2 (Security), Phase 3 (Networking) and Phase 4 (Storage).
-Phase 5 Hosting PARTIALLY done — App Service created but app not running yet.
+Completed Azure Phase 1-5 (Foundation, Security, Networking, Storage, Hosting).
+App is LIVE in production with full CI/CD pipeline!
 
-⚠️ PLAN ORDER CHANGE DISCOVERED:
-Original plan: Phase 5 (Hosting) → Phase 6 (Database)
-Reality: App crashes on startup without DB (db.Database.Migrate() fails!)
-Corrected order: Create Azure SQL FIRST → then complete Phase 5 hosting!
-
-Phase 5 completed so far:
+Phase 5 FULLY DONE:
 ✅ Docker Hub account created (vikasgage28)
 ✅ DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets added to GitHub
 ✅ build-and-push.yml workflow created → builds + pushes image on merge to main
@@ -298,24 +293,28 @@ Completed so far in Stage 13 (Docker):
 | 17 | Azure App Service (app-eshop-prod) pulling from Docker Hub | 🟢 Free | ✅ Done |
 | 18 | Managed Identity + Key Vault access (RBAC role assigned) | 🟢 Free | ✅ Done |
 | 19 | App Settings + Key Vault References | 🟢 Free | ✅ Done |
-| 20 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ⏳ After DB! |
+| 20 | Azure Deployment Slots (Blue/Green, zero downtime swap) | 🟢 Free | ✅ Concept learned (S1 needed for impl, too costly!) |
 | 21 | Azure Container Apps (migrate from App Service) | 🟡 $1-3 | ⏳ |
-| 22 | CD Pipeline — deploy-to-azure.yml (GitHub Actions auto deploy) | 🟢 Free | ⏳ |
+| 22 | CD Pipeline — auto deploy to Azure App Service | 🟢 Free | ✅ Done (deploy job added to build-and-push.yml!) |
 | 23 | Azure DNS — point api.eshop.com to real Public IP | 🟡 $0.50 | ⏳ |
 
 ---
 
-### 🗄️ Phase 6 — Databases ⚠️ MOVED BEFORE PHASE 5 COMPLETION!
+### 🗄️ Phase 6 — Databases
 > App needs DB to start! Created Azure SQL BEFORE finishing Phase 5 hosting.
+> ⚠️ Plan Decision: OrderDb + CustomerDb created AFTER microservices split (no code uses them yet!)
+> Smart approach: Learn Elastic Pool concept + add Cosmos DB with real feature (product reviews)!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 24 | Azure SQL Server + Database (EShop) | 🟢 Free | ✅ Done |
+| 24 | Azure SQL Server + Database (EShopDb — monolith) | 🟢 Free | ✅ Done |
 | 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ✅ Done |
 | 26 | Verify app starts + health endpoint works | 🟢 Free | ✅ Done |
-| 27 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ |
-| 28 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ |
-| 29 | Azure SQL Elastic Pool | 🔴 Delete! | ⏳ |
-| 30 | Azure Cosmos DB | 🟢 Free | ⏳ |
+| 27 | Azure SQL Elastic Pool (learn concept → delete!) | 🔴 Delete! | ⏳ Next! |
+| 28 | Azure Cosmos DB (free tier — product reviews feature!) | 🟢 Free | ⏳ |
+| 29 | Add /reviews endpoint to monolith using Cosmos DB | 🟢 Free | ⏳ |
+| 30 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ After microservices split! |
+| 31 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ After microservices split! |
 
 ---
 
@@ -382,6 +381,7 @@ Completed so far in Stage 13 (Docker):
 
 ### ⭐ Microservices Split — BEFORE Phases 14, 15, 16!
 > Learn Terraform + AKS ONCE on real microservices! Not twice!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 45 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
@@ -397,6 +397,7 @@ Completed so far in Stage 13 (Docker):
 ### 🏗️ Phase 14 — Infrastructure as Code (Terraform)
 > Learn ONCE on real microservices infrastructure! Not on monolith!
 > Real world: Nobody clicks portal! Everything is code!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 52 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
@@ -412,6 +413,7 @@ Completed so far in Stage 13 (Docker):
 > Real world: Always 3 environments! Never deploy direct to PROD!
 > ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
 > Smart approach: Learn concepts + simulate using FREE tools!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 58 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
@@ -426,6 +428,7 @@ Completed so far in Stage 13 (Docker):
 
 ### ☸️ Phase 16 — Kubernetes (AKS)
 > Deploy ALL microservices to AKS — this is real world! ✅
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 65 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
@@ -466,8 +469,8 @@ $200 Credit    →  20+ months 🚀
 | 16 | Azure Phase 2 — Security (AD, Service Principal, Key Vault, RBAC, Defender) | ✅ Done |
 | 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway) | ✅ Done |
 | 18 | Azure Phase 4 — Storage (Blob Storage, CDN → replaced by Front Door) | ✅ Done |
-| 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs) | 🔄 In Progress (needs DB!) |
-| 20 | Azure Phase 6 — Databases (Azure SQL — moved before Phase 5 completes!) | ⏳ **Next!** |
+| 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs, CD Pipeline) | ✅ Done |
+| 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | 🔄 **In Progress — Next!** |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
