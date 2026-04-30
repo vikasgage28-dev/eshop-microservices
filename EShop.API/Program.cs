@@ -160,7 +160,8 @@ try
     // Cosmos DB
     builder.Services.AddSingleton<CosmosClient>(sp =>
     {
-        var connectionString = builder.Configuration["CosmosDb__ConnectionString"];
+        var connectionString = builder.Configuration["CosmosDb:ConnectionString"]
+                           ?? builder.Configuration["CosmosDb__ConnectionString"];
         return new CosmosClient(connectionString);
     });
     builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
