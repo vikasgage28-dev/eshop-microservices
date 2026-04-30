@@ -69,48 +69,33 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 20: Azure Phase 6 (Databases)
+## 📍 CURRENT STAGE — Stage 21: Azure Phase 7 (Serverless & Automation)
 
 ### Where We Stopped
 ```
-Completed Azure Phase 1-5 (Foundation, Security, Networking, Storage, Hosting).
-App is LIVE in production with full CI/CD pipeline!
+Completed Azure Phase 1-6! App is LIVE with Cosmos DB product reviews!
 
-Phase 5 FULLY DONE:
-✅ Docker Hub account created (vikasgage28)
-✅ DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets added to GitHub
-✅ build-and-push.yml workflow created → builds + pushes image on merge to main
-✅ Image pushed → vikasgage28/eshop-api:latest on Docker Hub
-✅ App Service Plan created (asp-eshop-prod, B1, Linux, Central India)
-✅ App Service created (app-eshop-prod, pulls from Docker Hub)
-✅ Managed Identity enabled on App Service
-✅ Key Vault Secrets User role assigned to Managed Identity
-✅ App Settings configured with Key Vault references:
-   → ConnectionStrings__DefaultConnection → KV SqlConnectionString
-   → JwtSettings__SecretKey → KV JwtSecret
-   → JwtSettings__Issuer → KV JwtIssuer
-   → ASPNETCORE_ENVIRONMENT → Production
-   → ASPNETCORE_HTTP_PORTS → 80
-   → WEBSITES_PORT → 80
-
-✅ App is LIVE in Production!
-   URL: https://app-eshop-prod.azurewebsites.net
-   Health: https://app-eshop-prod.azurewebsites.net/health → Healthy!
-   Swagger: https://app-eshop-prod.azurewebsites.net/swagger → Working!
-
-✅ Azure SQL Server + Database created (FREE tier)
-   Server: sql-eshop-prod (Central India, rg-eshop-shared)
-   Database: EShopDb (Free General Purpose, auto-pause)
-   Admin: eshopadmin
-
-✅ Dockerfile fixed — non-root user home directory permissions
-   mkdir -p /home/appuser/ASP.NET/DataProtection-Keys
-   chown -R appuser:appgroup /home/appuser
-
-✅ Key Vault connection string updated with correct credentials
-✅ Key Vault URI changed to versionless (no version GUID)
-✅ DB migrations ran automatically on startup
-✅ Admin + User roles seeded automatically
+Phase 6 FULLY DONE:
+✅ Azure SQL Server + Database (EShopDb, Free tier, Central India)
+✅ Key Vault SqlConnectionString updated → Azure SQL
+✅ DB migrations + seeding run automatically on startup
+✅ Azure Cosmos DB account (Free tier) + EShopDb database + reviews container
+   Partition key: /productId | 400 RU/s
+   CosmosDbConnection secret stored in Key Vault
+✅ Product Reviews feature implemented end-to-end:
+   → Review entity (Newtonsoft.Json [JsonProperty("id")])
+   → IReviewRepository interface (Clean Architecture)
+   → ReviewRepository (Microsoft.Azure.Cosmos SDK, fully qualified Container)
+   → ReviewsController (GET/POST/DELETE — api/v1/products/{productId}/reviews)
+   → CosmosClient registered as Singleton in Program.cs
+   → Reads config as "CosmosDb:ConnectionString" ?? "CosmosDb__ConnectionString"
+✅ CosmosDb__ConnectionString added to App Service via Portal (not CLI!)
+   → Key Vault reference resolves to green ✅ in portal
+   → PowerShell @ escaping issue: use Portal UI or backtick-escape @ in CLI
+✅ Correct Managed Identity (2ecb0851) assigned Key Vault Secrets User role
+✅ Reviews endpoint working in production!
+   GET  https://app-eshop-prod.azurewebsites.net/api/v1/products/1/reviews → 200 ✅
+   POST https://app-eshop-prod.azurewebsites.net/api/v1/products/1/reviews → 200 ✅
 
 Completed so far in Stage 13 (Docker):
   ✅ Module 1 — Docker Fundamentals
@@ -310,9 +295,9 @@ Completed so far in Stage 13 (Docker):
 | 24 | Azure SQL Server + Database (EShopDb — monolith) | 🟢 Free | ✅ Done |
 | 25 | Update Key Vault SqlConnectionString → Azure SQL | 🟢 Free | ✅ Done |
 | 26 | Verify app starts + health endpoint works | 🟢 Free | ✅ Done |
-| 27 | Azure SQL Elastic Pool (learn concept → delete!) | 🔴 Delete! | ⏳ Next! |
-| 28 | Azure Cosmos DB (free tier — product reviews feature!) | 🟢 Free | ⏳ |
-| 29 | Add /reviews endpoint to monolith using Cosmos DB | 🟢 Free | ⏳ |
+| 27 | Azure SQL Elastic Pool (learn concept → delete!) | 🔴 Delete! | ✅ Done (learned concept, skipped provisioning) |
+| 28 | Azure Cosmos DB (free tier — product reviews feature!) | 🟢 Free | ✅ Done |
+| 29 | Add /reviews endpoint to monolith using Cosmos DB | 🟢 Free | ✅ Done |
 | 30 | Azure SQL Database (Order Service) | 🟢 Free | ⏳ After microservices split! |
 | 31 | Azure SQL Database (Customer Service) | 🟢 Free | ⏳ After microservices split! |
 
@@ -470,8 +455,8 @@ $200 Credit    →  20+ months 🚀
 | 17 | Azure Phase 3 — Networking (VNet, NSG, Private Endpoints, App Gateway) | ✅ Done |
 | 18 | Azure Phase 4 — Storage (Blob Storage, CDN → replaced by Front Door) | ✅ Done |
 | 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs, CD Pipeline) | ✅ Done |
-| 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | 🔄 **In Progress — Next!** |
-| 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ⏳ |
+| 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
+| 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | 🔄 **In Progress — Next!** |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
