@@ -15,15 +15,16 @@ namespace EShop.Functions.Functions
         }
 
         [Function("HealthCheck")]
-        public HttpResponseData Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")]
-            HttpRequestData req)
+        public async Task<HttpResponseData> Run(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")]
+    HttpRequestData req)
         {
             _logger.LogInformation("Health check called at: {time}", DateTime.UtcNow);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "application/json");
-            response.WriteString($"{{\"status\":\"healthy\",\"service\":\"EShop.Functions\",\"timestamp\":\"{DateTime.UtcNow:O}\"}}");
+            await response.WriteStringAsync(
+                $"{{\"status\":\"healthy\",\"service\":\"EShop.Functions\",\"timestamp\":\"{DateTime.UtcNow:O}\"}}");
 
             return response;
         }
