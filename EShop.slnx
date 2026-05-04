@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="EShop.API/EShop.API.csproj" Id="b2ada8cc-f6c4-47e6-83dc-51d898fa025a" />
     <Project Path="EShop.Core/EShop.Core.csproj" Id="a7448414-715b-4194-a47a-8c43e5e9dc3f" />
+    <Project Path="EShop.Functions/EShop.Functions.csproj" />
     <Project Path="EShop.Infrastructure/EShop.Infrastructure.csproj" Id="9df218b9-4042-471c-a5e1-b04e394fe7aa" />
     <Project Path="EShop.Shared/EShop.Shared.csproj" Id="a22f040e-30b5-487c-b71e-5d086e59d07c" />
   </Folder>
