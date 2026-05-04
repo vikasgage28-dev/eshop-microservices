@@ -353,7 +353,9 @@ Completed so far in Stage 13 (Docker):
 ---
 
 ### 📡 Phase 8 — Messaging & Events (microservices need to talk!)
+
 > 🎯 Welcome Email scenario: User registers → Service Bus → Azure Function Queue Trigger → SendGrid email!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ⏳ |
