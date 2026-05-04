@@ -21,10 +21,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore EShop.sln
+        run: dotnet restore EShop.slnx
 
       - name: Build EShop Solution
-        run: dotnet build EShop.sln --no-restore --configuration Release
+        run: dotnet build EShop.slnx --no-restore --configuration Release
 
       - name: Run Unit Tests
-        run: dotnet test EShop.sln --no-build --configuration Release --verbosity normal
+        run: dotnet test EShop.slnx --no-build --configuration Release --verbosity normal
