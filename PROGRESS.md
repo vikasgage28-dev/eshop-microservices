@@ -73,6 +73,46 @@ eshop-microservices/
 
 ### Where We Stopped
 ```
+Azure Functions DONE! Two functions deployed and working in production!
+Moving to Azure Logic Apps next!
+
+Phase 7 — Azure Functions completed:
+✅ EShop.Functions project created (dotnet-isolated, .NET 10, V4)
+✅ HealthCheck Function (HTTP Trigger)
+   → Route: GET /api/health
+   → Returns: {"status":"healthy","service":"EShop.Functions","timestamp":"..."}
+   → Fixed: WriteStringAsync (async I/O required in isolated worker!)
+   → Fixed: Removed UseAzureMonitorExporter (not needed without App Insights)
+   → Working in production: https://func-eshop-prod.azurewebsites.net/api/health ✅
+
+✅ InventorySummary Function (Timer Trigger)
+   → Schedule: 0 0 0 * * * (runs every midnight!)
+   → Reads Products table from Azure SQL DB
+   → Logs category summary (count + total stock per category)
+   → Logs LOW STOCK ALERT for products with Stock < 5
+   → Working in production! ✅
+
+✅ Azure Function App (func-eshop-prod, Consumption plan, FREE!)
+   → Managed Identity enabled
+   → Key Vault reference for SQL connection string (ConnectionStrings__DefaultConnection)
+   → CORS enabled for portal.azure.com (for Test/Run in portal)
+   → SCM Basic Auth enabled (for publish profile deployment)
+
+✅ CI/CD Pipeline updated (build-and-push.yml)
+   → Added "Deploy Azure Functions" job
+   → Uses Publish Profile (not Service Principal)
+   → ZIP Deploy via Kudu SCM endpoint
+   → All 3 jobs passing: Build+Push → Deploy App Service → Deploy Functions
+
+✅ Key Lessons Learned:
+   → Async I/O required in isolated worker (WriteStringAsync not WriteString!)
+   → Timer Trigger 202 Accepted = success (async, no response body!)
+   → Invocations tab needs Application Insights to show data
+   → Use az webapp log tail for real-time function logs
+   → Referencing EShop.Infrastructure = tight coupling (ok in monolith, fix in microservices!)
+   → local.settings.json = User Secrets for Functions (never committed to Git!)
+   → Connection strings tab in portal for DB connections (not App settings tab!)
+
 Completed Azure Phase 1-6! App is LIVE with Cosmos DB product reviews!
 
 Phase 6 FULLY DONE:
@@ -306,16 +346,17 @@ Completed so far in Stage 13 (Docker):
 ### ⚡ Phase 7 — Serverless & Automation
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 26 | Azure Functions | 🟢 Free | ⏳ |
-| 27 | Azure Logic Apps | 🟢 Free | ⏳ |
+| 26 | Azure Functions (HTTP + Timer Trigger, Managed Identity, Key Vault, CI/CD) | 🟢 Free | ✅ Done |
+| 27 | Azure Logic Apps | 🟢 Free | ⏳ Next! |
 | 28 | Azure Runbooks (automation) | 🟢 Free | ⏳ |
 
 ---
 
 ### 📡 Phase 8 — Messaging & Events (microservices need to talk!)
+> 🎯 Welcome Email scenario: User registers → Service Bus → Azure Function Queue Trigger → SendGrid email!
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 29 | Azure Service Bus (async messaging) | 🟢 Free | ⏳ |
+| 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ⏳ |
 | 30 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
 | 31 | Azure Queue Storage | 🟢 Free | ⏳ |
 | 32 | Azure Redis Cache | 🔴 Delete! | ⏳ |
