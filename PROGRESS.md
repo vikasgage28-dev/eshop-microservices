@@ -452,11 +452,11 @@ Completed so far in Stage 13 (Docker):
 
 ### 📡 Phase 8 — Messaging & Events (microservices need to talk!)
 
-> 🎯 Welcome Email scenario: User registers → Service Bus → Azure Function Queue Trigger → SendGrid email!
+> 🎯 Welcome Email scenario: User registers → Service Bus → Azure Function Queue Trigger → ACS email!
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ⏳ |
+| 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ✅ Done |
 | 30 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
 | 31 | Azure Queue Storage | 🟢 Free | ⏳ |
 | 32 | Azure Redis Cache | 🔴 Delete! | ⏳ |
@@ -598,7 +598,7 @@ $200 Credit    →  20+ months 🚀
 | 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs, CD Pipeline) | ✅ Done |
 | 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
-| 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
+| 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
 | 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
