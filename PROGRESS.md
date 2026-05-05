@@ -73,8 +73,48 @@ eshop-microservices/
 
 ### Where We Stopped
 ```
+Azure Runbooks DONE! Night runbook scheduled and tested successfully!
+Moving to Azure Phase 8 — Messaging next!
+
+Phase 7 — Azure Runbooks completed:
+✅ Azure Automation Account created (automation-eshop-prod, rg-eshop-shared)
+✅ System-assigned Managed Identity enabled on Automation Account
+✅ Contributor role assigned to Managed Identity on rg-eshop-prod
+✅ runbook-eshop-night (PowerShell 7.2) created and published:
+   → Checks App Service Plan SKU (B1 or F1?)
+   → Downgrades B1 → F1 if needed (cost saving!)
+   → Stops App Service (app-eshop-prod)
+   → Fixed bug: wrong plan name "plan-eshop-prod" → "asp-eshop-prod"
+✅ schedule-eshop-night created:
+   → Runs every day at 10:00 PM IST (India Standard Time)
+   → Linked to runbook-eshop-night ✅
+✅ Tested manually — runbook ran successfully:
+   → Detected B1, downgraded to F1, stopped app service!
+✅ Morning strategy: Manual start from portal (no morning runbook needed!)
+
+Phase 7 — Azure Logic Apps completed:
+✅ Azure Logic App created (Consumption plan)
+✅ Recurrence trigger (every 1 hour)
+✅ HTTP action calling /health endpoint (app-eshop-prod.azurewebsites.net/health)
+✅ Condition checking status code = 200
+✅ Email alert sent when API is DOWN
+✅ True/False branches configured for failure scenarios
+✅ End-to-end tested and verified!
+
+Full Working Flow:
+   Every 1 hour
+   → HTTP GET app-eshop-prod.azurewebsites.net/health
+   → Status = 200?
+      TRUE  → API Healthy (do nothing)
+      FALSE → API DOWN! → Send Email Alert!
+
+Key Lessons:
+   → Real world: production teams use this for 24/7 monitoring!
+   → Instant alerts when service goes down
+   → No manual checking needed
+   → Logic Apps used by companies worldwide!
+
 Azure Functions DONE! Two functions deployed and working in production!
-Moving to Azure Logic Apps next!
 
 Phase 7 — Azure Functions completed:
 ✅ EShop.Functions project created (dotnet-isolated, .NET 10, V4)
@@ -347,8 +387,8 @@ Completed so far in Stage 13 (Docker):
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 26 | Azure Functions (HTTP + Timer Trigger, Managed Identity, Key Vault, CI/CD) | 🟢 Free | ✅ Done |
-| 27 | Azure Logic Apps | 🟢 Free | ⏳ Next! |
-| 28 | Azure Runbooks (automation) | 🟢 Free | ⏳ |
+| 27 | Azure Logic Apps | 🟢 Free | ✅ Done |
+| 28 | Azure Runbooks (automation) | 🟢 Free | ✅ Done |
 
 ---
 
@@ -499,7 +539,7 @@ $200 Credit    →  20+ months 🚀
 | 18 | Azure Phase 4 — Storage (Blob Storage, CDN → replaced by Front Door) | ✅ Done |
 | 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs, CD Pipeline) | ✅ Done |
 | 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
-| 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | 🔄 **In Progress — Next!** |
+| 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ⏳ |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
