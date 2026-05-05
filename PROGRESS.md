@@ -69,12 +69,70 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 21: Azure Phase 7 (Serverless & Automation)
+## 📍 CURRENT STAGE — Stage 22: Azure Phase 8 (Messaging & Events)
 
 ### Where We Stopped
 ```
+Service Bus + Welcome Email DONE! End-to-end tested and verified!
+Moving to Redis Cache next!
+
+Phase 8 — Service Bus + Welcome Email completed:
+✅ Azure Service Bus Namespace created (sb-eshop-prod, Basic tier, Central India)
+✅ Queue created: welcome.email.queue
+✅ Service Bus Connection String stored in Key Vault (ServiceBusConnection)
+✅ Azure Communication Services created (acs-eshop-prod, Asia Pacific)
+✅ Email Communication Services created (ecs-eshop-prod, Asia Pacific)
+   → Lesson: Data location MUST match acs! (India failed, recreated Asia Pacific!)
+✅ Azure Subdomain provisioned: ee9fee22-f283-43f8-8deb-32020e03c868.azurecomm.net
+   → SPF + DKIM + DKIM2 all Verified automatically!
+✅ Domain connected to acs-eshop-prod successfully!
+✅ ACS Connection String stored in Key Vault (AcsConnection)
+
+Code Changes:
+✅ EShop.Shared/Messages/WelcomeEmailMessage.cs created
+   → Email + UserName properties (shared between API and Functions!)
+✅ AuthController.cs updated:
+   → ServiceBusClient injected via DI
+   → After registration → publishes WelcomeEmailMessage to Service Bus
+   → try/catch → registration never fails because of email!
+✅ Program.cs (EShop.API) updated:
+   → ServiceBusClient registered as Singleton
+   → Reads ServiceBusConnection from config
+✅ WelcomeEmailFunction.cs created:
+   → ServiceBusTrigger on "welcome.email.queue"
+   → Deserializes JSON → WelcomeEmailMessage
+   → Sends Welcome Email via ACS EmailClient (Plain text + HTML body)
+✅ Program.cs (EShop.Functions) updated:
+   → EmailClient registered as Singleton
+   → Reads AcsConnection from config
+✅ EShop.Shared reference added to EShop.Functions project
+✅ NuGet packages:
+   → EShop.API: Azure.Messaging.ServiceBus
+   → EShop.Functions: Azure.Communication.Email
+   → EShop.Functions: Microsoft.Azure.Functions.Worker.Extensions.ServiceBus
+
+App Settings added:
+✅ func-eshop-prod: ServiceBusConnection → Key Vault ✅
+✅ func-eshop-prod: AcsConnection → Key Vault ✅
+✅ func-eshop-prod: AcsSenderAddress → DoNotReply@ee9fee22-...azurecomm.net
+✅ app-eshop-prod: ServiceBusConnection → Key Vault ✅
+
+End-to-End Test:
+✅ Registered user via Swagger → JWT returned immediately!
+✅ WelcomeEmailFunction triggered automatically!
+✅ Welcome Email received in Outlook! 📧
+✅ Service Bus Explorer tested — sent JSON message directly from portal!
+
+Key Lessons:
+→ Azure subdomain = FREE, instant SPF/DKIM, goes to Junk (learning only!)
+→ Custom domain = real company, goes to Inbox, needs DNS verification
+→ Data location of ecs MUST match acs — different region = cannot connect!
+→ Service Bus Explorer → can send test messages directly from portal!
+→ try/catch around Service Bus → never block user registration!
+→ Email sent async → user gets JWT immediately, no waiting!
+
+Previously completed:
 Azure Runbooks DONE! Night runbook scheduled and tested successfully!
-Moving to Azure Phase 8 — Messaging next!
 
 Phase 7 — Azure Runbooks completed:
 ✅ Azure Automation Account created (automation-eshop-prod, rg-eshop-shared)
