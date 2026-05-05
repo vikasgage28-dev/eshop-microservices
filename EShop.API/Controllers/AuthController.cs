@@ -1,8 +1,11 @@
+using Azure.Messaging.ServiceBus;
 using EShop.Core.Interfaces;
 using EShop.Shared.Common;
 using EShop.Shared.DTOs;
+using EShop.Shared.Messages;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace EShop.API.Controllers
 {
@@ -13,12 +16,21 @@ namespace EShop.API.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ITokenService _tokenService;
+        private readonly ServiceBusClient _serviceBusClient;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService)
+        public AuthController(
+            UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
+            ITokenService tokenService,
+            ServiceBusClient serviceBusClient,
+            ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
+            _serviceBusClient = serviceBusClient;
+            _logger = logger;
         }
 
         [HttpPost("register")]
@@ -40,6 +52,25 @@ namespace EShop.API.Controllers
             await _userManager.AddToRoleAsync(user, "User");
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.CreateToken(user.Id, user.Email!, roles);
+
+            // Publish welcome email message to Service Bus
+            try
+            {
+                var sender = _serviceBusClient.CreateSender("welcome.email.queue");
+                var message = new WelcomeEmailMessage
+                {
+                    Email = user.Email!,
+                    UserName = $"{dto.FirstName} {dto.LastName}"
+                };
+                var sbMessage = new ServiceBusMessage(JsonSerializer.Serialize(message));
+                await sender.SendMessageAsync(sbMessage);
+                _logger.LogInformation("Welcome email message sent to Service Bus for {Email}", user.Email);
+            }
+            catch (Exception ex)
+            {
+                // Don't fail registration if Service Bus fails!
+                _logger.LogError(ex, "Failed to send welcome email message for {Email}", user.Email);
+            }
 
             return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
             {

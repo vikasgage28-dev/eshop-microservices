@@ -157,6 +157,13 @@ try
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<ITokenService, TokenService>();
 
+    // Service Bus
+    builder.Services.AddSingleton<Azure.Messaging.ServiceBus.ServiceBusClient>(sp =>
+    {
+        var connectionString = builder.Configuration["ServiceBusConnection"];
+        return new Azure.Messaging.ServiceBus.ServiceBusClient(connectionString);
+    });
+
     // Cosmos DB
     builder.Services.AddSingleton<CosmosClient>(sp =>
     {

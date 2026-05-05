@@ -10,8 +10,10 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Azure.Communication.Email" Version="1.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.50.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" Version="1.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
@@ -24,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EShop.Core\EShop.Core.csproj" />
     <ProjectReference Include="..\EShop.Infrastructure\EShop.Infrastructure.csproj" />
+    <ProjectReference Include="..\EShop.Shared\EShop.Shared.csproj" />
   </ItemGroup>
 
 </Project>
