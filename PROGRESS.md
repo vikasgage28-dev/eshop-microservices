@@ -69,12 +69,45 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 22: Azure Phase 8 (Messaging & Events)
+## 📍 CURRENT STAGE — Stage 23: Azure Phase 9 (API Gateway)
 
 ### Where We Stopped
 ```
+Ocelot API Gateway DONE! Deployed to production! Moving to APIM next!
+
+Phase 9 — Ocelot API Gateway completed:
+✅ EShop.Gateway project created (ASP.NET Core Empty, .NET 10)
+✅ Ocelot NuGet package installed (v24.1.0)
+✅ ocelot.json configured with routes:
+   → /gateway/auth/{everything}    → EShop.API /api/auth/{everything}
+   → /gateway/v1/products          → EShop.API /api/v1/products
+   → /gateway/v1/products/{id}     → EShop.API /api/v1/products/{id}
+   → /gateway/v2/products          → EShop.API /api/v2/products
+   → /gateway/v1/products/{id}/reviews → EShop.API reviews
+   → /gateway/health               → EShop.API /health
+✅ Rate Limiting configured:
+   → Auth routes   → 5 req/sec
+   → Product routes → 10 req/sec
+   → 429 Too Many Requests with custom message!
+   → ClientId header based rate limiting!
+✅ Program.cs configured with Ocelot middleware
+✅ Tested locally:
+   → GET /gateway/v1/products → 200 OK ✅
+   → POST /gateway/auth/login → JWT token ✅
+   → POST /gateway/v1/products (no token) → 401 ✅
+   → POST /gateway/v1/products (with token) → 201 ✅
+   → Rate limit exceeded → 429 ✅
+✅ Deployed to Azure via GitHub Actions pipeline!
+
+Key Lessons:
+→ Upstream = what client sends to Gateway
+→ Downstream = what Gateway forwards to API
+→ Rate limiting needs ClientId header to identify client!
+→ Period "1s" resets every second (use "1m" for manual testing!)
+→ Gateway is a PROXY — auth still handled by downstream API!
+
+Previously completed:
 Service Bus + Welcome Email DONE! End-to-end tested and verified!
-Moving to Redis Cache next!
 
 Phase 8 — Service Bus + Welcome Email completed:
 ✅ Azure Service Bus Namespace created (sb-eshop-prod, Basic tier, Central India)
@@ -466,7 +499,7 @@ Completed so far in Stage 13 (Docker):
 ### 🚪 Phase 9 — API Gateway (route all traffic through one door!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 33 | Ocelot API Gateway (.NET) | 🟢 Free | ⏳ |
+| 33 | Ocelot API Gateway (.NET) | 🟢 Free | ✅ Done |
 | 34 | Azure API Management (APIM) | 🟢 Free | ⏳ |
 
 ---
@@ -599,7 +632,7 @@ $200 Credit    →  20+ months 🚀
 | 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
-| 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ⏳ |
+| 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | 🔄 In Progress |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
 | 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
 | 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
