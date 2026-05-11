@@ -69,13 +69,24 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 23: Azure Phase 9 (API Gateway)
+## 📍 CURRENT STAGE — Stage 24: Azure Phase 10 (Observability)
 
 ### Where We Stopped
 ```
-Ocelot API Gateway DONE! Deployed to production! Moving to APIM next!
+Phase 9 — API Gateway DONE! Moving to Observability next!
 
-Phase 9 — Ocelot API Gateway completed:
+Phase 9 — APIM completed:
+✅ APIM created (Consumption tier - FREE!)
+✅ EShop API imported from Swagger/OpenAPI automatically!
+✅ All endpoints imported in one click! (no manual adding!)
+✅ Rate limiting policy added (XML policy - 10 calls/60 seconds)
+✅ Subscription keys configured:
+   → No key    → 401 Access Denied!
+   → With key  → 200 OK!
+✅ Tested via Postman - working end to end!
+✅ Developer Portal → Not available on Consumption tier (skip!)
+
+Phase 9 — Ocelot Gateway completed:
 ✅ EShop.Gateway project created (ASP.NET Core Empty, .NET 10)
 ✅ Ocelot NuGet package installed (v24.1.0)
 ✅ ocelot.json configured with routes:
@@ -500,7 +511,7 @@ Completed so far in Stage 13 (Docker):
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 33 | Ocelot API Gateway (.NET) | 🟢 Free | ✅ Done |
-| 34 | Azure API Management (APIM) | 🟢 Free | ⏳ |
+| 34 | Azure API Management (APIM) | 🟢 Free | ✅ Done |
 
 ---
 
@@ -632,8 +643,8 @@ $200 Credit    →  20+ months 🚀
 | 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
-| 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | 🔄 In Progress |
-| 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ⏳ |
+| 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
+| 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | 🔄 In Progress |
 | 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
 | 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
 | 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
