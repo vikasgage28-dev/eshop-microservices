@@ -153,6 +153,9 @@ try
         cfg.RegisterServicesFromAssembly(
             typeof(GetAllProductsHandler).Assembly));
 
+    // Application Insights
+    builder.Services.AddApplicationInsightsTelemetry();
+
     // Repositories & Services
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<ITokenService, TokenService>();
