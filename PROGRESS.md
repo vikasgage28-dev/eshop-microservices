@@ -557,7 +557,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ⭐ Microservices Split — BEFORE Terraform, Multi-env, AKS!
+### ⭐ Phase 12B — Microservices Split — BEFORE Terraform, Multi-env, AKS!
 > Learn Terraform + AKS ONCE on real microservices! Not twice!
 
 | # | Topic | Cost | Status |
@@ -693,7 +693,7 @@ $200 Credit    →  20+ months 🚀
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
 | 25 | Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
 | 26 | Phase 8 Remaining — Messaging (Service Bus Topics, Event Grid, Queue, Redis) | ⏳ |
-| 27 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 27 | Phase 12B — Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
 | 28 | Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
 | 29 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
 | 30 | Phase 14 — Kubernetes / AKS (Container Apps → AKS!) | ⏳ |
