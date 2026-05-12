@@ -557,7 +557,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ⭐ Phase 12B — Microservices Split — BEFORE Terraform, Multi-env, AKS!
+### ⭐ Phase 12 — Microservices Split — BEFORE Terraform, Multi-env, AKS!
 > Learn Terraform + AKS ONCE on real microservices! Not twice!
 
 | # | Topic | Cost | Status |
@@ -572,7 +572,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🏗️ Phase 12 — Infrastructure as Code (Terraform)
+### 🏗️ Phase 13 — Infrastructure as Code (Terraform)
 > Learn ONCE on real microservices infrastructure! Not on monolith!
 > Real world: Nobody clicks portal! Everything is code!
 
@@ -587,7 +587,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🌎 Phase 13 — Multiple Environments (DEV / STAGING / PROD)
+### 🌎 Phase 14 — Multiple Environments (DEV / STAGING / PROD)
 > Real world: Always 3 environments! Never deploy direct to PROD!
 > ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
 > Smart approach: Learn concepts + simulate using FREE tools!
@@ -604,7 +604,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ☸️ Phase 14 — Kubernetes (AKS)
+### ☸️ Phase 15 — Kubernetes (AKS)
 > Deploy ALL microservices to AKS — this is real world! ✅
 
 | # | Topic | Cost | Status |
@@ -622,7 +622,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ⚛️ Phase 15 — React Frontend (UI for EShop!)
+### ⚛️ Phase 16 — React Frontend (UI for EShop!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 67 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
@@ -634,7 +634,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🔑 Phase 16 — Authentication Deep Dive (with React UI!)
+### 🔑 Phase 17 — Authentication Deep Dive (with React UI!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 73 | OAuth 2.0 Authorization Code Flow (React + API) | 🟢 Free | ⏳ |
@@ -649,7 +649,7 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🤖 Phase 17 — Search & AI (at the end — full app ready!)
+### 🤖 Phase 18 — Search & AI (at the end — full app ready!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 82 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
@@ -693,13 +693,13 @@ $200 Credit    →  20+ months 🚀
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
 | 25 | Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
 | 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
-| 27 | Phase 12B — Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
-| 28 | Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
-| 29 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
-| 30 | Phase 14 — Kubernetes / AKS (Container Apps → AKS!) | ⏳ |
-| 31 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
-| 32 | Phase 16 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
-| 33 | Phase 17 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
+| 27 | Phase 12 — Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 28 | Phase 13 — Terraform / IaC (on real microservices!) | ⏳ |
+| 29 | Phase 14 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
+| 30 | Phase 15 — Kubernetes / AKS (Container Apps → AKS!) | ⏳ |
+| 31 | Phase 16 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
+| 32 | Phase 17 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
+| 33 | Phase 18 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
 
 ---
 
