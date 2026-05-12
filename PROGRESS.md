@@ -69,11 +69,20 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 25: Azure Phase 11 (Search & AI)
+## 📍 CURRENT STAGE — Stage 25: Azure Phase 13 (Architect Level)
 
 ### Where We Stopped
 ```
-Phase 10 — Observability DONE! Moving to Phase 11 next!
+Phase 11 (Search & AI) → SKIPPED (moved to end!)
+Phase 12 (Identity/AD B2C) → SKIPPED (needs React UI first!)
+Moving to Phase 13 — Architect Level next!
+
+Reason for skip:
+→ Phase 11 (AI) → needs full app ready, do at the very end!
+→ Phase 12 (AD B2C/SSO) → needs React frontend, do after UI is built!
+→ Plan: Phase 13 → Phase 14 → Microservices → React UI → Auth Deep Dive → AI!
+
+Phase 10 — Observability DONE!
 
 Phase 10 — Observability completed:
 ✅ Application Insights created (appi-eshop-prod)
@@ -538,27 +547,12 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🔍 Phase 11 — Search & AI
+### 🌍 Phase 11 — Architect Level (Next up!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 39 | Azure Cognitive Search | 🟢 Free | ⏳ |
-| 40 | Azure OpenAI (product recommendations) | 🟡 $1-2 | ⏳ |
-
----
-
-### 🔑 Phase 12 — Identity
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 41 | Azure AD B2C | 🟢 Free | ⏳ |
-
----
-
-### 🌍 Phase 13 — Architect Level
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 42 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
-| 43 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
-| 44 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
+| 39 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
+| 40 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
+| 41 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
 
 ---
 
@@ -609,7 +603,44 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ☸️ Phase 16 — Kubernetes (AKS)
+### ⚛️ Phase 16 — React Frontend (UI for EShop!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 65 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
+| 66 | Azure Static Web Apps (host React — FREE!) | 🟢 Free | ⏳ |
+| 67 | Connect React to EShop.API via APIM | 🟢 Free | ⏳ |
+| 68 | Products listing page | 🟢 Free | ⏳ |
+| 69 | Login/Register page (using our JWT) | 🟢 Free | ⏳ |
+| 70 | Admin dashboard (create/update products) | 🟢 Free | ⏳ |
+
+---
+
+### 🔑 Phase 17 — Authentication Deep Dive (with React UI!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 71 | OAuth 2.0 Authorization Code Flow (React + API) | 🟢 Free | ⏳ |
+| 72 | OpenID Connect (OIDC) | 🟢 Free | ⏳ |
+| 73 | Azure AD B2C (SSO for consumers!) | 🟢 Free | ⏳ |
+| 74 | Social Logins (Google + Microsoft) | 🟢 Free | ⏳ |
+| 75 | Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
+| 76 | Azure AD / Entra ID (enterprise login!) | 🟢 Free | ⏳ |
+| 77 | SAML 2.0 (corporate SSO!) | 🟢 Free | ⏳ |
+| 78 | Client Credentials Flow (service-to-service!) | 🟢 Free | ⏳ |
+| 79 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
+
+---
+
+### 🤖 Phase 18 — Search & AI (at the end — full app ready!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 80 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
+| 81 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
+| 82 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
+| 83 | AI product description generator | 🟡 $1-2 | ⏳ |
+
+---
+
+### ☸️ Phase 19 — Kubernetes (AKS)
 > Deploy ALL microservices to AKS — this is real world! ✅
 
 | # | Topic | Cost | Status |
@@ -658,13 +689,14 @@ $200 Credit    →  20+ months 🚀
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
-| 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | 🔄 In Progress |
-| 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
-| 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
-| 28 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
-| 29 | Azure Phase 14 — Terraform / IaC (on real microservices!) | ⏳ |
-| 30 | Azure Phase 15 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
-| 31 | Azure Phase 16 — Kubernetes / AKS (all microservices on K8s!) | ⏳ |
+| 25 | Azure Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
+| 26 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 27 | Azure Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
+| 28 | Azure Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
+| 29 | Azure Phase 14 — Kubernetes / AKS (all microservices on K8s!) | ⏳ |
+| 30 | Phase 16 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
+| 31 | Phase 17 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
+| 32 | Phase 18 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
 
 ---
 
