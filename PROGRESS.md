@@ -523,10 +523,10 @@ Completed so far in Stage 13 (Docker):
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ✅ Done |
-| 30 | Azure Service Bus Topics (publish/subscribe pattern!) | 🟢 Free | ⏳ |
-| 31 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
-| 32 | Azure Queue Storage | 🟢 Free | ⏳ |
-| 33 | Azure Redis Cache (implement caching — products list!) | 🔴 Delete! | ⏳ |
+| 30 | Azure Service Bus Topics (publish/subscribe pattern!) | 🟡 $10/mo | ⏭️ Skipped (paid, concept known!) |
+| 31 | Azure Event Grid (event-driven) | 🟢 Free | ⏭️ Skipped (nothing to implement!) |
+| 32 | Azure Queue Storage | 🟢 Free | ⏭️ Skipped (same concept as Service Bus Queue!) |
+| 33 | Azure Redis Cache | 🔴 $16/mo | ⏭️ Skipped (paid, concept known!) |
 
 ---
 
@@ -688,11 +688,11 @@ $200 Credit    →  20+ months 🚀
 | 19 | Azure Phase 5 — Hosting (Docker Hub, App Service, Managed Identity, Key Vault refs, CD Pipeline) | ✅ Done |
 | 20 | Azure Phase 6 — Databases (Azure SQL, Cosmos DB, Elastic Pool) | ✅ Done |
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
-| 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
+| 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ✅ Done (remaining skipped — paid/concept known!) |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
 | 25 | Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
-| 26 | Phase 8 Remaining — Messaging (Service Bus Topics, Event Grid, Queue, Redis) | ⏳ |
+| 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
 | 27 | Phase 12B — Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
 | 28 | Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
 | 29 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
