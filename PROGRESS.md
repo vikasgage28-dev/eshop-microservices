@@ -523,9 +523,10 @@ Completed so far in Stage 13 (Docker):
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
 | 29 | Azure Service Bus (async messaging) + Welcome Email (Queue Trigger) | 🟢 Free | ✅ Done |
-| 30 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
-| 31 | Azure Queue Storage | 🟢 Free | ⏳ |
-| 32 | Azure Redis Cache | 🔴 Delete! | ⏳ |
+| 30 | Azure Service Bus Topics (publish/subscribe pattern!) | 🟢 Free | ⏳ |
+| 31 | Azure Event Grid (event-driven) | 🟢 Free | ⏳ |
+| 32 | Azure Queue Storage | 🟢 Free | ⏳ |
+| 33 | Azure Redis Cache (implement caching — products list!) | 🔴 Delete! | ⏳ |
 
 ---
 
@@ -550,110 +551,111 @@ Completed so far in Stage 13 (Docker):
 ### 🌍 Phase 11 — Architect Level (Next up!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 39 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
-| 40 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
-| 41 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
+| 34 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
+| 35 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
+| 36 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
 
 ---
 
-### ⭐ Microservices Split — BEFORE Phases 14, 15, 16!
+### ⭐ Microservices Split — BEFORE Terraform, Multi-env, AKS!
 > Learn Terraform + AKS ONCE on real microservices! Not twice!
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 45 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
-| 46 | Split monolith → Catalog Service (.NET) | 🟢 Free | ⏳ |
-| 47 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
-| 48 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
-| 49 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
-| 50 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
-| 51 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
+| 37 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
+| 38 | Split monolith → Catalog Service (.NET) | 🟢 Free | ⏳ |
+| 39 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
+| 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
+| 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
+| 42 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
+| 43 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
 
 ---
 
-### 🏗️ Phase 14 — Infrastructure as Code (Terraform)
+### 🏗️ Phase 12 — Infrastructure as Code (Terraform)
 > Learn ONCE on real microservices infrastructure! Not on monolith!
 > Real world: Nobody clicks portal! Everything is code!
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 52 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
-| 53 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
-| 54 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
-| 55 | Terraform — Full EShop microservices infra in one command! | 🟢 Free | ⏳ |
-| 56 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
-| 57 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
+| 44 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
+| 45 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
+| 46 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
+| 47 | Terraform — Full EShop microservices infra in one command! | 🟢 Free | ⏳ |
+| 48 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
+| 49 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
 
 ---
 
-### 🌎 Phase 15 — Multiple Environments (DEV / STAGING / PROD)
+### 🌎 Phase 13 — Multiple Environments (DEV / STAGING / PROD)
 > Real world: Always 3 environments! Never deploy direct to PROD!
 > ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
 > Smart approach: Learn concepts + simulate using FREE tools!
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 58 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
-| 59 | Local Docker Compose = DEV environment (already done!) | 🟢 Free | ✅ Done |
-| 60 | Azure Deployment Slots = STAGING (same App Service, zero cost!) | 🟢 Free | ⏳ |
-| 61 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
-| 62 | Environment-specific appsettings.json (Dev/Staging/Production) | 🟢 Free | ⏳ |
-| 63 | Terraform workspaces for multi-env (concept + implement) | 🟢 Free | ⏳ |
-| 64 | Promote build: DEV(local) → STAGING(slot) → PROD(swap!) | 🟢 Free | ⏳ |
+| 50 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
+| 51 | Local Docker Compose = DEV environment (already done!) | 🟢 Free | ✅ Done |
+| 52 | Azure Deployment Slots = STAGING (same App Service, zero cost!) | 🟢 Free | ⏳ |
+| 53 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
+| 54 | Environment-specific appsettings.json (Dev/Staging/Production) | 🟢 Free | ⏳ |
+| 55 | Terraform workspaces for multi-env (concept + implement) | 🟢 Free | ⏳ |
+| 56 | Promote build: DEV(local) → STAGING(slot) → PROD(swap!) | 🟢 Free | ⏳ |
 
 ---
 
-### ⚛️ Phase 16 — React Frontend (UI for EShop!)
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 65 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
-| 66 | Azure Static Web Apps (host React — FREE!) | 🟢 Free | ⏳ |
-| 67 | Connect React to EShop.API via APIM | 🟢 Free | ⏳ |
-| 68 | Products listing page | 🟢 Free | ⏳ |
-| 69 | Login/Register page (using our JWT) | 🟢 Free | ⏳ |
-| 70 | Admin dashboard (create/update products) | 🟢 Free | ⏳ |
-
----
-
-### 🔑 Phase 17 — Authentication Deep Dive (with React UI!)
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 71 | OAuth 2.0 Authorization Code Flow (React + API) | 🟢 Free | ⏳ |
-| 72 | OpenID Connect (OIDC) | 🟢 Free | ⏳ |
-| 73 | Azure AD B2C (SSO for consumers!) | 🟢 Free | ⏳ |
-| 74 | Social Logins (Google + Microsoft) | 🟢 Free | ⏳ |
-| 75 | Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
-| 76 | Azure AD / Entra ID (enterprise login!) | 🟢 Free | ⏳ |
-| 77 | SAML 2.0 (corporate SSO!) | 🟢 Free | ⏳ |
-| 78 | Client Credentials Flow (service-to-service!) | 🟢 Free | ⏳ |
-| 79 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
-
----
-
-### 🤖 Phase 18 — Search & AI (at the end — full app ready!)
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 80 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
-| 81 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
-| 82 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
-| 83 | AI product description generator | 🟡 $1-2 | ⏳ |
-
----
-
-### ☸️ Phase 19 — Kubernetes (AKS)
+### ☸️ Phase 14 — Kubernetes (AKS)
 > Deploy ALL microservices to AKS — this is real world! ✅
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 65 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
-| 66 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
-| 67 | Deploy ALL microservices to AKS | 🟡 ~$5 | ⏳ |
-| 68 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
-| 69 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
-| 70 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
-| 71 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
-| 72 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
-| 73 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+| 57 | Azure Container Apps (stepping stone before AKS!) | 🟡 $1-3 | ⏳ |
+| 58 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
+| 59 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
+| 60 | Deploy ALL microservices to AKS | 🟡 ~$5 | ⏳ |
+| 61 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
+| 62 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
+| 63 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
+| 64 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
+| 65 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
+| 66 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+
+---
+
+### ⚛️ Phase 15 — React Frontend (UI for EShop!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 67 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
+| 68 | Azure Static Web Apps (host React — FREE!) | 🟢 Free | ⏳ |
+| 69 | Connect React to EShop.API via APIM | 🟢 Free | ⏳ |
+| 70 | Products listing page | 🟢 Free | ⏳ |
+| 71 | Login/Register page (using our JWT) | 🟢 Free | ⏳ |
+| 72 | Admin dashboard (create/update products) | 🟢 Free | ⏳ |
+
+---
+
+### 🔑 Phase 16 — Authentication Deep Dive (with React UI!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 73 | OAuth 2.0 Authorization Code Flow (React + API) | 🟢 Free | ⏳ |
+| 74 | OpenID Connect (OIDC) | 🟢 Free | ⏳ |
+| 75 | Azure AD B2C (SSO for consumers!) | 🟢 Free | ⏳ |
+| 76 | Social Logins (Google + Microsoft) | 🟢 Free | ⏳ |
+| 77 | Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
+| 78 | Azure AD / Entra ID (enterprise login!) | 🟢 Free | ⏳ |
+| 79 | SAML 2.0 (corporate SSO!) | 🟢 Free | ⏳ |
+| 80 | Client Credentials Flow (service-to-service!) | 🟢 Free | ⏳ |
+| 81 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
+
+---
+
+### 🤖 Phase 17 — Search & AI (at the end — full app ready!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 82 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
+| 83 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
+| 84 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
+| 85 | AI product description generator | 🟡 $1-2 | ⏳ |
 
 ---
 
@@ -689,14 +691,15 @@ $200 Credit    →  20+ months 🚀
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
-| 25 | Azure Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
-| 26 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
-| 27 | Azure Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
-| 28 | Azure Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
-| 29 | Azure Phase 14 — Kubernetes / AKS (all microservices on K8s!) | ⏳ |
-| 30 | Phase 16 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
-| 31 | Phase 17 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
-| 32 | Phase 18 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
+| 25 | Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
+| 26 | Phase 8 Remaining — Messaging (Service Bus Topics, Event Grid, Queue, Redis) | ⏳ |
+| 27 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
+| 28 | Phase 12 — Terraform / IaC (on real microservices!) | ⏳ |
+| 29 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
+| 30 | Phase 14 — Kubernetes / AKS (Container Apps → AKS!) | ⏳ |
+| 31 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
+| 32 | Phase 16 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
+| 33 | Phase 17 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
 
 ---
 
