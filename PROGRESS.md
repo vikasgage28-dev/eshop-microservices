@@ -69,11 +69,24 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 24: Azure Phase 10 (Observability)
+## 📍 CURRENT STAGE — Stage 25: Azure Phase 11 (Search & AI)
 
 ### Where We Stopped
 ```
-Phase 9 — API Gateway DONE! Moving to Observability next!
+Phase 10 — Observability DONE! Moving to Phase 11 next!
+
+Phase 10 — Observability completed:
+✅ Application Insights created (appi-eshop-prod)
+✅ Connected to App Service via APPLICATIONINSIGHTS_CONNECTION_STRING
+✅ AddApplicationInsightsTelemetry() added to EShop.API Program.cs
+✅ Deployed to production via GitHub Actions!
+✅ Live Metrics tested!
+✅ Failed requests, Response time, Server requests visible!
+⏳ Alerts → skipped for now
+⏳ Log Analytics → skipped for now
+⏳ Load Testing → later!
+
+Phase 9 — API Gateway DONE!
 
 Phase 9 — APIM completed:
 ✅ APIM created (Consumption tier - FREE!)
@@ -518,9 +531,9 @@ Completed so far in Stage 13 (Docker):
 ### 📊 Phase 10 — Observability (app is live → now monitor it!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 35 | Log Analytics Workspace | 🟢 Free | ⏳ |
-| 36 | Application Insights | 🟢 Free | ⏳ |
-| 37 | Azure Monitor + Alerts | 🟢 Free | ⏳ |
+| 35 | Log Analytics Workspace | 🟢 Free | ⏳ Later |
+| 36 | Application Insights | 🟢 Free | ✅ Done |
+| 37 | Azure Monitor + Alerts | 🟢 Free | ⏳ Later |
 | 38 | Azure Load Testing | 🟢 Free | ⏳ |
 
 ---
@@ -644,8 +657,8 @@ $200 Credit    →  20+ months 🚀
 | 21 | Azure Phase 7 — Serverless (Functions, Logic Apps, Runbooks) | ✅ Done |
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | 🔄 In Progress |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
-| 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | 🔄 In Progress |
-| 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | ⏳ |
+| 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
+| 25 | Azure Phase 11 — Search & AI (Cognitive Search, OpenAI) | 🔄 In Progress |
 | 26 | Azure Phase 12 — Identity (Azure AD B2C) | ⏳ |
 | 27 | Azure Phase 13 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
 | 28 | Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
