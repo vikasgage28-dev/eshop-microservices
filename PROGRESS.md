@@ -634,27 +634,34 @@ Completed so far in Stage 13 (Docker):
 ---
 
 ### 🔑 Phase 16 — Authentication Deep Dive (with React UI!)
+> Logical sequence: Concepts → Auth0 (easy!) → Azure AD B2C → Enterprise → Advanced!
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 73 | OAuth 2.0 Authorization Code Flow (React + API) | 🟢 Free | ⏳ |
-| 74 | OpenID Connect (OIDC) | 🟢 Free | ⏳ |
-| 75 | Azure AD B2C (SSO for consumers!) | 🟢 Free | ⏳ |
-| 76 | Social Logins (Google + Microsoft) | 🟢 Free | ⏳ |
-| 77 | Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
-| 78 | Azure AD / Entra ID (enterprise login!) | 🟢 Free | ⏳ |
-| 79 | SAML 2.0 (corporate SSO!) | 🟢 Free | ⏳ |
-| 80 | Client Credentials Flow (service-to-service!) | 🟢 Free | ⏳ |
-| 81 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
+| 73 | OAuth 2.0 concept (flows, tokens, scopes — theory first!) | 🟢 Free | ⏳ |
+| 74 | OpenID Connect (OIDC) concept (built on OAuth 2.0!) | 🟢 Free | ⏳ |
+| 75 | Auth0 setup (FREE! 7,500 users — easiest to start with!) | 🟢 Free | ⏳ |
+| 76 | Auth0 + React — Authorization Code Flow (login/logout!) | 🟢 Free | ⏳ |
+| 77 | Auth0 — Social Logins (Google + GitHub — free!) | 🟢 Free | ⏳ |
+| 78 | Auth0 — Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
+| 79 | Auth0 — Machine to Machine (service-to-service!) | 🟢 Free | ⏳ |
+| 80 | Azure AD B2C (same concepts — Azure native!) | 🟢 Free | ⏳ |
+| 81 | Azure AD B2C + React (replace Auth0 with AD B2C!) | 🟢 Free | ⏳ |
+| 82 | Social Logins via Azure AD B2C (Google + Microsoft!) | 🟢 Free | ⏳ |
+| 83 | Azure AD / Entra ID (enterprise employee login!) | 🟢 Free | ⏳ |
+| 84 | Client Credentials Flow (microservice to microservice!) | 🟢 Free | ⏳ |
+| 85 | SAML 2.0 (corporate SSO — enterprise apps!) | 🟢 Free | ⏳ |
+| 86 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
 
 ---
 
 ### 🤖 Phase 17 — Search & AI (full app ready!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 82 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
-| 83 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
-| 84 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
-| 85 | AI product description generator | 🟡 $1-2 | ⏳ |
+| 87 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
+| 88 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
+| 89 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
+| 90 | AI product description generator | 🟡 $1-2 | ⏳ |
 
 ---
 
@@ -665,25 +672,27 @@ Completed so far in Stage 13 (Docker):
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 86 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
-| 87 | terraform import → import all existing resources! | 🟢 Free | ⏳ |
-| 88 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
-| 89 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
-| 90 | Terraform — Full EShop infra in one command! | 🟢 Free | ⏳ |
-| 91 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
-| 92 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
+| 91 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
+| 92 | terraform import → import all existing resources! | 🟢 Free | ⏳ |
+| 93 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
+| 94 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
+| 95 | Terraform — Full EShop infra in one command! | 🟢 Free | ⏳ |
+| 96 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
+| 97 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
 
 ---
 
 ```
-Total Topics   →  92
-🟢 Free        →  80 topics
+Total Topics   →  97
+🟢 Free        →  85 topics
 🟡 Cheap       →   8 topics (~$10/month)
 🔴 Delete!     →   4 topics (create → learn → delete)
 ─────────────────────────────────────────────
 Order          →  Microservices → Multi-env → AKS
-               →  React → Auth → AI → Terraform LAST!
-Key decision   →  Terraform at END (know all resources first!)
+               →  React → Auth (Auth0 first! → AD B2C!)
+               →  AI → Terraform LAST!
+Key decisions  →  Auth0 FREE (easy start!) → AD B2C (Azure native!)
+               →  Terraform at END (know all resources first!)
                →  Build manually → understand → automate! ✅
 Monthly Cost   →  ~$10/month (only while learning AKS)
 ```
@@ -712,7 +721,7 @@ Monthly Cost   →  ~$10/month (only while learning AKS)
 | 28 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
 | 29 | Phase 14 — Kubernetes / AKS (Container Apps → AKS → Front Door!) | ⏳ |
 | 30 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
-| 31 | Phase 16 — Auth Deep Dive (OAuth, OIDC, AD B2C, SSO, SAML, mTLS!) | ⏳ |
+| 31 | Phase 16 — Auth Deep Dive (Auth0 → AD B2C → SAML → mTLS!) | ⏳ |
 | 32 | Phase 17 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
 | 33 | Phase 18 — Terraform / IaC (automate everything at the end!) | ⏳ |
 
