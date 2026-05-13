@@ -69,18 +69,21 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 25: Azure Phase 13 (Architect Level)
+## 📍 CURRENT STAGE — Stage 25: Azure Phase 11 (.NET Aspire)
 
 ### Where We Stopped
 ```
-Phase 11 (Search & AI) → SKIPPED (moved to end!)
-Phase 12 (Identity/AD B2C) → SKIPPED (needs React UI first!)
-Moving to Phase 13 — Architect Level next!
+Phase 11 — Architect Level decisions:
+→ Azure Front Door    → SKIPPED! Use in Phase 15 (AKS) where it makes real sense!
+→ App Configuration   → SHIFTED to Phase 12 (Microservices)!
+                        Real benefit seen with 5+ services, not monolith!
+                        appconfig-eshop-prod created (keep for Phase 12!)
+→ .NET Aspire         → NEXT! 🚀
 
-Reason for skip:
-→ Phase 11 (AI) → needs full app ready, do at the very end!
-→ Phase 12 (AD B2C/SSO) → needs React frontend, do after UI is built!
-→ Plan: Phase 13 → Phase 14 → Microservices → React UI → Auth Deep Dive → AI!
+Key decisions:
+→ App Config + Key Vault → All secrets/settings via App Config in Phase 12!
+→ App Service will only need AppConfig connection string!
+→ Each microservice reads from ONE source (App Config)!
 
 Phase 10 — Observability DONE!
 
@@ -548,12 +551,12 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### 🌍 Phase 11 — Architect Level (Next up!)
+### 🌍 Phase 11 — Architect Level
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 34 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏳ |
-| 35 | Azure App Configuration (centralized config) | 🟢 Free | ⏳ |
-| 36 | .NET Aspire (cloud-native orchestration) | 🟢 Free | ⏳ |
+| 34 | Azure Front Door (global load balancing) | 🔴 Delete! | ⏭️ Shifted to Phase 15 (AKS)! Real sense with multiple services! |
+| 35 | Azure App Configuration (centralized config) | 🟢 Free | ⏭️ Shifted to Phase 12 (Microservices)! appconfig-eshop-prod created! |
+| 36 | .NET Aspire (cloud-native orchestration) | 🟢 Free | 🔄 In Progress |
 
 ---
 
@@ -569,9 +572,11 @@ Completed so far in Stage 13 (Docker):
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
 | 42 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
 | 43 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
-| 44 | Azure Container Registry (ACR) — private registry for all microservice images! | 🟡 $5 | ⏳ |
-| 45 | Update CI/CD pipelines → push each microservice image to ACR | 🟢 Free | ⏳ |
-| 46 | AKS + Managed Identity → pull from ACR (no password needed!) | 🟢 Free | ⏳ |
+| 44 | Azure App Configuration — central hub for ALL settings + KV refs! | 🟢 Free | ⏳ |
+| 45 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
+| 46 | Azure Container Registry (ACR) — private registry for all microservice images! | 🟡 $5 | ⏳ |
+| 47 | Update CI/CD pipelines → push each microservice image to ACR | 🟢 Free | ⏳ |
+| 48 | AKS + Managed Identity → pull from ACR (no password needed!) | 🟢 Free | ⏳ |
 
 ---
 
@@ -694,7 +699,7 @@ $200 Credit    →  20+ months 🚀
 | 22 | Azure Phase 8 — Messaging (Service Bus, Event Grid, Queue Storage, Redis) | ✅ Done (remaining skipped — paid/concept known!) |
 | 23 | Azure Phase 9 — API Gateway (Ocelot, APIM) | ✅ Done |
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
-| 25 | Phase 11 — Architect Level (Front Door, App Config, .NET Aspire) | ⏳ |
+| 25 | Phase 11 — Architect Level (Front Door → shifted, App Config → shifted, .NET Aspire → next!) | 🔄 In Progress |
 | 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
 | 27 | Phase 12 — Microservices Split (Catalog, Order, Customer, Identity) | ⏳ |
 | 28 | Phase 13 — Terraform / IaC (on real microservices!) | ⏳ |
