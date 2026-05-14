@@ -682,19 +682,182 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
+## 🤖 AI/ML/GenAI Learning Path (Phases 19–29)
+> Learn AI the same way we learned Azure — Concept → Implement → Deploy into EShop!
+> Real organization approach: Use AI as a tool, integrate into real app, not toy examples!
+> Languages: Python (Phases 19-25 concepts + ML) → C#/.NET (Phases 26-28 production AI)
+
+### 🧠 Phase 19 — AI/ML/GenAI Concepts (Theory Only! No Code!)
+> Start here! Understand everything before touching code!
+> Same as learning Azure concepts before creating any resources!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 98  | What is AI vs ML vs Deep Learning vs GenAI? (clear differences!) | 🟢 Free | ⏳ |
+| 99  | How neural networks work (concept, no math!) | 🟢 Free | ⏳ |
+| 100 | How LLMs work internally (GPT, Claude, Gemini!) | 🟢 Free | ⏳ |
+| 101 | Tokens, Embeddings, Context Window, Temperature, Hallucination | 🟢 Free | ⏳ |
+| 102 | Transformer architecture concept (foundation of GPT!) | 🟢 Free | ⏳ |
+| 103 | What is RAG, Vector DB, Prompt Engineering, Fine-tuning? (when to use what!) | 🟢 Free | ⏳ |
+
+---
+
+### 🐍 Phase 20 — Python for AI
+> You already know programming! Python = just different syntax — 2-3 weeks max!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 104 | Python syntax (variables, loops, functions, classes — compare to C#!) | 🟢 Free | ⏳ |
+| 105 | pip + virtual environments (like NuGet + .NET SDK versions!) | 🟢 Free | ⏳ |
+| 106 | Jupyter Notebooks (industry standard for all AI work!) | 🟢 Free | ⏳ |
+| 107 | NumPy (fast arrays + math!) | 🟢 Free | ⏳ |
+| 108 | Pandas (data tables — analyze EShop product + order data!) | 🟢 Free | ⏳ |
+| 109 | Matplotlib (charts — visualize EShop sales patterns!) | 🟢 Free | ⏳ |
+
+---
+
+### 📊 Phase 21 — Classical ML (scikit-learn)
+> How machines learn from data! Foundation for everything that follows!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 110 | Supervised vs Unsupervised learning (concept + when to use!) | 🟢 Free | ⏳ |
+| 111 | Linear Regression → predict EShop product price! | 🟢 Free | ⏳ |
+| 112 | Classification (Decision Tree, Random Forest) → will customer churn? | 🟢 Free | ⏳ |
+| 113 | K-Means Clustering → group similar EShop products! | 🟢 Free | ⏳ |
+| 114 | Model evaluation (accuracy, precision, recall, F1!) | 🟢 Free | ⏳ |
+| 115 | Train/Test split, Cross validation, Overfitting vs Underfitting! | 🟢 Free | ⏳ |
+
+---
+
+### 🧬 Phase 22 — Deep Learning (PyTorch)
+> Neural networks, CNNs, LSTMs, Transformers — the foundation of GPT!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 116 | Neural networks (layers, neurons, weights, activation functions!) | 🟢 Free | ⏳ |
+| 117 | Backpropagation (how AI learns from mistakes!) | 🟢 Free | ⏳ |
+| 118 | CNN → EShop product image classifier! (Electronics, Clothing, etc.) | 🟢 Free | ⏳ |
+| 119 | RNN/LSTM → EShop review sentiment analysis! | 🟢 Free | ⏳ |
+| 120 | Transformer + Attention mechanism (how GPT is built internally!) | 🟢 Free | ⏳ |
+| 121 | Transfer learning → use pre-trained model (like using a NuGet package!) | 🟢 Free | ⏳ |
+
+---
+
+### 🤗 Phase 23 — HuggingFace Library
+> GitHub for AI models! 500,000+ pre-trained models — download in 2 lines of Python!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 122 | HuggingFace Transformers library + Pipelines (load any model easily!) | 🟢 Free | ⏳ |
+| 123 | Sentiment pipeline → analyze EShop reviews in 2 lines! | 🟢 Free | ⏳ |
+| 124 | Text Embeddings → convert EShop products to vectors (needed for RAG!) | 🟢 Free | ⏳ |
+| 125 | Fine-tuning pre-trained model on EShop product descriptions! | 🟢 Free | ⏳ |
+| 126 | HuggingFace Hub → explore + share models! | 🟢 Free | ⏳ |
+
+---
+
+### 💬 Phase 24 — Prompt Engineering
+> Art of talking to AI correctly! Most in-demand skill right now!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 127 | Zero-shot prompting (ask directly, no examples!) | 🟢 Free | ⏳ |
+| 128 | Few-shot prompting (give 2-3 examples → AI follows pattern!) | 🟢 Free | ⏳ |
+| 129 | Chain of Thought — tell AI to think step by step! | 🟢 Free | ⏳ |
+| 130 | System prompts + prompt templates with variables | 🟢 Free | ⏳ |
+| 131 | Output formatting (JSON responses!) + avoid hallucination techniques | 🟢 Free | ⏳ |
+
+---
+
+### 🔍 Phase 25 — RAG (Retrieval Augmented Generation)
+> Most used AI pattern in industry! AI answers from YOUR real data, not hallucination!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 132 | What is RAG? Why plain GPT fails for real apps (no product knowledge!) | 🟢 Free | ⏳ |
+| 133 | Embeddings deep dive → convert text to vectors (numbers!) | 🟢 Free | ⏳ |
+| 134 | Vector databases → ChromaDB (local) + Azure AI Search (cloud!) | 🟡 $1-2 | ⏳ |
+| 135 | Indexing pipeline — embed all EShop products + store in vector DB! | 🟡 $1-2 | ⏳ |
+| 136 | Retrieval pipeline — find similar products by user query! | 🟡 $1-2 | ⏳ |
+| 137 | Generation step — GPT answers using retrieved products! | 🟡 $1-2 | ⏳ |
+| 138 | Chunking strategies + hybrid search + reranking! | 🟡 $1-2 | ⏳ |
+
+---
+
+### ☁️ Phase 26 — Azure OpenAI Setup
+> Set up Azure OpenAI FIRST — needed before Semantic Kernel (Phase 27)!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 139 | Azure OpenAI Service setup (GPT-4 private deployment in Azure!) | 🟡 $2-3 | ⏳ |
+| 140 | Call Azure OpenAI from C# (Azure SDK — no Python needed!) | 🟡 $1-2 | ⏳ |
+| 141 | Connect RAG pipeline to Azure OpenAI (C# end-to-end!) | 🟡 $1-2 | ⏳ |
+| 142 | Azure AI Search — index EShop products as vectors! | 🟡 $1-2 | ⏳ |
+
+---
+
+### 🔷 Phase 27 — Semantic Kernel (.NET)
+> Microsoft's AI framework for .NET! Build production AI apps in C# — not Python!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 143 | Semantic Kernel setup + connect to Azure OpenAI! | 🟡 $1-2 | ⏳ |
+| 144 | Plugins — AI calls YOUR C# functions automatically! | 🟡 $1-2 | ⏳ |
+| 145 | Memory — vector store in .NET (RAG fully in C#!) | 🟡 $1-2 | ⏳ |
+| 146 | Planner — AI creates execution plan + runs steps automatically! | 🟡 $1-2 | ⏳ |
+| 147 | Agents — autonomous AI in C#! | 🟡 $1-2 | ⏳ |
+| 148 | EShop.AI microservice — ProductRecommendation + CustomerSupport plugins! | 🟡 $2-3 | ⏳ |
+
+---
+
+### 🌐 Phase 28 — Full Azure AI Services
+> All remaining Azure AI tools integrated into EShop (all C#!)
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 149 | Azure Computer Vision → product image analysis + auto-tagging! | 🟡 $1-2 | ⏳ |
+| 150 | Azure Language Service → sentiment on reviews + key phrase extraction! | 🟡 $1-2 | ⏳ |
+| 151 | Azure Speech Service → voice search in EShop! | 🟡 $1-2 | ⏳ |
+| 152 | Azure AI Studio → playground, test prompts, deploy + manage models! | 🟡 $1-2 | ⏳ |
+| 153 | Azure Bot Service → deploy AI chatbot to React UI! | 🟡 $1-2 | ⏳ |
+| 154 | Azure Document Intelligence → OCR on invoices + product documents! | 🟡 $1-2 | ⏳ |
+
+---
+
+### ⚙️ Phase 29 — MLOps (DevOps for Machine Learning!)
+> CI/CD for ML models! Your existing DevOps knowledge shines here!
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 155 | MLOps concept — ML lifecycle (train → deploy → monitor → retrain!) | 🟢 Free | ⏳ |
+| 156 | MLflow — experiment tracking + model versioning! | 🟢 Free | ⏳ |
+| 157 | Azure Machine Learning platform (train models in cloud!) | 🟡 $1-2 | ⏳ |
+| 158 | Deploy ML model as REST API → EShop.API calls it from C#! | 🟡 $1-2 | ⏳ |
+| 159 | GitHub Actions for ML (train on PR, deploy if accuracy improves!) | 🟢 Free | ⏳ |
+| 160 | Model monitoring — detect accuracy drift, trigger alerts! | 🟡 $1-2 | ⏳ |
+| 161 | Auto-retrain pipeline when new EShop orders arrive! | 🟡 $1-2 | ⏳ |
+
+---
+
 ```
-Total Topics   →  97
-🟢 Free        →  85 topics
-🟡 Cheap       →   8 topics (~$10/month)
-🔴 Delete!     →   4 topics (create → learn → delete)
+Total Topics   →  161
+🟢 Free        →  117 topics
+🟡 Cheap       →   40 topics (~$10-15/month)
+🔴 Delete!     →    4 topics (create → learn → delete)
 ─────────────────────────────────────────────
 Order          →  Microservices → Multi-env → AKS
                →  React → Auth (Auth0 first! → AD B2C!)
-               →  AI → Terraform LAST!
+               →  AI Concepts → Python → Classical ML → Deep Learning
+               →  HuggingFace → Prompt Engineering → RAG
+               →  Azure OpenAI → Semantic Kernel → Azure AI Services
+               →  MLOps → Terraform LAST!
 Key decisions  →  Auth0 FREE (easy start!) → AD B2C (Azure native!)
                →  Terraform at END (know all resources first!)
                →  Build manually → understand → automate! ✅
-Monthly Cost   →  ~$10/month (only while learning AKS)
+               →  AI: Concept first → Python → ML → GenAI (logical order!) ✅
+               →  AI in C#/.NET for production (Semantic Kernel!) ✅
+Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 ```
 
 ---
@@ -724,6 +887,17 @@ Monthly Cost   →  ~$10/month (only while learning AKS)
 | 31 | Phase 16 — Auth Deep Dive (Auth0 → AD B2C → SAML → mTLS!) | ⏳ |
 | 32 | Phase 17 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
 | 33 | Phase 18 — Terraform / IaC (automate everything at the end!) | ⏳ |
+| 34 | Phase 19 — AI/ML/GenAI Concepts (Theory Only! No Code!) | ⏳ |
+| 35 | Phase 20 — Python for AI (NumPy, Pandas, Matplotlib!) | ⏳ |
+| 36 | Phase 21 — Classical ML / scikit-learn (price prediction, churn!) | ⏳ |
+| 37 | Phase 22 — Deep Learning / PyTorch (CNN, LSTM, Transformer!) | ⏳ |
+| 38 | Phase 23 — HuggingFace Library (pre-trained models, embeddings!) | ⏳ |
+| 39 | Phase 24 — Prompt Engineering (zero-shot, few-shot, CoT!) | ⏳ |
+| 40 | Phase 25 — RAG (vector DB, index products, AI search!) | ⏳ |
+| 41 | Phase 26 — Azure OpenAI Setup (GPT-4 private, C# SDK!) | ⏳ |
+| 42 | Phase 27 — Semantic Kernel .NET (EShop.AI microservice!) | ⏳ |
+| 43 | Phase 28 — Full Azure AI Services (Vision, Speech, Language, Bot!) | ⏳ |
+| 44 | Phase 29 — MLOps (CI/CD for ML, auto-retrain, model monitoring!) | ⏳ |
 
 ---
 
