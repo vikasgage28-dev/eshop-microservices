@@ -1,5 +1,6 @@
 using Catalog.Core.Entities;
 using Catalog.Core.Interfaces;
+using Catalog.Infrastructure.Data;
 using Microsoft.Azure.Cosmos;
 
 namespace Catalog.Infrastructure.Repositories
@@ -10,9 +11,10 @@ namespace Catalog.Infrastructure.Repositories
 
         public ReviewRepository(CosmosClient cosmosClient)
         {
+            // Use constants from CatalogDataSeeder — single source of truth!
             _container = cosmosClient
-                .GetDatabase("CatalogDb")
-                .GetContainer("reviews");
+                .GetDatabase(CatalogDataSeeder.DatabaseName)
+                .GetContainer(CatalogDataSeeder.ContainerName);
         }
 
         public async Task<IEnumerable<Review>> GetByProductIdAsync(Guid productId)

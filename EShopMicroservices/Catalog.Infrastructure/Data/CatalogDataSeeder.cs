@@ -1,5 +1,6 @@
 using Catalog.Core.Entities;
 using Catalog.Infrastructure.Data.Configurations;
+using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -10,21 +11,50 @@ namespace Catalog.Infrastructure.Data
     public class CatalogDataSeeder
     {
         private readonly CatalogDbContext _context;
+        private readonly CosmosClient _cosmosClient;
         private readonly ILogger<CatalogDataSeeder> _logger;
 
-        public CatalogDataSeeder(CatalogDbContext context, ILogger<CatalogDataSeeder> logger)
+        // Cosmos DB names — single source of truth!
+        public const string DatabaseName  = "CatalogDb";
+        public const string ContainerName = "reviews";
+        public const string PartitionKey  = "/productId";
+
+        public CatalogDataSeeder(
+            CatalogDbContext context,
+            CosmosClient cosmosClient,
+            ILogger<CatalogDataSeeder> logger)
         {
-            _context = context;
-            _logger = logger;
+            _context      = context;
+            _cosmosClient = cosmosClient;
+            _logger       = logger;
         }
 
         public async Task SeedAsync()
         {
-            // Apply any pending migrations automatically
+            // SQL Server — apply any pending migrations
             await _context.Database.MigrateAsync();
+
+            // Cosmos DB — create database + container if not exists
+            await InitializeCosmosAsync();
 
             await SeedCategoriesAsync();
             await SeedProductsAsync();
+        }
+
+        private async Task InitializeCosmosAsync()
+        {
+            // CreateDatabaseIfNotExistsAsync → safe to call every startup!
+            var dbResponse = await _cosmosClient
+                .CreateDatabaseIfNotExistsAsync(DatabaseName);
+
+            // CreateContainerIfNotExistsAsync → safe to call every startup!
+            // Partition key = /productId → all reviews for a product in same partition
+            await dbResponse.Database.CreateContainerIfNotExistsAsync(
+                new ContainerProperties(ContainerName, PartitionKey));
+
+            _logger.LogInformation(
+                "Cosmos DB '{Database}' and container '{Container}' ready.",
+                DatabaseName, ContainerName);
         }
 
         private async Task SeedCategoriesAsync()
