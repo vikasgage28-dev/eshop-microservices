@@ -37,6 +37,9 @@ namespace Catalog.Infrastructure.Extensions
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IReviewRepository,   ReviewRepository>();
 
+            // Data seeder — called explicitly in Program.cs (Development only!)
+            services.AddScoped<CatalogDataSeeder>();
+
             return services;
         }
     }
