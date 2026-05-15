@@ -7,8 +7,10 @@ on:
     branches: [ develop, main ]
 
 jobs:
+  # Builds the legacy monolith — this is what runs in production (Azure App Service)
+  # Switch this to EShopMicroservices.slnx only when a microservice is deployed and replaces legacy
   build-and-test:
-    name: Build & Test .NET App
+    name: Build & Test Legacy Monolith
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +25,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore EShop.slnx
 
-      - name: Build EShop Solution
+      - name: Build solution
         run: dotnet build EShop.slnx --no-restore --configuration Release
 
-      - name: Run Unit Tests
+      - name: Run all tests
         run: dotnet test EShop.slnx --no-build --configuration Release --verbosity normal
