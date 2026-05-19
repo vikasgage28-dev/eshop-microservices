@@ -31,10 +31,11 @@ namespace Catalog.Infrastructure.Data
 
         public async Task SeedAsync()
         {
-            // SQL Server — apply any pending migrations
-            await _context.Database.MigrateAsync();
+            // Note: MigrateAsync() is called in Program.cs before SeedAsync()
+            // No need to call it here again!
 
             // Cosmos DB — create database + container if not exists
+            // Wrapped in try-catch so app works even without Cosmos Emulator locally!
             await InitializeCosmosAsync();
 
             await SeedCategoriesAsync();
@@ -43,18 +44,30 @@ namespace Catalog.Infrastructure.Data
 
         private async Task InitializeCosmosAsync()
         {
-            // CreateDatabaseIfNotExistsAsync → safe to call every startup!
-            var dbResponse = await _cosmosClient
-                .CreateDatabaseIfNotExistsAsync(DatabaseName);
+            try
+            {
+                // CreateDatabaseIfNotExistsAsync → safe to call every startup!
+                var dbResponse = await _cosmosClient
+                    .CreateDatabaseIfNotExistsAsync(DatabaseName);
 
-            // CreateContainerIfNotExistsAsync → safe to call every startup!
-            // Partition key = /productId → all reviews for a product in same partition
-            await dbResponse.Database.CreateContainerIfNotExistsAsync(
-                new ContainerProperties(ContainerName, PartitionKey));
+                // CreateContainerIfNotExistsAsync → safe to call every startup!
+                // Partition key = /productId → all reviews for a product in same partition
+                await dbResponse.Database.CreateContainerIfNotExistsAsync(
+                    new ContainerProperties(ContainerName, PartitionKey));
 
-            _logger.LogInformation(
-                "Cosmos DB '{Database}' and container '{Container}' ready.",
-                DatabaseName, ContainerName);
+                _logger.LogInformation(
+                    "Cosmos DB '{Database}' and container '{Container}' ready.",
+                    DatabaseName, ContainerName);
+            }
+            catch (Exception ex)
+            {
+                // Cosmos Emulator not running locally — that's OK!
+                // Reviews won't work but Products + Categories will!
+                _logger.LogWarning(
+                    "Cosmos DB unavailable — Reviews disabled. " +
+                    "Start Cosmos Emulator for full functionality. Error: {Message}",
+                    ex.Message);
+            }
         }
 
         private async Task SeedCategoriesAsync()

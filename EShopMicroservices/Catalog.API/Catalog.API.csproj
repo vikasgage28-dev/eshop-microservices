@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Cosmos SDK pulled in transitively via Catalog.Infrastructure — bypass Newtonsoft check -->
     <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+    <UserSecretsId>30b5ff24-e711-499d-99d3-9111d3eba651</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
