@@ -1,5 +1,6 @@
 using Catalog.Infrastructure.Data;
 using Catalog.Infrastructure.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +21,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// ── Seed data (Development only!) ───────────────────────────────
+// ── Database migration + Seed (Development only!) ───────────────
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
+
+    // Step 1: Run EF Core migrations (creates tables if not exist!)
+    var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    await db.Database.MigrateAsync();
+
+    // Step 2: Seed data (only after tables exist!)
     var seeder = scope.ServiceProvider.GetRequiredService<CatalogDataSeeder>();
     await seeder.SeedAsync();
 }
