@@ -1,5 +1,6 @@
 using Catalog.Core.Interfaces;
 using Catalog.Infrastructure.Data;
+using Catalog.Infrastructure.Messaging;
 using Catalog.Infrastructure.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,11 @@ namespace Catalog.Infrastructure.Extensions
 
             // Data seeder — called explicitly in Program.cs (Development only!)
             services.AddScoped<CatalogDataSeeder>();
+
+            // Event publisher
+            // Dev  → InMemoryEventPublisher (logs to console, no Azure needed!)
+            // Prod → ServiceBusEventPublisher (Phase 13!)
+            services.AddScoped<IEventPublisher, InMemoryEventPublisher>();
 
             return services;
         }
