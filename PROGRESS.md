@@ -69,26 +69,82 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 26: Phase 12 (Microservices Split)
+## 📍 CURRENT STAGE — Stage 27: Phase 12.2 (Ordering Service)
 
 ### Where We Stopped
 ```
-Phase 11 — Architect Level DONE!
+Phase 12.1 — Catalog Service COMPLETE! ✅
 
-Phase 11 decisions:
+Phase 12.1 — Catalog Service completed:
+✅ Solution structure created:
+   → EShopMicroservices/ (new solution folder)
+   → Catalog.Core, Catalog.Infrastructure, Catalog.API projects
+   → Clean Architecture with project references wired correctly
+
+✅ Catalog.Core — Domain layer:
+   → Entities: Product, Category, Review
+   → Interfaces: IProductRepository, ICategoryRepository, IReviewRepository, IEventPublisher
+   → CQRS Features (MediatR):
+      Products:   GetAllProducts, GetProductById, CreateProduct, UpdateProduct, DeleteProduct
+      Categories: GetAllCategories, GetCategoryById, CreateCategory, UpdateCategory, DeleteCategory
+      Reviews:    GetReviewsByProduct, CreateReview, DeleteReview
+   → Domain Events: ProductCreatedEvent, ProductUpdatedEvent, ProductDeletedEvent, ProductStockChangedEvent
+
+✅ Catalog.Infrastructure — Data + Messaging layer:
+   → CatalogDbContext (SQL Server via EF Core 10)
+   → ProductRepository, CategoryRepository (SQL Server)
+   → ReviewRepository (Azure Cosmos DB)
+   → CatalogDataSeeder (idempotent — safe to run multiple times!)
+   → EF Core Migration: InitialCatalogSchema (tables auto-created at startup!)
+   → InMemoryEventPublisher (logs to console — no Azure needed for dev!)
+   → ServiceBusEventPublisher (stub — wired in Phase 13 CI/CD!)
+   → InfrastructureServiceExtensions (registers all DI services)
+
+✅ Catalog.API — Presentation layer:
+   → ProductsController, CategoriesController, ReviewsController (all via IMediator)
+   → DTOs: ProductDto, CategoryDto, ReviewDto
+   → Swagger UI configured (http://localhost:5067/swagger)
+   → Program.cs: MigrateAsync() + SeedAsync() run at startup (Development only!)
+
+✅ Event-Driven Architecture implemented:
+   → IEventPublisher interface (Core — no infra dependency!)
+   → Dev  → InMemoryEventPublisher (logs events to console, zero Azure cost!)
+   → Prod → ServiceBusEventPublisher (stub for Phase 13 with Azure Service Bus)
+   → Command Handlers publish events AFTER successful DB save!
+      CreateProduct → publishes ProductCreatedEvent
+      UpdateProduct → publishes ProductUpdatedEvent
+      DeleteProduct → publishes ProductDeletedEvent
+
+✅ Security — Connection strings secured via dotnet User Secrets:
+   → appsettings.json + appsettings.Development.json have only placeholders!
+   → Real values in User Secrets (never in git!)
+   → ConnectionStrings:CatalogDb → LocalDB for local dev
+   → ConnectionStrings:CosmosDb  → Cosmos Emulator key (well-known public key)
+
+✅ Local Testing verified end-to-end:
+   → API starts cleanly on http://localhost:5067
+   → LocalDB auto-created by MigrateAsync()
+   → 2 categories + 5 products seeded automatically!
+   → Swagger UI returns live data from SQL Server ✅
+   → Cosmos Emulator not running → graceful warning, app continues! ✅
+
+✅ Git workflow completed:
+   → feature/phase12-catalog-events → PR → merged to develop ✅
+   → All previous branches also merged to develop ✅
+
+Key Architecture Decisions made in Phase 12.1:
+→ Clean Architecture: Core has ZERO infrastructure dependencies!
+→ CQRS: Controllers only know IMediator — decoupled from business logic!
+→ Event pattern: IEventPublisher interface + two implementations (Dev/Prod)
+→ User Secrets: Credentials NEVER in git — stored per-developer locally!
+→ Idempotent seeding: SeedAsync() safe to call multiple times!
+→ Cosmos graceful fallback: try-catch → warning → app starts without Cosmos!
+
+Phase 11 decisions (for reference):
 → Azure Front Door  → SKIPPED! Shifted to Phase 15 (AKS)!
-                      Makes real sense with multiple regions + services!
 → App Configuration → SHIFTED to Phase 12 (Microservices)!
                       appconfig-eshop-prod created and ready! ✅
-                      Real benefit seen with 5+ services not monolith!
 → .NET Aspire       → SHIFTED to Phase 12 (after microservices split!)
-                      Makes real sense when 5+ services running locally!
-
-Key Architecture Decisions:
-→ App Config = single source for ALL settings + Key Vault refs!
-→ Each microservice → reads from App Config only!
-→ App Service only needs → AppConfig connection string!
-→ .NET Aspire → orchestrate all microservices locally with one command!
 
 Phase 10 — Observability DONE!
 
@@ -570,8 +626,8 @@ Completed so far in Stage 13 (Docker):
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 37 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ⏳ |
-| 38 | Split monolith → Catalog Service (.NET) | 🟢 Free | ⏳ |
+| 37 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ✅ Done |
+| 38 | Split monolith → Catalog Service (.NET) — Clean Arch + CQRS + Events + LocalDB + User Secrets | 🟢 Free | ✅ Done (Phase 12.1!) |
 | 39 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
 | 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
@@ -913,7 +969,8 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 24 | Azure Phase 10 — Observability (Log Analytics, App Insights, Monitor, Load Testing) | ✅ Done |
 | 25 | Phase 11 — Architect Level (Front Door/App Config/Aspire → all shifted to Phase 12!) | ✅ Done |
 | 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
-| 27 | Phase 12 — Microservices Split + App Config + Aspire + ACR + CI/CD | 🔄 In Progress |
+| 27 | Phase 12.1 — Catalog Service (Clean Arch + CQRS + Events + User Secrets) | ✅ Done |
+| 27 | Phase 12 — Microservices Split (Ordering, Customer, Identity + App Config + Aspire + ACR) | 🔄 In Progress |
 | 28 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
 | 29 | Phase 14 — Kubernetes / AKS (Container Apps → AKS → Front Door!) | ⏳ |
 | 30 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
