@@ -128,14 +128,32 @@ Phase 12.1 — Catalog Service completed:
    → Swagger UI returns live data from SQL Server ✅
    → Cosmos Emulator not running → graceful warning, app continues! ✅
 
+✅ FluentValidation + MediatR Pipeline Behavior:
+   → ValidationBehavior<TRequest,TResponse> runs BEFORE every command handler!
+   → Validators live in Catalog.Core (next to their commands — Clean Architecture!)
+   → CreateProductCommandValidator  (Name required, Price > 0, Stock >= 0, CategoryId)
+   → UpdateProductCommandValidator  (Id + same rules as Create)
+   → CreateCategoryCommandValidator (Name required, max lengths)
+   → UpdateCategoryCommandValidator (Id + same rules as Create)
+   → ExceptionMiddleware: ValidationException → 400 Bad Request with field errors JSON
+   → Zero validation code in controllers — fully automatic via pipeline! ✅
+
+✅ Unit Tests — 23 tests all passing:
+   → CreateProductCommandHandlerTests (3), UpdateProduct (4), DeleteProduct (4)
+   → GetAllProductsQueryHandlerTests (3), GetProductById (3)
+   → GetAllCategoriesQueryHandlerTests (3), GetCategoryById (3)
+   → Tools: xUnit + Moq + FluentAssertions
+
 ✅ Git workflow completed:
-   → feature/phase12-catalog-events → PR → merged to develop ✅
-   → All previous branches also merged to develop ✅
+   → feature/phase12-catalog-events      → PR → merged to develop ✅
+   → feature/phase12-catalog-tests       → PR → merged to develop ✅
+   → feature/phase12-catalog-validation  → PR → merged to develop ✅
 
 Key Architecture Decisions made in Phase 12.1:
 → Clean Architecture: Core has ZERO infrastructure dependencies!
 → CQRS: Controllers only know IMediator — decoupled from business logic!
 → Event pattern: IEventPublisher interface + two implementations (Dev/Prod)
+→ ValidationBehavior: validation automatic in pipeline, NOT in controllers!
 → User Secrets: Credentials NEVER in git — stored per-developer locally!
 → Idempotent seeding: SeedAsync() safe to call multiple times!
 → Cosmos graceful fallback: try-catch → warning → app starts without Cosmos!
