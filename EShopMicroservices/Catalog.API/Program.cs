@@ -1,5 +1,9 @@
+using Catalog.API.Middleware;
+using Catalog.Core.Behaviors;
 using Catalog.Infrastructure.Data;
 using Catalog.Infrastructure.Extensions;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,8 +17,16 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "Catalog API", Version = "v1" }));
 
 // MediatR — register all handlers from Catalog.Core
+// + ValidationBehavior runs BEFORE every command handler automatically!
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(Catalog.Core.AssemblyMarker).Assembly));
+{
+    cfg.RegisterServicesFromAssembly(typeof(Catalog.Core.AssemblyMarker).Assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
+
+// FluentValidation — scan Catalog.Core assembly for all validators
+builder.Services.AddValidatorsFromAssembly(typeof(Catalog.Core.AssemblyMarker).Assembly);
+builder.Services.AddFluentValidationAutoValidation();
 
 // Infrastructure (DbContext, Cosmos, Repositories, Seeder)
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -36,6 +48,10 @@ if (app.Environment.IsDevelopment())
 }
 
 // ── Middleware pipeline ──────────────────────────────────────────
+
+// Global error handler — MUST be first so it catches all exceptions!
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
