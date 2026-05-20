@@ -69,10 +69,60 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 28: Phase 12.3 (Basket Service — next!)
+## 📍 CURRENT STAGE — Stage 29: Phase 12.4 (Identity Service — next!)
 
 ### Where We Stopped
 ```
+Phase 12.3 — Customer Service COMPLETE! ✅
+
+Phase 12.3 — Customer Service completed:
+✅ Customer.Core — Domain layer:
+   → Entities: Customer, Address (one-to-many relationship)
+   → Interfaces: ICustomerRepository, IEventPublisher
+   → CQRS Features (MediatR):
+      Commands: CreateCustomer, UpdateCustomer, DeleteCustomer
+      Queries:  GetCustomerById, GetAllCustomers, GetCustomerByEmail
+   → Domain Events: CustomerCreatedEvent, CustomerUpdatedEvent, CustomerDeletedEvent
+   → FluentValidation: CreateCustomerCommandValidator, UpdateCustomerCommandValidator
+   → ValidationBehavior<TRequest,TResponse>: automatic pipeline validation!
+   → AssemblyMarker: used for MediatR + FluentValidation scanning
+
+✅ Customer.Infrastructure — Data layer:
+   → CustomerDbContext (SQL Server via EF Core 10)
+   → CustomerRepository (CRUD + eager loading of Addresses)
+   → CustomerDataSeeder (idempotent — 2 sample customers with addresses)
+   → EF Core Migration: InitialCustomerSchema (tables auto-created at startup!)
+   → InMemoryEventPublisher (logs to console — no Azure needed for dev!)
+   → InfrastructureServiceExtensions
+
+✅ Customer.API — Presentation layer:
+   → CustomersController: GET /api/customers, GET /api/customers/{id},
+     GET /api/customers/email/{email}, POST /api/customers,
+     PUT /api/customers/{id}, DELETE /api/customers/{id}
+   → DTOs: CustomerDto, AddressDto
+   → ExceptionMiddleware: ValidationException → 400 Bad Request with field errors JSON
+   → Program.cs: MigrateAsync() + SeedAsync() run at startup (Development only!)
+   → User Secrets: ConnectionStrings:CustomerDb (never in git!)
+   → Swagger UI configured
+
+✅ Unit Tests — 20 tests all passing:
+   → CreateCustomerCommandHandlerTests (3 tests)
+   → UpdateCustomerCommandHandlerTests (4 tests)
+   → DeleteCustomerCommandHandlerTests (4 tests)
+   → GetCustomerByIdQueryHandlerTests  (3 tests)
+   → GetCustomerByEmailQueryHandlerTests (3 tests)
+   → GetAllCustomersQueryHandlerTests  (3 tests)
+   → Tools: xUnit + Moq + FluentAssertions
+
+✅ Git workflow completed:
+   → feature/phase12-customer-service → PR → merged to develop ✅
+
+Key Architecture Decisions made in Phase 12.3:
+→ Same Clean Architecture pattern (Core / Infrastructure / API) — fully consistent!
+→ Address is a child entity — EF Core one-to-many, eager-loaded always!
+→ UpdateCustomer: returns null when not found (no exceptions for 404) — same as Cancel pattern!
+→ InMemoryEventPublisher: zero Azure cost in dev — swap to ServiceBus in prod!
+
 Phase 12.2 — Ordering Service COMPLETE! ✅
 
 Phase 12.2 — Ordering Service completed:
@@ -695,8 +745,8 @@ Completed so far in Stage 13 (Docker):
 |---|-------|------|--------|
 | 37 | Design microservices boundaries (Catalog, Order, Customer, Identity) | 🟢 Free | ✅ Done |
 | 38 | Split monolith → Catalog Service (.NET) — Clean Arch + CQRS + Events + LocalDB + User Secrets | 🟢 Free | ✅ Done (Phase 12.1!) |
-| 39 | Split monolith → Order Service (.NET) | 🟢 Free | ⏳ |
-| 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ⏳ |
+| 39 | Split monolith → Order Service (.NET) | 🟢 Free | ✅ Done (Phase 12.2!) |
+| 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ✅ Done (Phase 12.3!) |
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
 | 42 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
 | 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ |
