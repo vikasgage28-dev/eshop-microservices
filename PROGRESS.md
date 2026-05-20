@@ -69,10 +69,59 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 27: Phase 12.2 (Ordering Service)
+## 📍 CURRENT STAGE — Stage 28: Phase 12.3 (Basket Service — next!)
 
 ### Where We Stopped
 ```
+Phase 12.2 — Ordering Service COMPLETE! ✅
+
+Phase 12.2 — Ordering Service completed:
+✅ Ordering.Core — Domain layer:
+   → Entities: Order, OrderItem, OrderStatus (enum: Pending/Confirmed/Shipped/Delivered/Cancelled)
+   → Interfaces: IOrderRepository, IEventPublisher
+   → CQRS Features (MediatR):
+      Commands: PlaceOrder, CancelOrder
+      Queries:  GetOrderById, GetOrdersByCustomer, GetAllOrders
+   → Domain Events: OrderPlacedEvent, OrderCancelledEvent
+   → FluentValidation: PlaceOrderCommandValidator (CustomerEmail, Items required)
+   → ValidationBehavior<TRequest,TResponse>: automatic pipeline validation!
+   → AssemblyMarker: used for MediatR + FluentValidation scanning
+
+✅ Ordering.Infrastructure — Data layer:
+   → OrderingDbContext (SQL Server via EF Core 10)
+   → OrderRepository (IOrderRepository implementation)
+   → OrderingDataSeeder (idempotent — safe to run multiple times!)
+   → EF Core Migration: InitialOrderingSchema (tables auto-created at startup!)
+   → InMemoryEventPublisher (logs to console — no Azure needed for dev!)
+
+✅ Ordering.API — Presentation layer:
+   → OrdersController: GET /api/orders, GET /api/orders/{id},
+     GET /api/orders/customer/{customerId}, POST /api/orders,
+     POST /api/orders/{id}/cancel
+   → DTOs: OrderDto, OrderItemDto
+   → ExceptionMiddleware: ValidationException → 400 Bad Request with field errors JSON
+   → Program.cs: MigrateAsync() + SeedAsync() run at startup (Development only!)
+   → User Secrets: ConnectionStrings:OrderingDb (never in git!)
+   → Swagger UI configured
+
+✅ Unit Tests — 16 tests all passing:
+   → PlaceOrderCommandHandlerTests  (3 tests)
+   → CancelOrderCommandHandlerTests (4 tests)
+   → GetOrderByIdQueryHandlerTests  (3 tests)
+   → GetOrdersByCustomerQueryHandlerTests (3 tests)
+   → GetAllOrdersQueryHandlerTests  (3 tests)
+   → Tools: xUnit + Moq + FluentAssertions
+
+✅ Git workflow completed:
+   → feature/phase12-ordering-service → PR → merged to develop ✅
+
+Key Architecture Decisions made in Phase 12.2:
+→ Same Clean Architecture pattern as Catalog (Core / Infrastructure / API)!
+→ OrderStatus enum guards valid state transitions at the domain level!
+→ CancelOrder: returns bool (true=cancelled, false=not found) — no exceptions for 404!
+→ PlaceOrder: returns full Order entity immediately after save!
+→ InMemoryEventPublisher: zero Azure cost in dev — swap to ServiceBus in prod!
+
 Phase 12.1 — Catalog Service COMPLETE! ✅
 
 Phase 12.1 — Catalog Service completed:
