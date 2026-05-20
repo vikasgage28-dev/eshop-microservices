@@ -69,10 +69,58 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 29: Phase 12.4 (Identity Service — next!)
+## 📍 CURRENT STAGE — Stage 30: Phase 12.4 Identity Service COMPLETE!
 
 ### Where We Stopped
 ```
+Phase 12.4 — Identity Service COMPLETE! ✅
+
+Phase 12.4 — Identity Service completed:
+✅ Identity.Core — Domain layer (clean POCO — NO ASP.NET Identity dependency):
+   → ApplicationUser entity (pure POCO: Id, UserName, Email, FirstName, LastName, FullName, CreatedAt, RefreshToken)
+   → Interfaces: ITokenService, IAuthRepository
+   → CQRS Features (MediatR):
+      Commands: RegisterCommand, LoginCommand, RefreshTokenCommand
+      Queries:  GetUserByIdQuery, GetAllUsersQuery
+   → Domain Events: UserRegisteredEvent
+   → FluentValidation: RegisterCommandValidator, LoginCommandValidator
+   → ValidationBehavior<TRequest,TResponse>: pipeline validation
+   → AssemblyMarker: MediatR + FluentValidation scanning
+
+✅ Identity.Infrastructure — Data layer:
+   → AppIdentityUser : IdentityUser (Infrastructure-only, maps to ApplicationUser)
+   → AppIdentityDbContext (IdentityDbContext<AppIdentityUser>, EF Core 10)
+   → AuthRepository: wraps UserManager + SignInManager + maps to ApplicationUser POCOs
+   → JwtTokenService: generates signed JWTs (HS256) + refresh tokens (RandomNumberGenerator)
+   → IdentityDataSeeder: seeds Admin + Customer roles + 2 seed users (idempotent)
+   → InfrastructureServiceExtensions: registers Identity, EF Core, services
+   → EF Core Migration: InitialIdentitySchema
+   → FrameworkReference: Microsoft.AspNetCore.App (for SignInManager in class library)
+
+✅ Identity.API — Presentation layer:
+   → AuthController: POST /register, POST /login, POST /refresh, GET /me, GET /users (Admin)
+   → DTOs: RegisterRequest, LoginRequest, RefreshTokenRequest, AuthResponse, UserDto
+   → ExceptionMiddleware: handles ValidationException (400) + unhandled exceptions (500)
+   → Program.cs: JWT Bearer auth, Swagger JWT lock icon, MediatR pipeline, FluentValidation
+   → Auto-migrate + seed on startup (development only)
+   → User Secrets: JwtSettings + ConnectionStrings (local dev, no secrets in git!)
+
+✅ Identity.Tests — 39 unit tests ALL PASSING:
+   → RegisterCommandHandlerTests (4 tests)
+   → LoginCommandHandlerTests (4 tests)
+   → RefreshTokenCommandHandlerTests (4 tests)
+   → GetUserByIdQueryHandlerTests (4 tests)
+   → GetAllUsersQueryHandlerTests (3 tests)
+   → RegisterCommandValidatorTests (9 tests: inline + theory)
+   → LoginCommandValidatorTests (5 tests: inline + theory)
+
+Key Architecture Decisions made in Phase 12.4:
+→ ApplicationUser = pure POCO in Core — no ASP.NET Identity dependency in Core!
+→ AppIdentityUser : IdentityUser lives ONLY in Infrastructure — proper Clean Architecture!
+→ AuthRepository maps AppIdentityUser ↔ ApplicationUser — Infrastructure translates!
+→ FrameworkReference Microsoft.AspNetCore.App needed for class libraries using SignInManager!
+→ JWT + Refresh Token pattern: short-lived access (60 min) + long-lived refresh (7 days)!
+
 Phase 12.3 — Customer Service COMPLETE! ✅
 
 Phase 12.3 — Customer Service completed:
@@ -747,7 +795,7 @@ Completed so far in Stage 13 (Docker):
 | 38 | Split monolith → Catalog Service (.NET) — Clean Arch + CQRS + Events + LocalDB + User Secrets | 🟢 Free | ✅ Done (Phase 12.1!) |
 | 39 | Split monolith → Order Service (.NET) | 🟢 Free | ✅ Done (Phase 12.2!) |
 | 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ✅ Done (Phase 12.3!) |
-| 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ⏳ |
+| 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ✅ Done (Phase 12.4!) |
 | 42 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
 | 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ |
 | 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
