@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 // ── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
@@ -78,6 +79,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 
 // ── Database migration + Seed ─────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())

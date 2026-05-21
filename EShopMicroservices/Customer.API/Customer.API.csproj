@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Customer.Core\Customer.Core.csproj" />
     <ProjectReference Include="..\Customer.Infrastructure\Customer.Infrastructure.csproj" />
+    <ProjectReference Include="..\EShopMicroservices.ServiceDefaults\EShopMicroservices.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

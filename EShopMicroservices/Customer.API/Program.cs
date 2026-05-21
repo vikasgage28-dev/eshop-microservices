@@ -7,6 +7,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 // ── Services ────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
@@ -32,6 +33,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 
 // ── Database migration + Seed (Development only!) ───────────────────────────
 if (app.Environment.IsDevelopment())

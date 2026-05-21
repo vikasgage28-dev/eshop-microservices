@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/aspire/">
+    <Project Path="EShopMicroservices.AppHost/EShopMicroservices.AppHost.csproj" Id="a4c0b49e-3461-4655-a3df-29e75f234c7b" />
+    <Project Path="EShopMicroservices.ServiceDefaults/EShopMicroservices.ServiceDefaults.csproj" Id="cbfe9554-50ec-43fd-9788-fb1e7147b574" />
+  </Folder>
   <Folder Name="/catalog/" />
   <Folder Name="/catalog/src/">
     <Project Path="Catalog.API/Catalog.API.csproj" Id="51c1164a-36e2-41a9-a1e2-867636e875bf" />

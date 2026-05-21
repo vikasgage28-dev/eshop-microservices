@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Catalog.Core\Catalog.Core.csproj" />
     <ProjectReference Include="..\Catalog.Infrastructure\Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\EShop.Contracts\EShop.Contracts.csproj" />
+    <ProjectReference Include="..\EShopMicroservices.ServiceDefaults\EShopMicroservices.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
