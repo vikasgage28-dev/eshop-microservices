@@ -69,10 +69,44 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 31: Phase 12.5 .NET Aspire Orchestration COMPLETE!
+## 📍 CURRENT STAGE — Stage 32: Phase 12.6a HTTP Service-to-Service Communication COMPLETE!
 
 ### Where We Stopped
 ```
+Phase 12.6a — HTTP Service-to-Service Communication COMPLETE! ✅
+
+EShop.Contracts:
+   → Added Events/OrderPlacedEvent.cs (shared contract for all services)
+
+Ordering.Core:
+   → Added ICustomerServiceClient interface (Clean Architecture — no HttpClient in Core!)
+   → Added CustomerDto (lightweight DTO for customer validation)
+
+Ordering.Infrastructure:
+   → Added HttpClients/CustomerServiceClient.cs (Typed HttpClient implementation)
+   → Calls GET http://customer-api/api/customers/{id} via Aspire Service Discovery
+
+Ordering.API:
+   → Registered typed HttpClient in Program.cs
+   → URL from appsettings.json ServiceUrls:CustomerApi (not hardcoded!)
+   → Aspire Service Discovery resolves "http://customer-api" to correct port
+
+PlaceOrderCommandHandler updated:
+   → Validates customer exists BEFORE placing order
+   → CustomerEmail now taken from Customer.API (trusted source!)
+   → Throws KeyNotFoundException if customer not found → 404
+
+Ordering.Tests updated:
+   → Mock ICustomerServiceClient added to all tests
+   → New test: Handle_ShouldThrow_WhenCustomerNotFound ✅
+   → All tests passing ✅
+
+Key Architecture Decisions made in Phase 12.6a:
+→ Typed HttpClient per calling service — loose coupling, no shared HttpClient lib!
+→ ICustomerServiceClient in Core — Infrastructure implements, Core stays clean!
+→ URL in appsettings.json — works locally (Aspire) and in Azure (ACA/AKS)!
+→ Customer.API owns customer data — Ordering trusts Customer.API as source of truth!
+
 Phase 12.5 — .NET Aspire Orchestration COMPLETE! ✅
 
 EShopMicroservices.ServiceDefaults:
