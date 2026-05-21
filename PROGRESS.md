@@ -69,10 +69,39 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 30: Phase 12.4 Identity Service COMPLETE!
+## 📍 CURRENT STAGE — Stage 31: Phase 12.5 .NET Aspire Orchestration COMPLETE!
 
 ### Where We Stopped
 ```
+Phase 12.5 — .NET Aspire Orchestration COMPLETE! ✅
+
+EShopMicroservices.ServiceDefaults:
+   → AddServiceDefaults() — OpenTelemetry (Tracing, Metrics), Health Checks, Service Discovery
+   → MapDefaultEndpoints() — /health and /alive endpoints on every service
+
+EShopMicroservices.AppHost:
+   → Orchestrates all 4 microservices as OS processes (no Docker needed!)
+   → builder.AddProject<Projects.Catalog_API>("catalog-api")
+   → builder.AddProject<Projects.Ordering_API>("ordering-api")
+   → builder.AddProject<Projects.Customer_API>("customer-api")
+   → builder.AddProject<Projects.Identity_API>("identity-api")
+
+All 4 APIs wired:
+   → builder.AddServiceDefaults() added to all 4 Program.cs files
+   → app.MapDefaultEndpoints() added to all 4 Program.cs files
+
+Aspire Dashboard:
+   → All 4 services Running ✅ with ONE F5 press
+   → Health checks, distributed tracing, metrics active
+   → Process Mode (no Docker/Podman required)
+   → Aspire Dashboard at https://localhost:17222
+
+Key Architecture Decisions made in Phase 12.5:
+→ Process Mode: No Docker required — services run as native OS processes!
+→ ServiceDefaults: shared config written once, applied to all 4 services!
+→ Service Discovery: services resolve by name (http://catalog-api) not hardcoded ports!
+→ ASPNETCORE_URLS added to launchSettings.json to fix dashboard startup!
+
 Phase 12.4 — Identity Service COMPLETE! ✅
 
 Phase 12.4 — Identity Service completed:
@@ -800,7 +829,7 @@ Completed so far in Stage 13 (Docker):
 | 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ |
 | 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
 | 45 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
-| 46 | .NET Aspire — orchestrate all services locally + dashboard! | 🟢 Free | ⏳ |
+| 46 | .NET Aspire — orchestrate all services locally + dashboard! | 🟢 Free | ✅ Done (Phase 12.5!) |
 | 47 | Azure Container Registry (ACR) — private registry for all images! | 🟡 $5 | ⏳ |
 | 48 | Update CI/CD pipelines → build + push each service image to ACR | 🟢 Free | ⏳ |
 | 49 | Managed Identity → AKS pulls from ACR (no password needed!) | 🟢 Free | ⏳ |
@@ -1135,7 +1164,8 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 25 | Phase 11 — Architect Level (Front Door/App Config/Aspire → all shifted to Phase 12!) | ✅ Done |
 | 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
 | 27 | Phase 12.1 — Catalog Service (Clean Arch + CQRS + Events + User Secrets) | ✅ Done |
-| 27 | Phase 12 — Microservices Split (Ordering, Customer, Identity + App Config + Aspire + ACR) | 🔄 In Progress |
+| 27 | Phase 12.5 — .NET Aspire Orchestration (ServiceDefaults + AppHost + Dashboard) | ✅ Done |
+| 28 | Phase 12.6 — Service-to-Service Communication (HTTP + Azure Service Bus) | 🔄 Next |
 | 28 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
 | 29 | Phase 14 — Kubernetes / AKS (Container Apps → AKS → Front Door!) | ⏳ |
 | 30 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
