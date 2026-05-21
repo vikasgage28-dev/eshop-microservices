@@ -9,19 +9,32 @@ namespace Ordering.Core.Features.Orders.Commands.PlaceOrder
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IEventPublisher _eventPublisher;
+        private readonly ICustomerServiceClient _customerServiceClient;
 
-        public PlaceOrderCommandHandler(IOrderRepository orderRepository, IEventPublisher eventPublisher)
+        public PlaceOrderCommandHandler(
+            IOrderRepository orderRepository,
+            IEventPublisher eventPublisher,
+            ICustomerServiceClient customerServiceClient)
         {
             _orderRepository = orderRepository;
             _eventPublisher = eventPublisher;
+            _customerServiceClient = customerServiceClient;
         }
 
         public async Task<Order> Handle(PlaceOrderCommand request, CancellationToken cancellationToken)
         {
+            // Validate customer exists in Customer.API
+            var customer = await _customerServiceClient
+                .GetCustomerByIdAsync(Guid.Parse(request.CustomerId));
+
+            if (customer is null)
+                throw new KeyNotFoundException(
+                    $"Customer {request.CustomerId} not found.");
+
             var order = new Order
             {
                 CustomerId = request.CustomerId,
-                CustomerEmail = request.CustomerEmail,
+                CustomerEmail = customer.Email,
                 ShippingAddress = request.ShippingAddress,
                 Notes = request.Notes,
                 Status = OrderStatus.Pending,

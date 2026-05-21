@@ -3,8 +3,10 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Ordering.API.Middleware;
 using Ordering.Core.Behaviors;
+using Ordering.Core.Interfaces;
 using Ordering.Infrastructure.Data;
 using Ordering.Infrastructure.Extensions;
+using Ordering.Infrastructure.HttpClients;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -31,6 +33,14 @@ builder.Services.AddFluentValidationAutoValidation();
 
 // Infrastructure (DbContext, Repositories, Seeder, EventPublisher)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// HTTP Client — Customer Service (Aspire Service Discovery resolves "customer-api")
+builder.Services.AddHttpClient<ICustomerServiceClient, CustomerServiceClient>(client =>
+{
+    var url = builder.Configuration["ServiceUrls:CustomerApi"]
+              ?? "http://customer-api";
+    client.BaseAddress = new Uri(url);
+});
 
 var app = builder.Build();
 app.MapDefaultEndpoints();

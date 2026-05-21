@@ -9,16 +9,19 @@ namespace Ordering.Tests.Orders.Commands
 {
     public class PlaceOrderCommandHandlerTests
     {
-        private readonly Mock<IOrderRepository> _repoMock      = new();
-        private readonly Mock<IEventPublisher>  _publisherMock = new();
+        private readonly Mock<IOrderRepository>       _repoMock      = new();
+        private readonly Mock<IEventPublisher>        _publisherMock = new();
+        private readonly Mock<ICustomerServiceClient> _customerMock  = new();
+
+        private static readonly Guid   CustomerId    = Guid.NewGuid();
+        private static readonly string CustomerEmail = "alice@eshop.com";
 
         private PlaceOrderCommandHandler CreateHandler()
-            => new(_repoMock.Object, _publisherMock.Object);
+            => new(_repoMock.Object, _publisherMock.Object, _customerMock.Object);
 
         private static PlaceOrderCommand MakeCommand() => new()
         {
-            CustomerId    = "customer-001",
-            CustomerEmail = "alice@eshop.com",
+            CustomerId      = CustomerId.ToString(),
             ShippingAddress = "123 Main St",
             Items = new List<PlaceOrderItemDto>
             {
@@ -30,7 +33,7 @@ namespace Ordering.Tests.Orders.Commands
         {
             Id            = Guid.NewGuid(),
             CustomerId    = cmd.CustomerId,
-            CustomerEmail = cmd.CustomerEmail,
+            CustomerEmail = CustomerEmail,
             Status        = OrderStatus.Pending,
             Items = cmd.Items.Select(i => new OrderItem
             {
@@ -41,10 +44,23 @@ namespace Ordering.Tests.Orders.Commands
             }).ToList()
         };
 
+        private void SetupCustomerExists()
+        {
+            _customerMock
+                .Setup(c => c.GetCustomerByIdAsync(CustomerId))
+                .ReturnsAsync(new CustomerDto
+                {
+                    Id       = CustomerId,
+                    FullName = "Alice Smith",
+                    Email    = CustomerEmail
+                });
+        }
+
         [Fact]
         public async Task Handle_ShouldCreateOrderAndReturnIt()
         {
             // Arrange
+            SetupCustomerExists();
             var cmd   = MakeCommand();
             var order = MakeOrder(cmd);
 
@@ -57,7 +73,7 @@ namespace Ordering.Tests.Orders.Commands
 
             // Assert
             result.Should().NotBeNull();
-            result.CustomerId.Should().Be("customer-001");
+            result.CustomerId.Should().Be(CustomerId.ToString());
             result.Status.Should().Be(OrderStatus.Pending);
         }
 
@@ -65,6 +81,7 @@ namespace Ordering.Tests.Orders.Commands
         public async Task Handle_ShouldPublishOrderPlacedEvent_AfterSave()
         {
             // Arrange
+            SetupCustomerExists();
             var cmd   = MakeCommand();
             var order = MakeOrder(cmd);
 
@@ -85,6 +102,7 @@ namespace Ordering.Tests.Orders.Commands
         public async Task Handle_ShouldCallRepository_WithCorrectData()
         {
             // Arrange
+            SetupCustomerExists();
             var cmd   = MakeCommand();
             var order = MakeOrder(cmd);
 
@@ -97,9 +115,27 @@ namespace Ordering.Tests.Orders.Commands
 
             // Assert — repository called with correct customer info
             _repoMock.Verify(r => r.AddAsync(It.Is<Order>(o =>
-                o.CustomerId    == "customer-001" &&
-                o.CustomerEmail == "alice@eshop.com" &&
+                o.CustomerId    == CustomerId.ToString() &&
+                o.CustomerEmail == CustomerEmail &&
                 o.Items.Count   == 1)), Times.Once);
+        }
+
+        [Fact]
+        public async Task Handle_ShouldThrow_WhenCustomerNotFound()
+        {
+            // Arrange
+            _customerMock
+                .Setup(c => c.GetCustomerByIdAsync(CustomerId))
+                .ReturnsAsync((CustomerDto?)null);
+
+            var cmd = MakeCommand();
+
+            // Act
+            var act = async () => await CreateHandler().Handle(cmd, CancellationToken.None);
+
+            // Assert — throws when customer does not exist
+            await act.Should().ThrowAsync<KeyNotFoundException>()
+                .WithMessage($"*{CustomerId}*");
         }
     }
 }
