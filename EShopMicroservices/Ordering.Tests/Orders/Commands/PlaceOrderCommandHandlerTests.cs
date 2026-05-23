@@ -1,7 +1,7 @@
+using EShop.Contracts.Events;
 using FluentAssertions;
 using Moq;
 using Ordering.Core.Entities;
-using Ordering.Core.Events;
 using Ordering.Core.Features.Orders.Commands.PlaceOrder;
 using Ordering.Core.Interfaces;
 
@@ -23,6 +23,7 @@ namespace Ordering.Tests.Orders.Commands
         {
             CustomerId      = CustomerId.ToString(),
             ShippingAddress = "123 Main St",
+            // CustomerEmail removed — fetched from Customer.API in handler!
             Items = new List<PlaceOrderItemDto>
             {
                 new() { ProductId = Guid.NewGuid(), ProductName = "Laptop", UnitPrice = 999.99m, Quantity = 1 }

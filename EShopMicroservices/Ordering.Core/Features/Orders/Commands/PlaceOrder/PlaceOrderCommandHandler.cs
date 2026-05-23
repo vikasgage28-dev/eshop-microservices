@@ -2,6 +2,7 @@ using MediatR;
 using Ordering.Core.Entities;
 using Ordering.Core.Events;
 using Ordering.Core.Interfaces;
+using EShop.Contracts.Events;
 
 namespace Ordering.Core.Features.Orders.Commands.PlaceOrder
 {
@@ -49,11 +50,20 @@ namespace Ordering.Core.Features.Orders.Commands.PlaceOrder
 
             var savedOrder = await _orderRepository.AddAsync(order);
 
-            await _eventPublisher.PublishAsync(new OrderPlacedEvent(
-                savedOrder.Id,
-                savedOrder.CustomerId,
-                savedOrder.CustomerEmail,
-                savedOrder.TotalAmount));
+            await _eventPublisher.PublishAsync(new OrderPlacedEvent
+            {
+                OrderId = savedOrder.Id,
+                CustomerId = savedOrder.CustomerId,
+                CustomerEmail = savedOrder.CustomerEmail,
+                TotalAmount = savedOrder.TotalAmount,
+                Items = savedOrder.Items.Select(i => new OrderPlacedItem
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.ProductName,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            });
 
             return savedOrder;
         }

@@ -1,29 +1,48 @@
+using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging;
 using Ordering.Core.Interfaces;
+using System.Text.Json;
 
 namespace Ordering.Infrastructure.Messaging
 {
     /// <summary>
-    /// Production implementation — publishes to Azure Service Bus.
-    /// Wired in Phase 13 (CI/CD + Azure)!
+    /// SERVICE BUS IMPLEMENTATION — For learning purposes.
+    /// Uses Azure Service Bus Topic + Subscriptions (Standard tier).
+    /// Switch via appsettings.json: "Messaging:Provider": "ServiceBus"
+    /// Requires: "Messaging:ServiceBus:ConnectionString" and "Messaging:ServiceBus:TopicName"
     /// </summary>
     public class ServiceBusEventPublisher : IEventPublisher
     {
+        private readonly ServiceBusClient _client;
+        private readonly string _topicName;
         private readonly ILogger<ServiceBusEventPublisher> _logger;
 
-        public ServiceBusEventPublisher(ILogger<ServiceBusEventPublisher> logger)
+        public ServiceBusEventPublisher(
+            ServiceBusClient client,
+            string topicName,
+            ILogger<ServiceBusEventPublisher> logger)
         {
+            _client = client;
+            _topicName = topicName;
             _logger = logger;
         }
 
-        public Task PublishAsync<TEvent>(TEvent @event) where TEvent : class
+        public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : class
         {
-            // TODO Phase 13: send to Azure Service Bus topic
-            _logger.LogWarning(
-                "[SERVICE BUS STUB] Would publish {EventType} to Service Bus.",
-                typeof(TEvent).Name);
+            var sender = _client.CreateSender(_topicName);
+            var body = JsonSerializer.Serialize(@event);
+            var message = new ServiceBusMessage(body)
+            {
+                Subject = typeof(TEvent).Name,
+                ContentType = "application/json",
+                MessageId = Guid.NewGuid().ToString()
+            };
 
-            return Task.CompletedTask;
+            await sender.SendMessageAsync(message);
+
+            _logger.LogInformation(
+                "[SERVICE BUS] Published {EventType} to topic '{Topic}'",
+                typeof(TEvent).Name, _topicName);
         }
     }
 }
