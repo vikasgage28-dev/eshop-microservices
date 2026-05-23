@@ -7,11 +7,9 @@ namespace Ordering.Core.Features.Orders.Commands.PlaceOrder
         public PlaceOrderCommandValidator()
         {
             RuleFor(x => x.CustomerId)
-                .NotEmpty().WithMessage("Customer ID is required.");
-
-            RuleFor(x => x.CustomerEmail)
-                .NotEmpty().WithMessage("Customer email is required.")
-                .EmailAddress().WithMessage("A valid customer email is required.");
+                .NotEmpty().WithMessage("Customer ID is required.")
+                .Must(id => Guid.TryParse(id, out _))
+                .WithMessage("Customer ID must be a valid GUID.");
 
             RuleFor(x => x.Items)
                 .NotEmpty().WithMessage("Order must contain at least one item.");

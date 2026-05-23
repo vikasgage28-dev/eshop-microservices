@@ -15,5 +15,6 @@ namespace Catalog.Core.Interfaces
             int pageSize,
             string? search = null,
             Guid? categoryId = null);
+        Task<bool> ReduceStockAsync(Guid productId, int quantity);
     }
 }

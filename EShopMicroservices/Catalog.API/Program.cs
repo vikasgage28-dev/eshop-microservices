@@ -60,7 +60,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog API v1"));
 }
 
-app.UseAuthorization();
+// Note: UseAuthorization() removed — no [Authorize] attributes here.
+// Internal service-to-service calls don't use JWT.
+// In AKS (Phase 14), Istio mTLS handles internal auth.
 app.MapControllers();
 
 app.Run();

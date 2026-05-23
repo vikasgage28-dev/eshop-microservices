@@ -100,5 +100,19 @@ namespace Catalog.Infrastructure.Repositories
 
             return (products, totalCount);
         }
+
+        public async Task<bool> ReduceStockAsync(Guid productId, int quantity)
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null) return false;
+
+            if (product.Stock < quantity) return false; // not enough stock!
+
+            product.Stock -= quantity;
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

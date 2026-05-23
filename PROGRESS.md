@@ -69,39 +69,98 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 32: Phase 12.6a HTTP Service-to-Service Communication COMPLETE!
+## 📍 CURRENT STAGE — Stage 33: Phase 12.6 Complete — Next: Phase 12.7 gRPC
 
 ### Where We Stopped
 ```
-Phase 12.6a — HTTP Service-to-Service Communication COMPLETE! ✅
+Phase 12.6b — Async Messaging + Aspire Orchestration Fixes COMPLETE! ✅
 
-EShop.Contracts:
-   → Added Events/OrderPlacedEvent.cs (shared contract for all services)
+EShop.Contracts/Events/OrderPlacedEvent.cs:
+   → Shared event: OrderId, CustomerId, CustomerEmail, TotalAmount, PlacedAt
+   → List<OrderPlacedItem> (ProductId, ProductName, Quantity, UnitPrice)
+
+Ordering.Infrastructure/Messaging — 3 swappable IEventPublisher implementations:
+   → InMemoryEventPublisher      — logs event to console (dev, zero cost)
+   → ServiceBusEventPublisher    — Azure Service Bus Topic (learning only, ₹83/2 days)
+   → StorageQueueEventPublisher  — manual fan-out to multiple queues (prod, ₹0.03/month)
+   → Switch via appsettings.json "Messaging:Provider": "InMemory|ServiceBus|StorageQueue"
+
+Catalog.Core/Interfaces:
+   → IOrderPlacedConsumer — consumer contract (Clean Architecture)
+   → IProductRepository   — added ReduceStockAsync(productId, quantity) → bool
+
+Catalog.Infrastructure/Messaging — 3 swappable IOrderPlacedConsumer implementations:
+   → InMemoryOrderPlacedConsumer      — logs "dev mode", sleeps
+   → ServiceBusOrderPlacedConsumer    — Service Bus Topic Subscription processor
+   → StorageQueueOrderPlacedConsumer  — polls queue every 5 seconds
+   → OrderPlacedBackgroundService     — IHostedService keeping consumer alive
+
+Catalog.Infrastructure/Repositories/ProductRepository:
+   → ReduceStockAsync — prevents negative stock, returns false if insufficient
+
+PlaceOrderCommand + Validator:
+   → Removed CustomerEmail (fetched from Customer.API, not caller's responsibility!)
+   → Added GUID format validation on CustomerId
+
+AppHost.cs — critical orchestration fixes:
+   → WithEndpoint("http", e => e.Port=N) — modifies existing endpoint (no duplicate conflict!)
+   → WithReference(customerApi)          — injects services__customer-api__http__0 env var
+   → WaitFor(customerApi)                — waits for /health before starting Ordering.API
+   → Fixed ports: catalog=5010, customer=5011, ordering=5012, identity=5013
+   → Dependency map documented in comments — only sync HTTP callers need WithReference+WaitFor
+
+Security fixes — removed UseAuthorization() from Catalog/Customer/Ordering APIs:
+   → Internal service calls don't use JWT
+   → Production: Istio mTLS in Phase 14 handles service identity
+
+Bugs diagnosed and fixed:
+   → 403 Forbidden (error code 1003) — corporate proxy intercepting "customer-api" hostname
+     Root cause: missing WithReference() → service discovery not injecting actual port
+   → Connection refused (localhost:5011) — startup race condition
+     Root cause: missing WaitFor() → Ordering.API started before Customer.API was ready
+   → Endpoint conflict — WithHttpEndpoint() creates duplicate; fixed with WithEndpoint()
+
+End-to-End Test PASSED ✅ (201 Created confirmed):
+   POST /api/orders →
+   CustomerServiceClient GET http://customer-api/api/customers/{id} → 200 OK →
+   customerEmail "john@test.com" fetched from Customer.API →
+   EF Core INSERT INTO [Orders] confirmed in logs →
+   [EVENT PUBLISHED] OrderPlacedEvent { TotalAmount:199.98, Items:[Laptop x2] } →
+   201 Created with full order returned ✅
+
+Key Architecture Decisions — Phase 12.6:
+→ WithReference only for sync HTTP callers — async messaging needs neither!
+→ WaitFor reflects true startup dependency — only add when B must be ready before A calls it!
+→ WithEndpoint() modifies existing; WithHttpEndpoint() creates new (causes conflict!)
+→ Fixed ports prevent corporate DNS from intercepting non-standard hostnames!
+→ UseAuthorization() removed from internal services — infra-level auth in Phase 14 (Istio)!
+→ CustomerEmail removed from command — Customer.API is single source of truth!
+→ IOrderPlacedConsumer + BackgroundService — Catalog listens without blocking HTTP!
+
+### Next: Phase 12.7 — gRPC (FREE, highest job-market demand in 2025)
+→ Add gRPC endpoint to Customer.API (alongside existing REST — side-by-side learning)
+→ Ordering.API calls Customer.API via auto-generated gRPC stub (.proto contract)
+→ Compare REST vs gRPC: JSON/HTTP1.1 vs Protobuf/HTTP2, performance, contract safety
+→ Cost: ₹0 — NuGet packages only, no infrastructure
+→ Branch: feature/phase12-grpc
+```
+
+Phase 12.6a — HTTP Service-to-Service Communication COMPLETE! ✅
 
 Ordering.Core:
    → Added ICustomerServiceClient interface (Clean Architecture — no HttpClient in Core!)
    → Added CustomerDto (lightweight DTO for customer validation)
 
 Ordering.Infrastructure:
-   → Added HttpClients/CustomerServiceClient.cs (Typed HttpClient implementation)
+   → Added HttpClients/CustomerServiceClient.cs (Typed HttpClient with detailed logging)
    → Calls GET http://customer-api/api/customers/{id} via Aspire Service Discovery
 
-Ordering.API:
-   → Registered typed HttpClient in Program.cs
-   → URL from appsettings.json ServiceUrls:CustomerApi (not hardcoded!)
-   → Aspire Service Discovery resolves "http://customer-api" to correct port
-
-PlaceOrderCommandHandler updated:
-   → Validates customer exists BEFORE placing order
-   → CustomerEmail now taken from Customer.API (trusted source!)
-   → Throws KeyNotFoundException if customer not found → 404
-
-Ordering.Tests updated:
+Ordering.Tests:
    → Mock ICustomerServiceClient added to all tests
    → New test: Handle_ShouldThrow_WhenCustomerNotFound ✅
    → All tests passing ✅
 
-Key Architecture Decisions made in Phase 12.6a:
+Key Architecture Decisions — Phase 12.6a:
 → Typed HttpClient per calling service — loose coupling, no shared HttpClient lib!
 → ICustomerServiceClient in Core — Infrastructure implements, Core stays clean!
 → URL in appsettings.json — works locally (Aspire) and in Azure (ACA/AKS)!
@@ -859,7 +918,8 @@ Completed so far in Stage 13 (Docker):
 | 39 | Split monolith → Order Service (.NET) | 🟢 Free | ✅ Done (Phase 12.2!) |
 | 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ✅ Done (Phase 12.3!) |
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ✅ Done (Phase 12.4!) |
-| 42 | Service-to-service communication (HTTP + Service Bus) | 🟢 Free | ⏳ |
+| 42 | Service-to-service communication (HTTP sync + async messaging) | 🟢 Free | ✅ Done (Phase 12.6!) |
+| 42a | gRPC service-to-service (typed contracts, 7x faster than REST) | 🟢 Free | ⏳ Phase 12.7 — NEXT! |
 | 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ |
 | 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
 | 45 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
@@ -1199,7 +1259,8 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 26 | Phase 8 Remaining — Messaging (Topics, Event Grid, Queue, Redis) | ⏭️ Skipped (paid/concept known!) |
 | 27 | Phase 12.1 — Catalog Service (Clean Arch + CQRS + Events + User Secrets) | ✅ Done |
 | 27 | Phase 12.5 — .NET Aspire Orchestration (ServiceDefaults + AppHost + Dashboard) | ✅ Done |
-| 28 | Phase 12.6 — Service-to-Service Communication (HTTP + Azure Service Bus) | 🔄 Next |
+| 28 | Phase 12.6 — Service-to-Service Communication (HTTP + Messaging + Aspire fixes) | ✅ Done |
+| 28a | Phase 12.7 — gRPC (typed contracts, Protobuf, HTTP/2 — highest market demand) | 🔄 Next |
 | 28 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
 | 29 | Phase 14 — Kubernetes / AKS (Container Apps → AKS → Front Door!) | ⏳ |
 | 30 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |

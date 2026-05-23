@@ -1,3 +1,4 @@
+using Azure.Messaging.ServiceBus;
 using Catalog.Core.Interfaces;
 using Catalog.Infrastructure.Data;
 using Catalog.Infrastructure.Messaging;
@@ -6,6 +7,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Catalog.Infrastructure.Extensions
 {
@@ -15,13 +17,11 @@ namespace Catalog.Infrastructure.Extensions
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // SQL Server — Products + Categories
+            // SQL Server
             services.AddDbContext<CatalogDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("CatalogDb")));
 
-            // Cosmos DB — Reviews
-            // Use System.Text.Json serializer so [JsonPropertyName] attributes are respected
-            // This pairs with AzureCosmosDisableNewtonsoftJsonCheck=true in the csproj
+            // Cosmos DB
             var cosmosConnectionString = configuration.GetConnectionString("CosmosDb")!;
             var cosmosOptions = new CosmosClientOptions
             {
@@ -33,18 +33,52 @@ namespace Catalog.Infrastructure.Extensions
             };
             services.AddSingleton(new CosmosClient(cosmosConnectionString, cosmosOptions));
 
-            // Repository registrations
-            services.AddScoped<IProductRepository,  ProductRepository>();
+            // Repositories
+            services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
-            services.AddScoped<IReviewRepository,   ReviewRepository>();
-
-            // Data seeder — called explicitly in Program.cs (Development only!)
+            services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<CatalogDataSeeder>();
 
-            // Event publisher
-            // Dev  → InMemoryEventPublisher (logs to console, no Azure needed!)
-            // Prod → ServiceBusEventPublisher (Phase 13!)
+            // Event Publisher (Catalog publishes its own events)
             services.AddScoped<IEventPublisher, InMemoryEventPublisher>();
+
+            // Messaging Consumer — swap via appsettings.json
+            var provider = configuration["Messaging:Provider"] ?? "InMemory";
+
+            switch (provider)
+            {
+                case "ServiceBus":
+                    var sbConnection = configuration["Messaging:ServiceBus:ConnectionString"]!;
+                    var topicName = configuration["Messaging:ServiceBus:TopicName"]!;
+                    var subscriptionName = configuration["Messaging:ServiceBus:SubscriptionName"]!;
+                    services.AddSingleton(new ServiceBusClient(sbConnection));
+                    services.AddScoped<IOrderPlacedConsumer>(sp =>
+                        new ServiceBusOrderPlacedConsumer(
+                            sp.GetRequiredService<ServiceBusClient>(),
+                            topicName,
+                            subscriptionName,
+                            sp.GetRequiredService<IServiceScopeFactory>(),
+                            sp.GetRequiredService<ILogger<ServiceBusOrderPlacedConsumer>>()));
+                    break;
+
+                case "StorageQueue":
+                    var sqConnection = configuration["Messaging:StorageQueue:ConnectionString"]!;
+                    var queueName = configuration["Messaging:StorageQueue:CatalogQueueName"]!;
+                    services.AddScoped<IOrderPlacedConsumer>(sp =>
+                        new StorageQueueOrderPlacedConsumer(
+                            sqConnection,
+                            queueName,
+                            sp.GetRequiredService<IServiceScopeFactory>(),
+                            sp.GetRequiredService<ILogger<StorageQueueOrderPlacedConsumer>>()));
+                    break;
+
+                default: // InMemory
+                    services.AddScoped<IOrderPlacedConsumer, InMemoryOrderPlacedConsumer>();
+                    break;
+            }
+
+            // Background service — watches queue/topic continuously
+            services.AddHostedService<OrderPlacedBackgroundService>();
 
             return services;
         }
