@@ -1,0 +1,54 @@
+<Solution>
+  <Folder Name="/aspire/">
+    <Project Path="EShopMicroservices.AppHost/EShopMicroservices.AppHost.csproj" Id="a4c0b49e-3461-4655-a3df-29e75f234c7b" />
+    <Project Path="EShopMicroservices.ServiceDefaults/EShopMicroservices.ServiceDefaults.csproj" Id="cbfe9554-50ec-43fd-9788-fb1e7147b574" />
+  </Folder>
+  <Folder Name="/catalog/" />
+  <Folder Name="/catalog/src/">
+    <Project Path="Catalog.API/Catalog.API.csproj" Id="51c1164a-36e2-41a9-a1e2-867636e875bf" />
+    <Project Path="Catalog.Core/Catalog.Core.csproj" Id="591cfe40-cb1b-4df7-a791-6ed8151aaced" />
+    <Project Path="Catalog.Infrastructure/Catalog.Infrastructure.csproj" Id="4192e945-83e4-4d68-a54f-be7d5cc55bff" />
+  </Folder>
+  <Folder Name="/catalog/tests/">
+    <Project Path="Catalog.Tests/Catalog.Tests.csproj" Id="d0b032e4-efc8-4387-9a05-a9f2d44c8d10" />
+  </Folder>
+  <Folder Name="/customer/" />
+  <Folder Name="/customer/src/">
+    <Project Path="Customer.API/Customer.API.csproj" Id="f348b6df-908c-4f84-87f9-e96d16f933a8" />
+    <Project Path="Customer.Core/Customer.Core.csproj" Id="b64fff11-0d84-405c-9fb7-517e2bf722e1" />
+    <Project Path="Customer.Infrastructure/Customer.Infrastructure.csproj" Id="35779a46-09ac-40bf-9c70-89fc58a19fa1" />
+  </Folder>
+  <Folder Name="/customer/tests/">
+    <Project Path="Customer.Tests/Customer.Tests.csproj" Id="53d89220-4a3d-46d1-87a2-4b168b6d6048" />
+  </Folder>
+  <Folder Name="/identity/" />
+  <Folder Name="/identity/src/">
+    <Project Path="Identity.API/Identity.API.csproj" Id="e6860604-ef3e-41ce-b3f5-288260b08786" />
+    <Project Path="Identity.Core/Identity.Core.csproj" Id="c135e237-177f-4268-b999-a0d3516b6a69" />
+    <Project Path="Identity.Infrastructure/Identity.Infrastructure.csproj" Id="375e1baf-3a9f-454a-8a5f-e7ff93fed925" />
+  </Folder>
+  <Folder Name="/identity/tests/">
+    <Project Path="Identity.Tests/Identity.Tests.csproj" Id="6a8b262b-8fae-4923-9a06-ccd167e3fdbe" />
+  </Folder>
+  <Folder Name="/legacy/">
+    <Project Path="../EShop.API/EShop.API.csproj" />
+    <Project Path="../EShop.Core/EShop.Core.csproj" />
+    <Project Path="../EShop.Functions/EShop.Functions.csproj" />
+    <Project Path="../EShop.Gateway/EShop.Gateway.csproj" />
+    <Project Path="../EShop.Infrastructure/EShop.Infrastructure.csproj" />
+    <Project Path="../EShop.Shared/EShop.Shared.csproj" />
+    <Project Path="../EShop.Tests/EShop.Tests.csproj" />
+  </Folder>
+  <Folder Name="/ordering/" />
+  <Folder Name="/ordering/src/">
+    <Project Path="Ordering.API/Ordering.API.csproj" Id="d549bf03-986d-4e0d-a59c-a92ffcbf4c98" />
+    <Project Path="Ordering.Core/Ordering.Core.csproj" Id="90d4ee4e-2377-4351-aa1c-08e6a1649832" />
+    <Project Path="Ordering.Infrastructure/Ordering.Infrastructure.csproj" Id="9bd523dd-ac39-495e-ac58-9fd4d543fe53" />
+  </Folder>
+  <Folder Name="/ordering/tests/">
+    <Project Path="Ordering.Tests/Ordering.Tests.csproj" Id="f674a794-33e7-4edd-8ed5-7fc78fecf237" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="EShop.Contracts/EShop.Contracts.csproj" Id="18478c28-df39-4edf-b4b1-f6f6eab12c72" />
+  </Folder>
+</Solution>
