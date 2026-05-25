@@ -1,11 +1,12 @@
 using Azure.Messaging.ServiceBus;
+using EShop.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ordering.Core.Interfaces;
 using Ordering.Infrastructure.Data;
-using Ordering.Infrastructure.HttpClients;
+using Ordering.Infrastructure.GrpcClients;
 using Ordering.Infrastructure.Messaging;
 using Ordering.Infrastructure.Repositories;
 
@@ -24,6 +25,18 @@ namespace Ordering.Infrastructure.Extensions
             // Repositories
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<OrderingDataSeeder>();
+
+            // gRPC Client — Customer Service
+            // Address uses Aspire's named-endpoint service discovery syntax:
+            //   http://_grpc.customer-api  → resolves to the "grpc" endpoint of customer-api
+            // Aspire injects services__customer-api__grpc__0=http://localhost:5022 from AppHost.
+            // The "_endpointName.serviceName" host pattern selects a specific named endpoint
+            // (the HTTP/2-only port on Customer.API, required for gRPC over plain http://).
+            // ICustomerServiceClient → CustomerGrpcClient (swapped from HTTP, Core unchanged!)
+            var customerApiGrpcUrl = configuration["ServiceUrls:CustomerApiGrpc"] ?? "http://_grpc.customer-api";
+            services.AddGrpcClient<CustomerGrpc.CustomerGrpcClient>(o =>
+                o.Address = new Uri(customerApiGrpcUrl));
+            services.AddScoped<ICustomerServiceClient, CustomerGrpcClient>();
 
             // Messaging — swap provider via appsettings.json
             var provider = configuration["Messaging:Provider"] ?? "InMemory";

@@ -7,8 +7,14 @@
     <UserSecretsId>92c90f41-88ac-49f8-83a4-ac41b4df17f0</UserSecretsId>
   </PropertyGroup>
 
+  <!-- gRPC: compile customer.proto as SERVER — generates CustomerGrpcBase for us to implement -->
+  <ItemGroup>
+    <Protobuf Include="..\EShop.Contracts\Protos\customer.proto" GrpcServices="Server" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.80.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
