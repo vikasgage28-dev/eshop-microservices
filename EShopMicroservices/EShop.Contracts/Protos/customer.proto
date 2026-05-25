@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "EShop.Contracts.Protos";
+
+package customer;
+
+// The service definition — what operations Customer.API exposes via gRPC
+service CustomerGrpc {
+  rpc GetCustomer (GetCustomerRequest) returns (CustomerResponse);
+}
+
+// Request message — what Ordering.API sends
+message GetCustomerRequest {
+  string id = 1;
+}
+
+// Response message — what Customer.API returns
+message CustomerResponse {
+  string id       = 1;
+  string email    = 2;
+  string fullName = 3;
+  bool   found    = 4;
+}

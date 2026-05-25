@@ -69,10 +69,84 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 33: Phase 12.6 Complete — Next: Phase 12.7 gRPC
+## 📍 CURRENT STAGE — Stage 33: Phase 12.7 Complete — Next: Phase 12.8
 
 ### Where We Stopped
 ```
+Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
+
+EShop.Contracts/Protos/customer.proto:
+   → Defines CustomerGrpc service (Unary call — request/response, not streaming)
+   → GetCustomerRequest { id: string }
+   → CustomerResponse { id, email, fullName, found: bool }
+   → Protobuf binary serialisation — 5-10x smaller payload than JSON
+
+Customer.API — gRPC Server:
+   → CustomerGrpcService.cs — inherits CustomerGrpc.CustomerGrpcBase (generated stub)
+   → Calls existing GetCustomerByIdQuery via MediatR — ZERO new business logic
+   → Clean Architecture preserved: gRPC is just another transport, Core unchanged!
+   → Kestrel configured with TWO dedicated listeners:
+        5011 → HttpProtocols.Http1   (REST + Swagger — HTTP/1.1 only)
+        5022 → HttpProtocols.Http2   (gRPC h2c — HTTP/2 only)
+   → UseUrls() clears Aspire-injected ASPNETCORE_URLS; Listen* calls win
+   → ListenLocalhost (not ListenAnyIP) — no Windows Firewall admin prompt!
+
+Ordering.Infrastructure — gRPC Client:
+   → CustomerGrpcClient.cs — implements ICustomerServiceClient (same interface!)
+   → PlaceOrderCommandHandler has ZERO changes — Core is fully transport-agnostic
+   → AddGrpcClient<CustomerGrpc.CustomerGrpcClient> registered via DI
+   → Address: "http://_grpc.customer-api" — Aspire named-endpoint SD syntax
+
+AppHost.cs:
+   → Customer.API now has TWO endpoints registered:
+        "http"  port 5011, IsProxied=false — REST
+        "grpc"  port 5022, IsProxied=false, UriScheme="http" — gRPC
+   → IsProxied=false bypasses Aspire's HTTP/1.1-only YARP reverse proxy
+   → Aspire injects services__customer-api__grpc__0=http://localhost:5022
+     which the "_grpc.customer-api" service discovery pattern resolves to
+
+Root Cause Diagnosed (HTTP_1_1_REQUIRED):
+   → Http1AndHttp2 on ONE port over plain http:// = impossible for gRPC
+   → Without TLS there is no ALPN negotiation — Kestrel defaults to HTTP/1.1
+   → gRPC client sends HTTP/2 prior-knowledge frames → server responds HTTP_1_1_REQUIRED
+   → Fix: dedicated HTTP/2-only port per Microsoft docs recommendation
+   → In production (HTTPS): single port with Http1AndHttp2 works via ALPN automatically
+
+End-to-End Test PASSED ✅ (201 Created confirmed):
+   POST /api/orders (Ordering.API:5012) →
+   CustomerGrpcClient resolves http://_grpc.customer-api → http://localhost:5022 →
+   HTTP/2 gRPC call → CustomerGrpcService → GetCustomerByIdQuery via MediatR →
+   CustomerResponse { email="john@test.com", found=true } returned as Protobuf →
+   Order saved to SQL Server with customerEmail populated →
+   201 Created ✅
+   [GRPC CLIENT] Customer found: john@test.com (ordering-api console) ✅
+   [GRPC SERVER] Customer found: john@test.com (customer-api console) ✅
+
+Key Architecture Decisions — Phase 12.7:
+→ gRPC requires HTTP/2 — always! No HTTP/1.1 fallback exists in the protocol
+→ h2c (HTTP/2 cleartext) needs Http2-ONLY port — Http1AndHttp2 without TLS = broken
+→ Production: HTTPS + ALPN allows single port Http1AndHttp2 (no code change needed!)
+→ IsProxied=false is MANDATORY for gRPC in Aspire dev mode — YARP proxy is HTTP/1.1 only
+→ "_endpointName.serviceName" = Aspire SD syntax to select a named endpoint by name
+→ ICustomerServiceClient interface untouched — swap from HTTP to gRPC = one DI line!
+→ UseUrls() + ListenLocalhost() = full Kestrel control, no Aspire port injection conflicts
+→ Internal service auth: NONE intentionally — API Gateway (JWT) + Istio mTLS in Phase 14
+
+Why unauthenticated ordering is intentional (NOT a bug):
+→ Current state: services are exposed directly — learning phase, no gateway yet
+→ External JWT layer = API Gateway validates once, services trust gateway
+→ Internal mTLS = Istio proves service identity cryptographically (Phase 14/AKS)
+→ Adding [Authorize] to every service = duplication, coupling, key rotation nightmare
+→ Real pattern: gateway owns auth, services own business logic
+
+### Next: Phase 12.8 — Azure App Configuration (centralized config)
+→ Replace per-service appsettings.json with single Azure App Configuration store
+→ All services read from one place — one connection string change updates all services
+→ Key Vault references: secrets stay in Key Vault, App Config holds non-secret config
+→ Feature flags: enable/disable features without redeployment
+→ Branch: feature/phase12-app-config
+```
+
 Phase 12.6b — Async Messaging + Aspire Orchestration Fixes COMPLETE! ✅
 
 EShop.Contracts/Events/OrderPlacedEvent.cs:
@@ -919,8 +993,8 @@ Completed so far in Stage 13 (Docker):
 | 40 | Split monolith → Customer Service (.NET) | 🟢 Free | ✅ Done (Phase 12.3!) |
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ✅ Done (Phase 12.4!) |
 | 42 | Service-to-service communication (HTTP sync + async messaging) | 🟢 Free | ✅ Done (Phase 12.6!) |
-| 42a | gRPC service-to-service (typed contracts, 7x faster than REST) | 🟢 Free | ⏳ Phase 12.7 — NEXT! |
-| 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ |
+| 42a | gRPC service-to-service (typed contracts, 7x faster than REST) | 🟢 Free | ✅ Done (Phase 12.7!) |
+| 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ Phase 12.8 — NEXT! |
 | 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
 | 45 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
 | 46 | .NET Aspire — orchestrate all services locally + dashboard! | 🟢 Free | ✅ Done (Phase 12.5!) |

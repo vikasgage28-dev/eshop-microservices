@@ -18,8 +18,21 @@ var builder = DistributedApplication.CreateBuilder(args);
 var catalogApi  = builder.AddProject<Projects.Catalog_API>("catalog-api")
                          .WithEndpoint("http", e => e.Port = 5010);
 
+// Customer.API exposes TWO endpoints:
+//   "http" on 5011 → HTTP/1.1 (REST + Swagger)
+//   "grpc" on 5022 → HTTP/2  (gRPC h2c)
+// IsProxied=false bypasses Aspire's HTTP/1.1-only reverse proxy so gRPC's HTTP/2
+// connection reaches Kestrel directly. Service discovery still works via WithReference.
 var customerApi = builder.AddProject<Projects.Customer_API>("customer-api")
-                         .WithEndpoint("http", e => e.Port = 5011);
+                         .WithEndpoint("http", e => {
+                             e.Port = 5011;
+                             e.IsProxied = false;
+                         })
+                         .WithEndpoint("grpc", e => {
+                             e.Port = 5022;
+                             e.UriScheme = "http";
+                             e.IsProxied = false;
+                         });
 
 var identityApi = builder.AddProject<Projects.Identity_API>("identity-api")
                          .WithEndpoint("http", e => e.Port = 5013);
