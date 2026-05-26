@@ -1261,6 +1261,93 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
+### 🤖 Phase 29b — Agentic AI (.NET + Azure)
+> The 2025-2026 paradigm shift: from single chatbots → networks of autonomous agents that
+> perceive, reason, plan, act, and remember. Principal Cloud & AI Architects design agent
+> SYSTEMS — not just individual models. This is the highest-demand AI skill in 2026.
+>
+> Learning order: Concepts → MCP (tools) → Single Agent → Multi-Agent → Azure runtime → EShop integration
+
+#### What makes AI "Agentic"?
+```
+Traditional AI:   User asks question → LLM generates answer → DONE
+                  One turn. Passive. No side effects.
+
+Agentic AI:       User gives GOAL → Agent perceives context
+                              → Agent reasons and plans steps
+                              → Agent calls tools / other agents
+                              → Agent observes results
+                              → Agent repeats until goal is met
+                  Multi-turn. Autonomous. Takes real actions.
+
+EShop example:
+  User: "Find me the cheapest laptop under ₹50,000, check if it's in stock,
+         and place an order if you find one"
+
+  Traditional: Returns text listing laptops (no action taken)
+
+  Agentic:     Step 1 → ProductSearchAgent.SearchProducts("laptop", maxPrice=50000)
+               Step 2 → InventoryAgent.CheckStock(productId)   ← calls EShop API
+               Step 3 → PricingAgent.ApplyDiscounts(productId) ← calls EShop API
+               Step 4 → OrderAgent.PlaceOrder(customerId, productId) ← calls EShop API
+               Result → "Ordered Lenovo IdeaPad for ₹47,999. Order ID: ORD-001"
+               The agent DID the task — not just described it!
+```
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 163a | Agentic AI concepts — Perception→Reasoning→Planning→Action→Memory loop | 🟢 Free | ⏳ |
+| 163b | Agent patterns — ReAct, Tool Use, Reflection, Plan-and-Execute, Multi-Agent | 🟢 Free | ⏳ |
+| 163c | MCP — Model Context Protocol (Anthropic/industry standard — "USB-C for AI tools") | 🟢 Free | ⏳ |
+| 163d | Build custom MCP Server in C# — expose EShop tools (GetProducts, CheckInventory, PlaceOrder) | 🟡 $1-2 | ⏳ |
+| 163e | Connect Claude/GPT-4 to EShop via MCP — any AI model, same server, zero integration changes | 🟡 $1-2 | ⏳ |
+| 163f | Semantic Kernel ChatCompletionAgent — single agent with SK plugins + memory | 🟡 $1-2 | ⏳ |
+| 163g | Semantic Kernel AgentGroupChat — multiple agents collaborating (debate, correct, hand off) | 🟡 $1-2 | ⏳ |
+| 163h | Azure AI Foundry Agent Service — managed agent runtime, persistent threads, file search, code interpreter | 🟡 $2-3 | ⏳ |
+| 163i | Multi-agent orchestration — Orchestrator + Specialists: ShoppingOrchestrator → Product + Pricing + Inventory + Order agents | 🟡 $2-3 | ⏳ |
+| 163j | A2A Protocol (Agent-to-Agent, Google 2025) — agents discover + call other agents over HTTP | 🟢 Free | ⏳ |
+| 163k | EShop.AI.Agent microservice — Clean Architecture agent service, REST + gRPC endpoints, called by other microservices like any other service | 🟡 $2-3 | ⏳ |
+
+#### Architecture — how EShop.AI.Agent fits the microservices system
+```
+                     ┌─────────────────────────────────────────────┐
+                     │           EShop.AI.Agent Service             │
+                     │                                              │
+                     │  ┌──────────────────────────────────────┐   │
+                     │  │      ShoppingOrchestratorAgent        │   │
+                     │  │  (Semantic Kernel AgentGroupChat)     │   │
+                     │  └────────┬──────────┬──────────┬───────┘   │
+                     │           │          │          │            │
+                     │  ┌────────▼─┐ ┌──────▼──┐ ┌───▼───────┐   │
+                     │  │ Product  │ │ Pricing │ │   Order   │   │
+                     │  │  Agent   │ │  Agent  │ │   Agent   │   │
+                     │  └────┬─────┘ └────┬────┘ └─────┬─────┘   │
+                     └───────┼────────────┼─────────────┼─────────┘
+                             │            │             │
+                     gRPC ───▼────        │      gRPC ──▼────
+                     Catalog.API    (internal calc)  Ordering.API
+                     Customer.API                    Customer.API
+
+Clean Architecture applies here too:
+  AI.Agent.Core          → IShoppingAgent, IProductSearchTool, IOrderTool (interfaces)
+  AI.Agent.Infrastructure→ SK Agents, MCP Server, Azure AI Foundry client
+  AI.Agent.API           → REST /api/agent/chat, gRPC AgentService
+```
+
+#### Key decisions for this phase
+```
+→ MCP first — learn the tool protocol BEFORE building agents (agents need tools!)
+→ Single agent before multi-agent — master ChatCompletionAgent first
+→ Azure AI Foundry = production runtime; SK = local dev and fine control
+→ IShoppingAgent in Core — clean architecture means swapping SK ↔ AutoGen ↔ Foundry
+   without touching business logic, same as swapping HTTP ↔ gRPC in Phase 12.7!
+→ A2A = future-proof — as agent ecosystems grow, services will expose A2A endpoints
+   the same way they expose REST and gRPC today
+→ Cost: most is $1-3/run during learning — use Azure OpenAI with token limits!
+```
+
+---
+
 ### 🌐 Phase 30 — Full Azure AI Services
 > All remaining Azure AI tools integrated into EShop (all C#!)
 
@@ -1291,9 +1378,9 @@ Completed so far in Stage 13 (Docker):
 ---
 
 ```
-Total Topics   →  176
-🟢 Free        →  124 topics
-🟡 Cheap       →   48 topics (~$10-15/month)
+Total Topics   →  187  (+11 Agentic AI topics added Phase 29b)
+🟢 Free        →  128 topics
+🟡 Cheap       →   55 topics (~$10-15/month)
 🔴 Delete!     →    4 topics (create → learn → delete)
 ─────────────────────────────────────────────
 Order          →  Microservices → Multi-env → AKS
@@ -1301,13 +1388,15 @@ Order          →  Microservices → Multi-env → AKS
                →  AI Concepts → Python → Classical ML → Deep Learning
                →  HuggingFace → GenAI Concepts → GenAI Implementation
                →  Prompt Engineering → RAG → Azure OpenAI
-               →  Semantic Kernel → Azure AI Services → MLOps → Terraform LAST!
+               →  Semantic Kernel → AGENTIC AI (MCP + Agents + A2A) → Azure AI Services → MLOps → Terraform LAST!
 Key decisions  →  Auth0 FREE (easy start!) → AD B2C (Azure native!)
                →  Terraform at END (know all resources first!)
                →  Build manually → understand → automate! ✅
                →  AI: Concept first → Python → ML → GenAI (logical order!) ✅
                →  GenAI: Concepts phase → Implementation phase (dedicated!) ✅
                →  AI in C#/.NET for production (Semantic Kernel!) ✅
+               →  Agentic AI: MCP tools first → single agent → multi-agent → Azure Foundry! ✅
+               →  IShoppingAgent in Core = Clean Architecture for AI (swap SK↔Foundry freely!) ✅
 Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 ```
 
@@ -1352,6 +1441,7 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 42 | Phase 27 — RAG (vector DB, index EShop products, AI search!) | ⏳ |
 | 43 | Phase 28 — Azure OpenAI Setup (GPT-4 private, C# SDK!) | ⏳ |
 | 44 | Phase 29 — Semantic Kernel .NET (EShop.AI microservice!) | ⏳ |
+| 44b | Phase 29b — Agentic AI (MCP + SK Agents + Azure AI Foundry + A2A + EShop.AI.Agent microservice!) | ⏳ |
 | 45 | Phase 30 — Full Azure AI Services (Vision, Speech, Language, Bot!) | ⏳ |
 | 46 | Phase 31 — MLOps (CI/CD for ML, auto-retrain, model monitoring!) | ⏳ |
 
