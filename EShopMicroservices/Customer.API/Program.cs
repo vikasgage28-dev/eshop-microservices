@@ -24,6 +24,16 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenLocalhost(5022, lo => lo.Protocols = HttpProtocols.Http2);    // gRPC (h2c)
 });
 
+// ── CORS — origins come from appsettings.json, never hardcoded ──────────────
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+    options.AddPolicy("ReactFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
 // ── Services ────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
@@ -69,6 +79,7 @@ if (app.Environment.IsDevelopment())
 
 // ── Middleware pipeline ──────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors("ReactFrontend");
 
 if (app.Environment.IsDevelopment())
 {
