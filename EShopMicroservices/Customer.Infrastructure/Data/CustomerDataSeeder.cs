@@ -31,7 +31,7 @@ namespace Customer.Infrastructure.Data
                     Id        = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                     FirstName = "Alice",
                     LastName  = "Smith",
-                    Email     = "alice.smith@eshop.com",
+                    Email     = "alice@eshop.com",   // matches Identity seeded email
                     Phone     = "+91-9000000001",
                     CreatedAt = DateTime.UtcNow,
                     Addresses = new List<Address>

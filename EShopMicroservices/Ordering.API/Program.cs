@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,21 @@ using Ordering.Infrastructure.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
+// ── CORS — origins come from appsettings.json, never hardcoded ──────────────
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+    options.AddPolicy("ReactFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
 // ── Services ────────────────────────────────────────────────────────────────
-builder.Services.AddControllers();
+// JsonStringEnumConverter → Status serializes as "Pending" not 0
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -54,6 +68,7 @@ if (app.Environment.IsDevelopment())
 
 // Global error handler — MUST be first so it catches all exceptions!
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors("ReactFrontend");
 
 if (app.Environment.IsDevelopment())
 {

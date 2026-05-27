@@ -69,9 +69,61 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 33: Phase 12.7 Complete — Next: Phase 12.8
+## 📍 CURRENT STAGE — Stage 34: Phase 13 React Frontend COMPLETE — Next: Phase 13 Azure Static Web Apps Deployment
 
 ### Where We Stopped
+```
+Phase 13 — React Frontend COMPLETE! ✅
+
+React 19 + TypeScript + Vite 8 frontend built and running at http://localhost:5173
+Connected live to all 4 backend APIs via .NET Aspire (localhost ports).
+
+What was built:
+→ Full project scaffold (Vite 8, React 19, TypeScript, Tailwind CSS v4, Shadcn/ui)
+→ Redux Toolkit store + typed hooks (useAppSelector, useAppDispatch)
+→ RTK Query — createApi, baseQuery with JWT header, all endpoints
+→ Axios JWT interceptor for login/register/refresh
+→ React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
+→ Auth slice — login, logout, register, token + user in Redux
+→ Login page + Register page (wider cards, placeholders, dark text fix)
+→ Products page — RTK Query, search debounce, category filter, pagination, Picsum images
+→ Product Detail page — full info, reviews, qty selector, Add to Cart
+→ Admin page — product CRUD table with Create/Edit/Delete dialog (Admin only)
+→ Cart page — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
+→ Checkout page — shipping address form, lookup customer by email, PlaceOrder API
+→ Orders page — table with status badges, click row → Order Detail
+→ Order Detail page — full order info, items list, Cancel Order for Pending
+→ Customers page — admin-only list with search
+→ Dashboard — stat cards (Products, Orders, Customers, Revenue) + Recent Orders table
+→ Profile page — avatar, account info, role badges, order stats, actions
+→ Dark mode — useDarkMode hook, localStorage persistence, Moon/Sun toggle in TopBar
+→ Lenovo Vantage UI design — 165px sidebar, solid blue active state, flat borders, #f4f4f4 bg
+→ Font scaling — all text uses rem-based Tailwind classes (text-sm, text-xs, etc.)
+  Base font size: 20px in index.css → all text scales proportionally
+→ Auth pages — wider cards (700px), all inputs have placeholders, dark text fix
+→ Custom hooks: useAuth, useCart, useDebounce, useDarkMode
+
+CustomerDataSeeder.cs fixed:
+→ alice.smith@eshop.com → alice@eshop.com (matches Identity seeder)
+
+Key credentials:
+→ Admin:    admin@eshop.com / Admin@12345
+→ Customer: alice@eshop.com / Customer@12345
+→ Currency: INR (₹) — en-IN locale
+
+Remaining in Phase 13:
+→ Azure Static Web Apps deployment (FREE CI/CD from GitHub) — next step!
+→ Zod + React Hook Form (forms currently use plain useState — optional upgrade)
+→ React 19 new hooks (useTransition, useOptimistic — optional deep dive)
+→ Categories admin page (optional — products work without it)
+
+### Next: Phase 13 remaining → Azure Static Web Apps Deploy
+→ az staticwebapp create + GitHub Actions auto-generated yml
+→ frontend/eshop-frontend → Static Web App (FREE tier)
+→ VITE_API_BASE_URL → point to Azure APIs
+```
+
+### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
 ```
 Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
 
@@ -1005,41 +1057,126 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
-### ⚛️ Phase 13 — React Frontend (UI for EShop!) ← NEXT!
+### ⚛️ Phase 13 — React Frontend (UI for EShop!) ← IN PROGRESS 🔄
 > Build the UI FIRST — provides immediate visible value and unlocks real auth testing!
 > Backend is complete. APIs run locally. No new infrastructure needed to start.
 
+**Confirmed Tech Stack:**
+```
+Core:          React 19.2  +  TypeScript 6  +  Vite 8
+Routing:       React Router DOM v7
+State:         Redux Toolkit 2.12  (store + slices)
+API Calls:     RTK Query  (built into RTK — replaces createAsyncThunk)
+Auth calls:    Axios  (JWT interceptor for login/register/refresh only)
+Forms:         React Hook Form v7  +  Zod v4  (schema validation)
+UI:            Shadcn/ui  +  Tailwind CSS v4  +  Lucide React (icons)
+Charts:        Recharts  (order stats, product analytics)
+Dates:         DayJS
+Hosting:       Azure Static Web Apps  (FREE tier)
+
+Builds on FinanceTracker knowledge:
+  ✅ RTK (createSlice, configureStore, typed hooks) — already know
+  ✅ React Router DOM v7 — already know
+  ✅ Axios interceptor — already know
+  ✅ Recharts — already know
+  NEW: RTK Query (upgrade from createAsyncThunk)
+  NEW: Shadcn/ui + Tailwind v4 (instead of MUI)
+  NEW: React Hook Form + Zod (instead of useReducer manual forms)
+  NEW: React 19 hooks — use(), useActionState, useOptimistic, useTransition
+```
+
+**Hooks used in this app:**
+```
+React built-in:   useState, useEffect, useReducer, useMemo, useCallback, useRef
+React 19 new:     useTransition, useActionState, useOptimistic, use()
+React Router:     useNavigate, useParams, useLocation
+Redux:            useAppSelector, useAppDispatch
+RTK Query:        useGetProductsQuery, usePlaceOrderMutation (auto-generated)
+RHF:              useForm, useWatch
+Custom built:     useAuth, useCart, useDebounce
+```
+
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 50 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
-| 51 | Azure Static Web Apps (host React — FREE!) | 🟢 Free | ⏳ |
-| 52 | Connect React to local EShop APIs (CORS config) | 🟢 Free | ⏳ |
-| 53 | Products listing page | 🟢 Free | ⏳ |
-| 54 | Login/Register page (using our JWT Identity.API) | 🟢 Free | ⏳ |
-| 55 | Admin dashboard (create/update products) | 🟢 Free | ⏳ |
+| 50 | Vite 8 + React 19 + TypeScript 6 project scaffold | 🟢 Free | ✅ Done |
+| 51 | Tailwind CSS v4 setup (one CSS import — no config file!) | 🟢 Free | ✅ Done |
+| 52 | Shadcn/ui init + core components (Button, Card, Input, Table, Dialog) | 🟢 Free | ✅ Done |
+| 53 | Folder architecture (api/, features/, pages/, components/, hooks/, types/, lib/) | 🟢 Free | ✅ Done |
+| 54 | Redux store + typed hooks (useAppSelector, useAppDispatch) | 🟢 Free | ✅ Done |
+| 55 | RTK Query — createApi, baseQuery with JWT header, endpoints | 🟢 Free | ✅ Done |
+| 56 | Axios auth client — JWT interceptor for login/register/refresh | 🟢 Free | ✅ Done |
+| 57 | React Router DOM v7 — routes, nested layouts, ProtectedRoute | 🟢 Free | ✅ Done |
+| 58 | Auth slice — login, logout, token + user in Redux | 🟢 Free | ✅ Done |
+| 59 | Zod schemas + React Hook Form (replaces useReducer manual forms) | 🟢 Free | ⏭️ Skipped — forms use plain useState (works fine, RHF optional upgrade later) |
+| 60 | Login page — wider card (700px), placeholders, dark text fix | 🟢 Free | ✅ Done |
+| 61 | Register page — wider card (700px), all field placeholders | 🟢 Free | ✅ Done |
+| 62 | Products listing — RTK Query + search debounce + category filter + pagination + Picsum images | 🟢 Free | ✅ Done |
+| 63 | Product detail page — image, description, reviews, qty selector, Add to Cart | 🟢 Free | ✅ Done |
+| 64 | Admin page — product CRUD with Create/Edit/Delete dialog (Admin only) | 🟢 Free | ✅ Done |
+| 65 | Categories page — admin CRUD table | 🟢 Free | ⏳ Optional — not built yet |
+| 66 | Cart — Redux slice, qty controls, remove, subtotal, live badge in Sidebar + TopBar | 🟢 Free | ✅ Done |
+| 67 | Checkout page — shipping address + customer lookup + PlaceOrder API call | 🟢 Free | ✅ Done |
+| 68 | Orders page + Order Detail page — list, status badges, items, Cancel Order | 🟢 Free | ✅ Done |
+| 69 | Customers page — admin-only list with search filter | 🟢 Free | ✅ Done |
+| 70 | Dashboard — stat cards (Products/Orders/Customers/Revenue) + Recent Orders table | 🟢 Free | ✅ Done |
+| 71 | Dark mode toggle — useDarkMode hook, localStorage, Moon/Sun in TopBar | 🟢 Free | ✅ Done |
+| 72 | CORS config on all 4 backend APIs | 🟢 Free | ✅ Done |
+| 73 | React 19 new hooks — useTransition, useActionState, useOptimistic | 🟢 Free | ⏳ Optional deep dive later |
+| 74 | Custom hooks — useAuth, useCart, useDebounce, useDarkMode | 🟢 Free | ✅ Done |
+| 75 | Azure Static Web Apps deploy (FREE — CI/CD from GitHub) | 🟢 Free | 🔄 **NEXT** |
+| — | Profile page — avatar, account info, role badges, order stats, actions | 🟢 Free | ✅ Done (extra!) |
+| — | Lenovo Vantage UI — 165px sidebar, solid blue active, flat borders, Segoe UI | 🟢 Free | ✅ Done (extra!) |
+| — | Font scaling — rem-based Tailwind classes, 20px base in index.css | 🟢 Free | ✅ Done (extra!) |
 
 ---
 
 ### 🔑 Phase 14 — Authentication Deep Dive (with React UI!)
 > UI must exist before Auth makes sense to implement and test end-to-end!
-> Logical sequence: Concepts → Auth0 (easy!) → Azure AD B2C → Enterprise → Advanced!
+> Logical sequence: Concepts → Already built → Standard flows → Enterprise → Advanced → Passwordless
+> Total cost: £0 — all tools free tier or local
 
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 56 | OAuth 2.0 concept (flows, tokens, scopes — theory first!) | 🟢 Free | ⏳ |
-| 57 | OpenID Connect (OIDC) concept (built on OAuth 2.0!) | 🟢 Free | ⏳ |
-| 58 | Auth0 setup (FREE! 7,500 users — easiest to start with!) | 🟢 Free | ⏳ |
-| 59 | Auth0 + React — Authorization Code Flow (login/logout!) | 🟢 Free | ⏳ |
-| 60 | Auth0 — Social Logins (Google + GitHub — free!) | 🟢 Free | ⏳ |
-| 61 | Auth0 — Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
-| 62 | Auth0 — Machine to Machine (service-to-service!) | 🟢 Free | ⏳ |
-| 63 | Azure AD B2C (same concepts — Azure native!) | 🟢 Free | ⏳ |
-| 64 | Azure AD B2C + React (replace Auth0 with AD B2C!) | 🟢 Free | ⏳ |
-| 65 | Social Logins via Azure AD B2C (Google + Microsoft!) | 🟢 Free | ⏳ |
-| 66 | Azure AD / Entra ID (enterprise employee login!) | 🟢 Free | ⏳ |
-| 67 | Client Credentials Flow (microservice to microservice!) | 🟢 Free | ⏳ |
-| 68 | SAML 2.0 (corporate SSO — enterprise apps!) | 🟢 Free | ⏳ |
-| 69 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
+**Already done in Identity.API (✅):**
+```
+JWT Authentication       — email + password → JWT token
+Refresh Token            — silent re-auth without re-login
+Role-based auth          — Admin / User roles in JWT claims
+```
+
+**Tools used in Phase 14:**
+```
+Auth0 free tier          — OAuth 2.0, OIDC, Social Logins, Refresh Tokens, M2M
+Azure AD B2C free tier   — Consumer identity, Social Logins via Azure
+Entra ID free tier       — Enterprise employee login
+Keycloak (local)         — SAML 2.0, SSO — runs as local Java app, zero cost
+ASP.NET Core Identity    — 2FA built-in (GenerateTwoFactorTokenAsync)
+MailKit NuGet            — sends OTP email (Gmail SMTP free)
+Fido2.NET NuGet          — Passkeys / WebAuthn implementation
+Local self-signed certs  — mTLS between microservices
+```
+
+| # | Auth Method | Tool | Cost | Status |
+|---|------------|------|------|--------|
+| 76 | **Session vs Token** — concept, when to use which | Theory | 🟢 Free | ⏳ |
+| 77 | **OAuth 2.0 concepts** — flows, tokens, scopes, grants | Theory | 🟢 Free | ⏳ |
+| 78 | **OAuth 2.0 — Authorization Code + PKCE** — React SPA login | Auth0 | 🟢 Free | ⏳ |
+| 79 | **OAuth 2.0 — Client Credentials** — microservice to microservice | Auth0 | 🟢 Free | ⏳ |
+| 80 | **OAuth 2.0 — Refresh Token flow** — silent re-auth | Auth0 | 🟢 Free | ⏳ |
+| 81 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT | Auth0 | 🟢 Free | ⏳ |
+| 82 | **OAuth 2.1** — updated spec (PKCE mandatory, implicit removed) | Theory | 🟢 Free | ⏳ |
+| 83 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery | Auth0 | 🟢 Free | ⏳ |
+| 84 | **Social Logins** — Google + GitHub via Auth0 | Auth0 | 🟢 Free | ⏳ |
+| 85 | **2FA — Email OTP** — Identity built-in + MailKit (no Google Authenticator!) | MailKit | 🟢 Free | ⏳ |
+| 86 | **Magic Links** — passwordless email login (HMAC signed token) | Identity.API | 🟢 Free | ⏳ |
+| 87 | **Azure AD B2C** — consumer identity, Azure native OIDC | Azure free | 🟢 Free | ⏳ |
+| 88 | **Azure AD B2C + React** — replace Auth0 with AD B2C | Azure free | 🟢 Free | ⏳ |
+| 89 | **Social Logins via Azure AD B2C** — Google + Microsoft | Azure free | 🟢 Free | ⏳ |
+| 90 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
+| 91 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow | Keycloak local | 🟢 Free | ⏳ |
+| 92 | **API Key Authentication** — developer / service account access | Identity.API | 🟢 Free | ⏳ |
+| 93 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID, no password | Fido2.NET | 🟢 Free | ⏳ |
+| 94 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth | Local certs | 🟢 Free | ⏳ |
+| 95 | **Zero Trust concept** — never trust, always verify architecture | Theory | 🟢 Free | ⏳ |
+| 96 | **Risk-based / Adaptive Auth** — new device triggers extra verification | Identity.API | 🟢 Free | ⏳ |
 
 ---
 
@@ -1438,7 +1575,7 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 27 | Phase 12.5 — .NET Aspire Orchestration (ServiceDefaults + AppHost + Dashboard) | ✅ Done |
 | 28 | Phase 12.6 — Service-to-Service Communication (HTTP + Messaging + Aspire fixes) | ✅ Done |
 | 28a | Phase 12.7 — gRPC (typed contracts, Protobuf, HTTP/2 — highest market demand) | ✅ Done |
-| 29 | Phase 13 — React Frontend (Vite + TypeScript + Azure Static Web Apps) | 🔄 **NEXT** |
+| 29 | Phase 13 — React Frontend (Vite + TypeScript + Redux + RTK Query + full UI) | ✅ Done (Static Web Apps deploy = next!) |
 | 30 | Phase 14 — Auth Deep Dive (Auth0 → AD B2C → SAML → mTLS!) | ⏳ |
 | 31 | Phase 15 — Cloud Deployment (Dockerfiles + App Config + Multi-Env + AKS) | ⏳ |
 | 32 | Phase 16 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
