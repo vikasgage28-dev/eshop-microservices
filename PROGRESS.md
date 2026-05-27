@@ -69,9 +69,61 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 33: Phase 12.7 Complete — Next: Phase 12.8
+## 📍 CURRENT STAGE — Stage 34: Phase 13 React Frontend COMPLETE — Next: Phase 13 Azure Static Web Apps Deployment
 
 ### Where We Stopped
+```
+Phase 13 — React Frontend COMPLETE! ✅
+
+React 19 + TypeScript + Vite 8 frontend built and running at http://localhost:5173
+Connected live to all 4 backend APIs via .NET Aspire (localhost ports).
+
+What was built:
+→ Full project scaffold (Vite 8, React 19, TypeScript, Tailwind CSS v4, Shadcn/ui)
+→ Redux Toolkit store + typed hooks (useAppSelector, useAppDispatch)
+→ RTK Query — createApi, baseQuery with JWT header, all endpoints
+→ Axios JWT interceptor for login/register/refresh
+→ React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
+→ Auth slice — login, logout, register, token + user in Redux
+→ Login page + Register page (wider cards, placeholders, dark text fix)
+→ Products page — RTK Query, search debounce, category filter, pagination, Picsum images
+→ Product Detail page — full info, reviews, qty selector, Add to Cart
+→ Admin page — product CRUD table with Create/Edit/Delete dialog (Admin only)
+→ Cart page — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
+→ Checkout page — shipping address form, lookup customer by email, PlaceOrder API
+→ Orders page — table with status badges, click row → Order Detail
+→ Order Detail page — full order info, items list, Cancel Order for Pending
+→ Customers page — admin-only list with search
+→ Dashboard — stat cards (Products, Orders, Customers, Revenue) + Recent Orders table
+→ Profile page — avatar, account info, role badges, order stats, actions
+→ Dark mode — useDarkMode hook, localStorage persistence, Moon/Sun toggle in TopBar
+→ Lenovo Vantage UI design — 165px sidebar, solid blue active state, flat borders, #f4f4f4 bg
+→ Font scaling — all text uses rem-based Tailwind classes (text-sm, text-xs, etc.)
+  Base font size: 20px in index.css → all text scales proportionally
+→ Auth pages — wider cards (700px), all inputs have placeholders, dark text fix
+→ Custom hooks: useAuth, useCart, useDebounce, useDarkMode
+
+CustomerDataSeeder.cs fixed:
+→ alice.smith@eshop.com → alice@eshop.com (matches Identity seeder)
+
+Key credentials:
+→ Admin:    admin@eshop.com / Admin@12345
+→ Customer: alice@eshop.com / Customer@12345
+→ Currency: INR (₹) — en-IN locale
+
+Remaining in Phase 13:
+→ Azure Static Web Apps deployment (FREE CI/CD from GitHub) — next step!
+→ Zod + React Hook Form (forms currently use plain useState — optional upgrade)
+→ React 19 new hooks (useTransition, useOptimistic — optional deep dive)
+→ Categories admin page (optional — products work without it)
+
+### Next: Phase 13 remaining → Azure Static Web Apps Deploy
+→ az staticwebapp create + GitHub Actions auto-generated yml
+→ frontend/eshop-frontend → Static Web App (FREE tier)
+→ VITE_API_BASE_URL → point to Azure APIs
+```
+
+### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
 ```
 Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
 
@@ -139,12 +191,13 @@ Why unauthenticated ordering is intentional (NOT a bug):
 → Adding [Authorize] to every service = duplication, coupling, key rotation nightmare
 → Real pattern: gateway owns auth, services own business logic
 
-### Next: Phase 12.8 — Azure App Configuration (centralized config)
-→ Replace per-service appsettings.json with single Azure App Configuration store
-→ All services read from one place — one connection string change updates all services
-→ Key Vault references: secrets stay in Key Vault, App Config holds non-secret config
-→ Feature flags: enable/disable features without redeployment
-→ Branch: feature/phase12-app-config
+### Next: Phase 13 — React Frontend (UI for EShop!)
+→ Build React + TypeScript + Vite frontend against running local APIs
+→ Azure Static Web Apps for free hosting with CI/CD built in
+→ Products listing, Login/Register, Admin dashboard
+→ Unblocks Phase 14 (Auth Deep Dive needs a UI to test against!)
+→ App Config + Key Vault deferred to Phase 15 (Cloud Deploy) where multi-pod value is real
+→ Branch: feature/phase13-react-frontend
 ```
 
 Phase 12.6b — Async Messaging + Aspire Orchestration Fixes COMPLETE! ✅
@@ -994,109 +1047,206 @@ Completed so far in Stage 13 (Docker):
 | 41 | Split monolith → Identity Service (.NET) | 🟢 Free | ✅ Done (Phase 12.4!) |
 | 42 | Service-to-service communication (HTTP sync + async messaging) | 🟢 Free | ✅ Done (Phase 12.6!) |
 | 42a | gRPC service-to-service (typed contracts, 7x faster than REST) | 🟢 Free | ✅ Done (Phase 12.7!) |
-| 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ⏳ Phase 12.8 — NEXT! |
-| 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ⏳ |
-| 45 | Docker Compose for ALL microservices locally | 🟢 Free | ⏳ |
+| 43 | Azure App Configuration — central hub (settings + KV refs!) | 🟢 Free | ➡️ Moved to Phase 15 (Cloud Deployment) |
+| 44 | Each microservice reads from App Config only (one source!) | 🟢 Free | ➡️ Moved to Phase 15 (Cloud Deployment) |
+| 45 | Docker Compose for ALL microservices locally | 🟢 Free | ➡️ Moved to Phase 15 (Cloud Deployment) |
 | 46 | .NET Aspire — orchestrate all services locally + dashboard! | 🟢 Free | ✅ Done (Phase 12.5!) |
-| 47 | Azure Container Registry (ACR) — private registry for all images! | 🟡 $5 | ⏳ |
-| 48 | Update CI/CD pipelines → build + push each service image to ACR | 🟢 Free | ⏳ |
-| 49 | Managed Identity → AKS pulls from ACR (no password needed!) | 🟢 Free | ⏳ |
+| 47 | Azure Container Registry (ACR) — private registry for all images! | 🟡 $5 | ➡️ Moved to Phase 15 (Cloud Deployment) |
+| 48 | Update CI/CD pipelines → build + push each service image to ACR | 🟢 Free | ➡️ Moved to Phase 15 (Cloud Deployment) |
+| 49 | Managed Identity → AKS pulls from ACR (no password needed!) | 🟢 Free | ➡️ Moved to Phase 15 (Cloud Deployment) |
 
 ---
 
-### 🌎 Phase 13 — Multiple Environments (DEV / STAGING / PROD)
-> Real world: Always 3 environments! Never deploy direct to PROD!
-> ⚠️ Cost Decision: NOT creating separate Azure environments (too expensive!)
-> Smart approach: Learn concepts + simulate using FREE tools!
+### ⚛️ Phase 13 — React Frontend (UI for EShop!) ← IN PROGRESS 🔄
+> Build the UI FIRST — provides immediate visible value and unlocks real auth testing!
+> Backend is complete. APIs run locally. No new infrastructure needed to start.
+
+**Confirmed Tech Stack:**
+```
+Core:          React 19.2  +  TypeScript 6  +  Vite 8
+Routing:       React Router DOM v7
+State:         Redux Toolkit 2.12  (store + slices)
+API Calls:     RTK Query  (built into RTK — replaces createAsyncThunk)
+Auth calls:    Axios  (JWT interceptor for login/register/refresh only)
+Forms:         React Hook Form v7  +  Zod v4  (schema validation)
+UI:            Shadcn/ui  +  Tailwind CSS v4  +  Lucide React (icons)
+Charts:        Recharts  (order stats, product analytics)
+Dates:         DayJS
+Hosting:       Azure Static Web Apps  (FREE tier)
+
+Builds on FinanceTracker knowledge:
+  ✅ RTK (createSlice, configureStore, typed hooks) — already know
+  ✅ React Router DOM v7 — already know
+  ✅ Axios interceptor — already know
+  ✅ Recharts — already know
+  NEW: RTK Query (upgrade from createAsyncThunk)
+  NEW: Shadcn/ui + Tailwind v4 (instead of MUI)
+  NEW: React Hook Form + Zod (instead of useReducer manual forms)
+  NEW: React 19 hooks — use(), useActionState, useOptimistic, useTransition
+```
+
+**Hooks used in this app:**
+```
+React built-in:   useState, useEffect, useReducer, useMemo, useCallback, useRef
+React 19 new:     useTransition, useActionState, useOptimistic, use()
+React Router:     useNavigate, useParams, useLocation
+Redux:            useAppSelector, useAppDispatch
+RTK Query:        useGetProductsQuery, usePlaceOrderMutation (auto-generated)
+RHF:              useForm, useWatch
+Custom built:     useAuth, useCart, useDebounce
+```
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 50 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
-| 51 | Local Docker Compose = DEV environment (already done!) | 🟢 Free | ✅ Done |
-| 52 | Azure Deployment Slots = STAGING (same App Service, zero cost!) | 🟢 Free | ⏳ |
-| 53 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
-| 54 | Environment-specific appsettings.json (Dev/Staging/Production) | 🟢 Free | ⏳ |
-| 55 | Promote build: DEV(local) → STAGING(slot) → PROD(swap!) | 🟢 Free | ⏳ |
+| 50 | Vite 8 + React 19 + TypeScript 6 project scaffold | 🟢 Free | ✅ Done |
+| 51 | Tailwind CSS v4 setup (one CSS import — no config file!) | 🟢 Free | ✅ Done |
+| 52 | Shadcn/ui init + core components (Button, Card, Input, Table, Dialog) | 🟢 Free | ✅ Done |
+| 53 | Folder architecture (api/, features/, pages/, components/, hooks/, types/, lib/) | 🟢 Free | ✅ Done |
+| 54 | Redux store + typed hooks (useAppSelector, useAppDispatch) | 🟢 Free | ✅ Done |
+| 55 | RTK Query — createApi, baseQuery with JWT header, endpoints | 🟢 Free | ✅ Done |
+| 56 | Axios auth client — JWT interceptor for login/register/refresh | 🟢 Free | ✅ Done |
+| 57 | React Router DOM v7 — routes, nested layouts, ProtectedRoute | 🟢 Free | ✅ Done |
+| 58 | Auth slice — login, logout, token + user in Redux | 🟢 Free | ✅ Done |
+| 59 | Zod schemas + React Hook Form (replaces useReducer manual forms) | 🟢 Free | ⏭️ Skipped — forms use plain useState (works fine, RHF optional upgrade later) |
+| 60 | Login page — wider card (700px), placeholders, dark text fix | 🟢 Free | ✅ Done |
+| 61 | Register page — wider card (700px), all field placeholders | 🟢 Free | ✅ Done |
+| 62 | Products listing — RTK Query + search debounce + category filter + pagination + Picsum images | 🟢 Free | ✅ Done |
+| 63 | Product detail page — image, description, reviews, qty selector, Add to Cart | 🟢 Free | ✅ Done |
+| 64 | Admin page — product CRUD with Create/Edit/Delete dialog (Admin only) | 🟢 Free | ✅ Done |
+| 65 | Categories page — admin CRUD table | 🟢 Free | ⏳ Optional — not built yet |
+| 66 | Cart — Redux slice, qty controls, remove, subtotal, live badge in Sidebar + TopBar | 🟢 Free | ✅ Done |
+| 67 | Checkout page — shipping address + customer lookup + PlaceOrder API call | 🟢 Free | ✅ Done |
+| 68 | Orders page + Order Detail page — list, status badges, items, Cancel Order | 🟢 Free | ✅ Done |
+| 69 | Customers page — admin-only list with search filter | 🟢 Free | ✅ Done |
+| 70 | Dashboard — stat cards (Products/Orders/Customers/Revenue) + Recent Orders table | 🟢 Free | ✅ Done |
+| 71 | Dark mode toggle — useDarkMode hook, localStorage, Moon/Sun in TopBar | 🟢 Free | ✅ Done |
+| 72 | CORS config on all 4 backend APIs | 🟢 Free | ✅ Done |
+| 73 | React 19 new hooks — useTransition, useActionState, useOptimistic | 🟢 Free | ⏳ Optional deep dive later |
+| 74 | Custom hooks — useAuth, useCart, useDebounce, useDarkMode | 🟢 Free | ✅ Done |
+| 75 | Azure Static Web Apps deploy (FREE — CI/CD from GitHub) | 🟢 Free | 🔄 **NEXT** |
+| — | Profile page — avatar, account info, role badges, order stats, actions | 🟢 Free | ✅ Done (extra!) |
+| — | Lenovo Vantage UI — 165px sidebar, solid blue active, flat borders, Segoe UI | 🟢 Free | ✅ Done (extra!) |
+| — | Font scaling — rem-based Tailwind classes, 20px base in index.css | 🟢 Free | ✅ Done (extra!) |
 
 ---
 
-### ☸️ Phase 14 — Kubernetes (AKS)
-> Deploy ALL microservices to AKS — this is real world! ✅
+### 🔑 Phase 14 — Authentication Deep Dive (with React UI!)
+> UI must exist before Auth makes sense to implement and test end-to-end!
+> Logical sequence: Concepts → Already built → Standard flows → Enterprise → Advanced → Passwordless
+> Total cost: £0 — all tools free tier or local
+
+**Already done in Identity.API (✅):**
+```
+JWT Authentication       — email + password → JWT token
+Refresh Token            — silent re-auth without re-login
+Role-based auth          — Admin / User roles in JWT claims
+```
+
+**Tools used in Phase 14:**
+```
+Auth0 free tier          — OAuth 2.0, OIDC, Social Logins, Refresh Tokens, M2M
+Azure AD B2C free tier   — Consumer identity, Social Logins via Azure
+Entra ID free tier       — Enterprise employee login
+Keycloak (local)         — SAML 2.0, SSO — runs as local Java app, zero cost
+ASP.NET Core Identity    — 2FA built-in (GenerateTwoFactorTokenAsync)
+MailKit NuGet            — sends OTP email (Gmail SMTP free)
+Fido2.NET NuGet          — Passkeys / WebAuthn implementation
+Local self-signed certs  — mTLS between microservices
+```
+
+| # | Auth Method | Tool | Cost | Status |
+|---|------------|------|------|--------|
+| 76 | **Session vs Token** — concept, when to use which | Theory | 🟢 Free | ⏳ |
+| 77 | **OAuth 2.0 concepts** — flows, tokens, scopes, grants | Theory | 🟢 Free | ⏳ |
+| 78 | **OAuth 2.0 — Authorization Code + PKCE** — React SPA login | Auth0 | 🟢 Free | ⏳ |
+| 79 | **OAuth 2.0 — Client Credentials** — microservice to microservice | Auth0 | 🟢 Free | ⏳ |
+| 80 | **OAuth 2.0 — Refresh Token flow** — silent re-auth | Auth0 | 🟢 Free | ⏳ |
+| 81 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT | Auth0 | 🟢 Free | ⏳ |
+| 82 | **OAuth 2.1** — updated spec (PKCE mandatory, implicit removed) | Theory | 🟢 Free | ⏳ |
+| 83 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery | Auth0 | 🟢 Free | ⏳ |
+| 84 | **Social Logins** — Google + GitHub via Auth0 | Auth0 | 🟢 Free | ⏳ |
+| 85 | **2FA — Email OTP** — Identity built-in + MailKit (no Google Authenticator!) | MailKit | 🟢 Free | ⏳ |
+| 86 | **Magic Links** — passwordless email login (HMAC signed token) | Identity.API | 🟢 Free | ⏳ |
+| 87 | **Azure AD B2C** — consumer identity, Azure native OIDC | Azure free | 🟢 Free | ⏳ |
+| 88 | **Azure AD B2C + React** — replace Auth0 with AD B2C | Azure free | 🟢 Free | ⏳ |
+| 89 | **Social Logins via Azure AD B2C** — Google + Microsoft | Azure free | 🟢 Free | ⏳ |
+| 90 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
+| 91 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow | Keycloak local | 🟢 Free | ⏳ |
+| 92 | **API Key Authentication** — developer / service account access | Identity.API | 🟢 Free | ⏳ |
+| 93 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID, no password | Fido2.NET | 🟢 Free | ⏳ |
+| 94 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth | Local certs | 🟢 Free | ⏳ |
+| 95 | **Zero Trust concept** — never trust, always verify architecture | Theory | 🟢 Free | ⏳ |
+| 96 | **Risk-based / Adaptive Auth** — new device triggers extra verification | Identity.API | 🟢 Free | ⏳ |
+
+---
+
+### ☁️ Phase 15 — Cloud Deployment (App Config + Multi-Env + AKS)
+> Deploy the COMPLETE, AUTHENTICATED app (UI + Auth + Services) in one go!
+> App Config and Key Vault are wired here — where multi-pod value is REAL!
+
+**Phase 15a — Containerization & Config**
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 56 | Azure Container Apps (stepping stone before AKS!) | 🟡 $1-3 | ⏳ |
-| 57 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
-| 58 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
-| 59 | Deploy ALL microservices to AKS | 🟡 ~$5 | ⏳ |
-| 60 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
-| 61 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
-| 62 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
-| 63 | Azure Front Door (global entry point for AKS!) | 🔴 Delete! | ⏳ |
-| 64 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
-| 65 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
-| 66 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+| 70 | Dockerfiles for all 4 microservices (multi-stage builds) | 🟢 Free | ⏳ |
+| 71 | Build images via GitHub Actions (no local Docker needed!) | 🟢 Free | ⏳ |
+| 72 | Azure Container Registry (ACR) — private image registry | 🟡 $5 | ⏳ |
+| 73 | Azure App Configuration — central config hub (settings + KV refs + feature flags) | 🟢 Free | ⏳ |
+| 74 | Key Vault references — secrets in KV, App Config holds pointers | 🟢 Free | ⏳ |
+| 75 | Each microservice reads from App Config only (one source of truth!) | 🟢 Free | ⏳ |
+| 76 | Managed Identity → AKS pulls from ACR + reads Key Vault (no passwords!) | 🟢 Free | ⏳ |
 
----
-
-### ⚛️ Phase 15 — React Frontend (UI for EShop!)
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 67 | React project setup (Vite + TypeScript) | 🟢 Free | ⏳ |
-| 68 | Azure Static Web Apps (host React — FREE!) | 🟢 Free | ⏳ |
-| 69 | Connect React to EShop.API via APIM | 🟢 Free | ⏳ |
-| 70 | Products listing page | 🟢 Free | ⏳ |
-| 71 | Login/Register page (using our JWT) | 🟢 Free | ⏳ |
-| 72 | Admin dashboard (create/update products) | 🟢 Free | ⏳ |
-
----
-
-### 🔑 Phase 16 — Authentication Deep Dive (with React UI!)
-> Logical sequence: Concepts → Auth0 (easy!) → Azure AD B2C → Enterprise → Advanced!
+**Phase 15b — Multi-Environment Strategy**
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 73 | OAuth 2.0 concept (flows, tokens, scopes — theory first!) | 🟢 Free | ⏳ |
-| 74 | OpenID Connect (OIDC) concept (built on OAuth 2.0!) | 🟢 Free | ⏳ |
-| 75 | Auth0 setup (FREE! 7,500 users — easiest to start with!) | 🟢 Free | ⏳ |
-| 76 | Auth0 + React — Authorization Code Flow (login/logout!) | 🟢 Free | ⏳ |
-| 77 | Auth0 — Social Logins (Google + GitHub — free!) | 🟢 Free | ⏳ |
-| 78 | Auth0 — Refresh Tokens (silent re-auth!) | 🟢 Free | ⏳ |
-| 79 | Auth0 — Machine to Machine (service-to-service!) | 🟢 Free | ⏳ |
-| 80 | Azure AD B2C (same concepts — Azure native!) | 🟢 Free | ⏳ |
-| 81 | Azure AD B2C + React (replace Auth0 with AD B2C!) | 🟢 Free | ⏳ |
-| 82 | Social Logins via Azure AD B2C (Google + Microsoft!) | 🟢 Free | ⏳ |
-| 83 | Azure AD / Entra ID (enterprise employee login!) | 🟢 Free | ⏳ |
-| 84 | Client Credentials Flow (microservice to microservice!) | 🟢 Free | ⏳ |
-| 85 | SAML 2.0 (corporate SSO — enterprise apps!) | 🟢 Free | ⏳ |
-| 86 | Mutual TLS - mTLS (bank-level security!) | 🟢 Free | ⏳ |
+| 77 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
+| 78 | App Config labels (dev / staging / prod) — same store, different values | 🟢 Free | ⏳ |
+| 79 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
+| 80 | Promote build: local → STAGING → PROD (swap!) | 🟢 Free | ⏳ |
 
----
+**Phase 15c — Kubernetes (AKS)**
 
-### 🤖 Phase 17 — Search & AI (full app ready!)
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 87 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
-| 88 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
-| 89 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
-| 90 | AI product description generator | 🟡 $1-2 | ⏳ |
+| 81 | Azure Container Apps (stepping stone before AKS!) | 🟡 $1-3 | ⏳ |
+| 82 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
+| 83 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
+| 84 | Deploy ALL microservices + React SWA to AKS | 🟡 ~$5 | ⏳ |
+| 85 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
+| 86 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
+| 87 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
+| 88 | Azure Front Door (global entry point for AKS!) | 🔴 Delete! | ⏳ |
+| 89 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
+| 90 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
+| 91 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
 
 ---
 
-### 🏗️ Phase 18 — Infrastructure as Code (Terraform)
+### 🤖 Phase 16 — Search & AI (full app ready!)
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 92 | Azure Cognitive Search (product search + fuzzy!) | 🟢 Free | ⏳ |
+| 93 | Azure OpenAI — GPT-4 (product recommendations) | 🟡 $1-2 | ⏳ |
+| 94 | AI Chatbot in React (customer support!) | 🟡 $1-2 | ⏳ |
+| 95 | AI product description generator | 🟡 $1-2 | ⏳ |
+
+---
+
+### 🏗️ Phase 17 — Infrastructure as Code (Terraform)
 > Do at the END! Know all resources first, then automate everything!
 > Real world: Build manually → understand → then codify!
 > Nobody clicks portal in production! Everything is code!
 
 | # | Topic | Cost | Status |
 |---|-------|------|--------|
-| 91 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
-| 92 | terraform import → import all existing resources! | 🟢 Free | ⏳ |
-| 93 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
-| 94 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
-| 95 | Terraform — Full EShop infra in one command! | 🟢 Free | ⏳ |
-| 96 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
-| 97 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
+| 96 | Terraform Fundamentals (providers, state, plan, apply) | 🟢 Free | ⏳ |
+| 97 | terraform import → import all existing resources! | 🟢 Free | ⏳ |
+| 98 | Terraform modules for each microservice (SQL, KV, ACR) | 🟢 Free | ⏳ |
+| 99 | Terraform — AKS cluster + networking + RBAC | 🟢 Free | ⏳ |
+| 100 | Terraform — Full EShop infra in one command! | 🟢 Free | ⏳ |
+| 101 | Terraform remote state (Azure Blob Storage backend) | 🟢 Free | ⏳ |
+| 102 | Terraform workspaces (DEV / STAGING / PROD configs) | 🟢 Free | ⏳ |
 
 ---
 
@@ -1261,6 +1411,93 @@ Completed so far in Stage 13 (Docker):
 
 ---
 
+### 🤖 Phase 29b — Agentic AI (.NET + Azure)
+> The 2025-2026 paradigm shift: from single chatbots → networks of autonomous agents that
+> perceive, reason, plan, act, and remember. Principal Cloud & AI Architects design agent
+> SYSTEMS — not just individual models. This is the highest-demand AI skill in 2026.
+>
+> Learning order: Concepts → MCP (tools) → Single Agent → Multi-Agent → Azure runtime → EShop integration
+
+#### What makes AI "Agentic"?
+```
+Traditional AI:   User asks question → LLM generates answer → DONE
+                  One turn. Passive. No side effects.
+
+Agentic AI:       User gives GOAL → Agent perceives context
+                              → Agent reasons and plans steps
+                              → Agent calls tools / other agents
+                              → Agent observes results
+                              → Agent repeats until goal is met
+                  Multi-turn. Autonomous. Takes real actions.
+
+EShop example:
+  User: "Find me the cheapest laptop under ₹50,000, check if it's in stock,
+         and place an order if you find one"
+
+  Traditional: Returns text listing laptops (no action taken)
+
+  Agentic:     Step 1 → ProductSearchAgent.SearchProducts("laptop", maxPrice=50000)
+               Step 2 → InventoryAgent.CheckStock(productId)   ← calls EShop API
+               Step 3 → PricingAgent.ApplyDiscounts(productId) ← calls EShop API
+               Step 4 → OrderAgent.PlaceOrder(customerId, productId) ← calls EShop API
+               Result → "Ordered Lenovo IdeaPad for ₹47,999. Order ID: ORD-001"
+               The agent DID the task — not just described it!
+```
+
+| # | Topic | Cost | Status |
+|---|-------|------|--------|
+| 163a | Agentic AI concepts — Perception→Reasoning→Planning→Action→Memory loop | 🟢 Free | ⏳ |
+| 163b | Agent patterns — ReAct, Tool Use, Reflection, Plan-and-Execute, Multi-Agent | 🟢 Free | ⏳ |
+| 163c | MCP — Model Context Protocol (Anthropic/industry standard — "USB-C for AI tools") | 🟢 Free | ⏳ |
+| 163d | Build custom MCP Server in C# — expose EShop tools (GetProducts, CheckInventory, PlaceOrder) | 🟡 $1-2 | ⏳ |
+| 163e | Connect Claude/GPT-4 to EShop via MCP — any AI model, same server, zero integration changes | 🟡 $1-2 | ⏳ |
+| 163f | Semantic Kernel ChatCompletionAgent — single agent with SK plugins + memory | 🟡 $1-2 | ⏳ |
+| 163g | Semantic Kernel AgentGroupChat — multiple agents collaborating (debate, correct, hand off) | 🟡 $1-2 | ⏳ |
+| 163h | Azure AI Foundry Agent Service — managed agent runtime, persistent threads, file search, code interpreter | 🟡 $2-3 | ⏳ |
+| 163i | Multi-agent orchestration — Orchestrator + Specialists: ShoppingOrchestrator → Product + Pricing + Inventory + Order agents | 🟡 $2-3 | ⏳ |
+| 163j | A2A Protocol (Agent-to-Agent, Google 2025) — agents discover + call other agents over HTTP | 🟢 Free | ⏳ |
+| 163k | EShop.AI.Agent microservice — Clean Architecture agent service, REST + gRPC endpoints, called by other microservices like any other service | 🟡 $2-3 | ⏳ |
+
+#### Architecture — how EShop.AI.Agent fits the microservices system
+```
+                     ┌─────────────────────────────────────────────┐
+                     │           EShop.AI.Agent Service             │
+                     │                                              │
+                     │  ┌──────────────────────────────────────┐   │
+                     │  │      ShoppingOrchestratorAgent        │   │
+                     │  │  (Semantic Kernel AgentGroupChat)     │   │
+                     │  └────────┬──────────┬──────────┬───────┘   │
+                     │           │          │          │            │
+                     │  ┌────────▼─┐ ┌──────▼──┐ ┌───▼───────┐   │
+                     │  │ Product  │ │ Pricing │ │   Order   │   │
+                     │  │  Agent   │ │  Agent  │ │   Agent   │   │
+                     │  └────┬─────┘ └────┬────┘ └─────┬─────┘   │
+                     └───────┼────────────┼─────────────┼─────────┘
+                             │            │             │
+                     gRPC ───▼────        │      gRPC ──▼────
+                     Catalog.API    (internal calc)  Ordering.API
+                     Customer.API                    Customer.API
+
+Clean Architecture applies here too:
+  AI.Agent.Core          → IShoppingAgent, IProductSearchTool, IOrderTool (interfaces)
+  AI.Agent.Infrastructure→ SK Agents, MCP Server, Azure AI Foundry client
+  AI.Agent.API           → REST /api/agent/chat, gRPC AgentService
+```
+
+#### Key decisions for this phase
+```
+→ MCP first — learn the tool protocol BEFORE building agents (agents need tools!)
+→ Single agent before multi-agent — master ChatCompletionAgent first
+→ Azure AI Foundry = production runtime; SK = local dev and fine control
+→ IShoppingAgent in Core — clean architecture means swapping SK ↔ AutoGen ↔ Foundry
+   without touching business logic, same as swapping HTTP ↔ gRPC in Phase 12.7!
+→ A2A = future-proof — as agent ecosystems grow, services will expose A2A endpoints
+   the same way they expose REST and gRPC today
+→ Cost: most is $1-3/run during learning — use Azure OpenAI with token limits!
+```
+
+---
+
 ### 🌐 Phase 30 — Full Azure AI Services
 > All remaining Azure AI tools integrated into EShop (all C#!)
 
@@ -1291,23 +1528,26 @@ Completed so far in Stage 13 (Docker):
 ---
 
 ```
-Total Topics   →  176
-🟢 Free        →  124 topics
-🟡 Cheap       →   48 topics (~$10-15/month)
+Total Topics   →  187  (+11 Agentic AI topics added Phase 29b)
+🟢 Free        →  128 topics
+🟡 Cheap       →   55 topics (~$10-15/month)
 🔴 Delete!     →    4 topics (create → learn → delete)
 ─────────────────────────────────────────────
-Order          →  Microservices → Multi-env → AKS
-               →  React → Auth (Auth0 first! → AD B2C!)
+Order          →  Microservices → React Frontend → Auth (Auth0 → AD B2C!)
+               →  Cloud Deploy (Dockerfiles + App Config + Multi-env + AKS)
+               →  Search & AI → Terraform LAST
                →  AI Concepts → Python → Classical ML → Deep Learning
                →  HuggingFace → GenAI Concepts → GenAI Implementation
                →  Prompt Engineering → RAG → Azure OpenAI
-               →  Semantic Kernel → Azure AI Services → MLOps → Terraform LAST!
+               →  Semantic Kernel → AGENTIC AI (MCP + Agents + A2A) → Azure AI Services → MLOps
 Key decisions  →  Auth0 FREE (easy start!) → AD B2C (Azure native!)
                →  Terraform at END (know all resources first!)
                →  Build manually → understand → automate! ✅
                →  AI: Concept first → Python → ML → GenAI (logical order!) ✅
                →  GenAI: Concepts phase → Implementation phase (dedicated!) ✅
                →  AI in C#/.NET for production (Semantic Kernel!) ✅
+               →  Agentic AI: MCP tools first → single agent → multi-agent → Azure Foundry! ✅
+               →  IShoppingAgent in Core = Clean Architecture for AI (swap SK↔Foundry freely!) ✅
 Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 ```
 
@@ -1334,13 +1574,12 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 27 | Phase 12.1 — Catalog Service (Clean Arch + CQRS + Events + User Secrets) | ✅ Done |
 | 27 | Phase 12.5 — .NET Aspire Orchestration (ServiceDefaults + AppHost + Dashboard) | ✅ Done |
 | 28 | Phase 12.6 — Service-to-Service Communication (HTTP + Messaging + Aspire fixes) | ✅ Done |
-| 28a | Phase 12.7 — gRPC (typed contracts, Protobuf, HTTP/2 — highest market demand) | 🔄 Next |
-| 28 | Phase 13 — Multiple Environments (DEV/STAGING/PROD) | ⏳ |
-| 29 | Phase 14 — Kubernetes / AKS (Container Apps → AKS → Front Door!) | ⏳ |
-| 30 | Phase 15 — React Frontend (Static Web Apps, connect to API!) | ⏳ |
-| 31 | Phase 16 — Auth Deep Dive (Auth0 → AD B2C → SAML → mTLS!) | ⏳ |
-| 32 | Phase 17 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
-| 33 | Phase 18 — Terraform / IaC (automate everything at the end!) | ⏳ |
+| 28a | Phase 12.7 — gRPC (typed contracts, Protobuf, HTTP/2 — highest market demand) | ✅ Done |
+| 29 | Phase 13 — React Frontend (Vite + TypeScript + Redux + RTK Query + full UI) | ✅ Done (Static Web Apps deploy = next!) |
+| 30 | Phase 14 — Auth Deep Dive (Auth0 → AD B2C → SAML → mTLS!) | ⏳ |
+| 31 | Phase 15 — Cloud Deployment (Dockerfiles + App Config + Multi-Env + AKS) | ⏳ |
+| 32 | Phase 16 — Search & AI (Cognitive Search, OpenAI, Chatbot!) | ⏳ |
+| 33 | Phase 17 — Terraform / IaC (automate everything at the end!) | ⏳ |
 | 34 | Phase 19 — AI/ML/GenAI Concepts (Theory Only! No Code!) | ⏳ |
 | 35 | Phase 20 — Python for AI (NumPy, Pandas, Matplotlib!) | ⏳ |
 | 36 | Phase 21 — Classical ML / scikit-learn (price prediction, churn!) | ⏳ |
@@ -1352,6 +1591,7 @@ Monthly Cost   →  ~$10-15/month (AKS + AI services while learning)
 | 42 | Phase 27 — RAG (vector DB, index EShop products, AI search!) | ⏳ |
 | 43 | Phase 28 — Azure OpenAI Setup (GPT-4 private, C# SDK!) | ⏳ |
 | 44 | Phase 29 — Semantic Kernel .NET (EShop.AI microservice!) | ⏳ |
+| 44b | Phase 29b — Agentic AI (MCP + SK Agents + Azure AI Foundry + A2A + EShop.AI.Agent microservice!) | ⏳ |
 | 45 | Phase 30 — Full Azure AI Services (Vision, Speech, Language, Bot!) | ⏳ |
 | 46 | Phase 31 — MLOps (CI/CD for ML, auto-retrain, model monitoring!) | ⏳ |
 
