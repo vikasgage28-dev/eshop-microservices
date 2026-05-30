@@ -69,58 +69,139 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 34: Phase 13 React Frontend COMPLETE — Next: Phase 13 Azure Static Web Apps Deployment
+## 📍 CURRENT STAGE — Phase 14: Authentication Deep Dive — STARTING NOW
 
-### Where We Stopped
+### Key Credentials (never changes)
 ```
-Phase 13 — React Frontend COMPLETE! ✅
+Admin:    admin@eshop.com  / Admin@12345
+Customer: alice@eshop.com  / Customer@12345
+Currency: INR (₹) — en-IN locale
+UI Theme: Lenovo Vantage Blue (#0067c0), 165px Sidebar
+Frontend: http://localhost:5173 (Vite dev server)
+Aspire:   https://localhost:17222 (dashboard)
+Ports:    catalog=5010, customer=5011/5022(gRPC), ordering=5012, identity=5013
+```
 
-React 19 + TypeScript + Vite 8 frontend built and running at http://localhost:5173
-Connected live to all 4 backend APIs via .NET Aspire (localhost ports).
+---
 
-What was built:
-→ Full project scaffold (Vite 8, React 19, TypeScript, Tailwind CSS v4, Shadcn/ui)
-→ Redux Toolkit store + typed hooks (useAppSelector, useAppDispatch)
-→ RTK Query — createApi, baseQuery with JWT header, all endpoints
-→ Axios JWT interceptor for login/register/refresh
-→ React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
-→ Auth slice — login, logout, register, token + user in Redux
-→ Login page + Register page (wider cards, placeholders, dark text fix)
-→ Products page — RTK Query, search debounce, category filter, pagination, Picsum images
-→ Product Detail page — full info, reviews, qty selector, Add to Cart
-→ Admin page — product CRUD table with Create/Edit/Delete dialog (Admin only)
-→ Cart page — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
-→ Checkout page — shipping address form, lookup customer by email, PlaceOrder API
-→ Orders page — table with status badges, click row → Order Detail
-→ Order Detail page — full order info, items list, Cancel Order for Pending
-→ Customers page — admin-only list with search
-→ Dashboard — stat cards (Products, Orders, Customers, Revenue) + Recent Orders table
-→ Profile page — avatar, account info, role badges, order stats, actions
-→ Dark mode — useDarkMode hook, localStorage persistence, Moon/Sun toggle in TopBar
-→ Lenovo Vantage UI design — 165px sidebar, solid blue active state, flat borders, #f4f4f4 bg
-→ Font scaling — all text uses rem-based Tailwind classes (text-sm, text-xs, etc.)
-  Base font size: 20px in index.css → all text scales proportionally
-→ Auth pages — wider cards (700px), all inputs have placeholders, dark text fix
-→ Custom hooks: useAuth, useCart, useDebounce, useDarkMode
+### Phase 13 — React Frontend COMPLETE ✅ (Fully Polished)
+```
+Phase 13 — React 19 Frontend — ALL DONE ✅
 
-CustomerDataSeeder.cs fixed:
-→ alice.smith@eshop.com → alice@eshop.com (matches Identity seeder)
+Stack: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Shadcn/ui
+State: Redux Toolkit + RTK Query + Axios JWT interceptor
+Router: React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
 
-Key credentials:
-→ Admin:    admin@eshop.com / Admin@12345
-→ Customer: alice@eshop.com / Customer@12345
-→ Currency: INR (₹) — en-IN locale
+Pages Built:
+→ Login / Register  — wider 700px cards, show/hide password, inline errors
+→ Products          — RTK Query, search debounce, category filter, pagination, Picsum images
+→ Product Detail    — full info, reviews, qty selector, Add to Cart
+→ Admin (Products)  — CRUD table with Create/Edit/Delete dialog (Admin only)
+→ Cart              — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
+→ Checkout          — saved address selector + new address form + save-to-profile checkbox
+→ Orders            — table with status badges, click row → Order Detail
+→ Order Detail      — full order info, items list, Cancel Order for Pending
+→ Customers         — admin-only, search, Register (from site users), Unregister, address count badge
+→ Dashboard         — stat cards (Products/Orders/Customers/Revenue) + Recent Orders table
+→ Profile           — avatar, account info, role badges, order stats, addresses, actions
 
-Remaining in Phase 13:
-→ Azure Static Web Apps deployment (FREE CI/CD from GitHub) — next step!
-→ Zod + React Hook Form (forms currently use plain useState — optional upgrade)
-→ React 19 new hooks (useTransition, useOptimistic — optional deep dive)
-→ Categories admin page (optional — products work without it)
+Address Management (Customer DB ↔ Checkout):
+→ CustomerDB stores structured Address records (street, city, state, country, postalCode, isDefault)
+→ OrderingDB stores flat shipping address string snapshot at order time
+→ Profile page — full CRUD for saved addresses (Add / Delete)
+→ Checkout — saved address cards selector + "Use different address" + "Save to profile" checkbox
+→ AddAddress / DeleteAddress commands + handlers + ICustomerRepository + controller endpoints
+→ RTK Query tag invalidation keeps Profile and Checkout in sync
 
-### Next: Phase 13 remaining → Azure Static Web Apps Deploy
-→ az staticwebapp create + GitHub Actions auto-generated yml
-→ frontend/eshop-frontend → Static Web App (FREE tier)
-→ VITE_API_BASE_URL → point to Azure APIs
+Customer Registration Flow (Admin):
+→ GET /api/auth/users — fetches all Identity users
+→ Filters out users who already have a Customer profile (by email)
+→ Admin picks from dropdown → creates Customer profile → list refreshes
+
+Bug Fixes Applied:
+→ ProfilePage orders: was using Identity userId (wrong) → now uses customer.id (correct)
+→ OrdersPage: same fix applied earlier (customer.id lookup by email first)
+→ CheckoutPage: alert() replaced with amber inline validation error banner
+→ Dashboard status colors: extracted to shared orderStatusColor in lib/utils.ts
+
+Polish Applied:
+→ Shared orderStatusColor constant in lib/utils.ts — OrdersPage + DashboardPage both use it
+→ Orders page: added <h1> heading (consistent with all other pages)
+→ Checkout success: "Continue Shopping" → "Browse Products"
+→ Profile page: "Browse Products" button added for customers (admins excluded)
+→ Customers table: Addresses column with blue pill badge showing count per customer
+
+Custom Hooks:
+→ useAuth — reads Redux auth slice, exposes email/userId/roles/isAdmin/fullName
+→ useCart — cart Redux slice CRUD + computed totals
+→ useDebounce — debounced search inputs (300ms)
+→ useDarkMode — localStorage persistence, Moon/Sun toggle in TopBar
+
+UI Design:
+→ Lenovo Vantage style — #0067c0 blue, 165px sidebar, solid active state, #f4f4f4 bg
+→ Base font 20px in index.css → rem-based Tailwind (text-sm/xs) scales proportionally
+→ Dark mode — full dark theme via Tailwind dark: variants, toggled in TopBar
+
+Deferred (do later — not blocking):
+→ Azure Static Web Apps deploy — shifting to Phase 15 (Cloud Deploy) with all services
+→ Zod + React Hook Form — optional upgrade (forms work fine with useState)
+→ React 19 new hooks (useTransition, useOptimistic) — optional deep dive
+→ Categories admin page — optional (products work without it)
+```
+
+---
+
+### Phase 14 — Authentication Deep Dive — NEXT ⬅️
+```
+Philosophy:
+→ API Gateway owns auth validation — services trust the gateway (correct microservice pattern)
+→ Individual services do NOT add [Authorize] — gateway handles it (like Netflix, Uber)
+→ Each auth mode implemented in Identity.API + React frontend — end-to-end working demo
+→ No Azure needed until items 20-22 — months of learning first!
+
+Complete Authentication Sequence:
+─────────────────────────────────────────────────────────────────
+🟢 No Azure Needed — Implement In Order
+─────────────────────────────────────────────────────────────────
+  1.  Silent Token Refresh        ⏳  Auto-renew JWT before expiry — Axios interceptor (80% done!)
+  2.  Refresh Token Rotation      ⏳  Each refresh → new token, old one invalidated immediately
+  3.  JWT RS256 (Asymmetric)      ⏳  Upgrade HS256 shared secret → RS256 public/private key pair
+  4.  2FA — Email OTP             ⏳  MailKit + Gmail SMTP — 6-digit code sent to email
+  5.  2FA — TOTP (Authenticator)  ⏳  Google Authenticator / Authy — 30s rotating code (QRCoder NuGet)
+  6.  SMS OTP                     ⏳  Twilio / MSG91 — OTP on mobile number
+  7.  Magic Links                 ⏳  Passwordless — HMAC-signed link emailed to user (Slack/Notion style)
+  8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
+  9.  OAuth 2.0 + PKCE            ⏳  Authorization Code flow — Auth0 free tier, industry standard
+  10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc (on top of OAuth 2.0)
+  11. Social Logins               ⏳  Google + GitHub via Auth0 — uses OIDC internally
+  12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
+  13. Device Authorization Grant  ⏳  GitHub CLI / Netflix TV / IoT — code shown on device
+  14. PAT (Personal Access Token) ⏳  GitHub-style long-lived scoped developer tokens
+  15. API Key Auth                ⏳  Stripe-style — for service accounts and external integrations
+  16. Risk-based / Adaptive Auth  ⏳  New device/location detected → triggers extra challenge
+  17. QR Code Login               ⏳  WhatsApp Web style — scan QR with phone to log in on desktop
+  18. Passkeys / WebAuthn         ⏳  Fingerprint / Face ID — Fido2.NET NuGet (future of auth!)
+  19. mTLS                        ⏳  Certificate-based service-to-service — local self-signed certs
+
+─────────────────────────────────────────────────────────────────
+🔵 Needs Azure — Do Later (Phase 15 onwards)
+─────────────────────────────────────────────────────────────────
+  20. Azure AD B2C                ⏳  Consumer identity — OIDC with custom policies + branding
+  21. Entra ID (Azure AD)         ⏳  Enterprise — "Login with Microsoft" for employees
+  22. Workload Identity           ⏳  AKS pod gets Azure token automatically — no passwords in K8s
+
+─────────────────────────────────────────────────────────────────
+🟣 Enterprise / Advanced — After Azure Phase
+─────────────────────────────────────────────────────────────────
+  23. SAML 2.0 + SSO             ⏳  Corporate SSO — Keycloak as local IdP (Salesforce/Workday style)
+  24. DPoP                        ⏳  Banking-grade — binds access token to client key pair (FAPI)
+  25. SCIM                        ⏳  Auto-provision/deprovision users from company directory
+  26. Zero Trust Architecture     ⏳  Never trust the network — verify every request every time
+
+Next immediate step: Item 1 — Silent Token Refresh
+→ Backend RefreshTokenCommandHandler already complete
+→ Axios interceptor partially set up in authClient.ts
+→ Wire up: intercept 401 → call POST /api/auth/refresh → retry original request
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
