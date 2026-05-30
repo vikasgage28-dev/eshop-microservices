@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { RootState } from '@/app/store'
-import type { Customer } from '@/types/customer.types'
+import type { Address, Customer } from '@/types/customer.types'
 import { API_URLS } from '@/lib/constants'
 
 export const customerApi = createApi({
@@ -40,6 +40,21 @@ export const customerApi = createApi({
       query: (id) => ({ url: `/customers/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Customer'],
     }),
+    addAddress: builder.mutation<Address, { customerId: string; address: Omit<Address, 'id'> }>({
+      query: ({ customerId, address }) => ({
+        url: `/customers/${customerId}/addresses`,
+        method: 'POST',
+        body: address,
+      }),
+      invalidatesTags: ['Customer'],
+    }),
+    deleteAddress: builder.mutation<void, { customerId: string; addressId: string }>({
+      query: ({ customerId, addressId }) => ({
+        url: `/customers/${customerId}/addresses/${addressId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Customer'],
+    }),
   }),
 })
 
@@ -50,4 +65,6 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
+  useAddAddressMutation,
+  useDeleteAddressMutation,
 } = customerApi

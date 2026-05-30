@@ -10,5 +10,9 @@ namespace Customer.Core.Interfaces
         Task<Entities.Customer> AddAsync(Entities.Customer customer);
         Task<Entities.Customer?> UpdateAsync(Entities.Customer customer);
         Task<bool> DeleteAsync(Guid id);
+
+        // Address management
+        Task<Address?> AddAddressAsync(Guid customerId, Address address);
+        Task<bool> DeleteAddressAsync(Guid customerId, Guid addressId);
     }
 }

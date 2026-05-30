@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, ShieldCheck, User, Mail, Hash, ClipboardList } from 'lucide-react'
+import { LogOut, ShieldCheck, User, Mail, Hash, ClipboardList, MapPin, Plus, Trash2, Loader2, Star, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useGetOrdersByCustomerQuery, useGetOrdersQuery } from '@/api/orderingApi'
+import { useGetCustomerByEmailQuery, useAddAddressMutation, useDeleteAddressMutation } from '@/api/customerApi'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
+import type { Address } from '@/types/customer.types'
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
@@ -15,18 +18,41 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
+const EMPTY_ADDR = { street: '', city: '', state: '', country: 'India', postalCode: '', isDefault: false }
+
 export default function ProfilePage() {
-  const { fullName, email, userId, roles, isAdmin, logout } = useAuth()
+  const { fullName, email, userId, roles, isAdmin, logout } = useAuth()  // userId used for display only
   const navigate = useNavigate()
 
-  const { data: allOrders }      = useGetOrdersQuery(undefined,         { skip: !isAdmin })
-  const { data: customerOrders } = useGetOrdersByCustomerQuery(userId!, { skip: isAdmin || !userId })
+  const { data: allOrders }      = useGetOrdersQuery(undefined,              { skip: !isAdmin })
+  const { data: customer }       = useGetCustomerByEmailQuery(email ?? '',   { skip: !email || isAdmin })
+  // Orders are keyed by Customer profile ID (not Identity userId) — must wait for customer to load
+  const { data: customerOrders } = useGetOrdersByCustomerQuery(customer?.id ?? '', { skip: isAdmin || !customer?.id })
 
-  const orders  = isAdmin ? allOrders : customerOrders
+  const [addAddress, { isLoading: addingAddr }] = useAddAddressMutation()
+  const [deleteAddress]                          = useDeleteAddressMutation()
+
+  const [showAddrForm, setShowAddrForm] = useState(false)
+  const [addrForm, setAddrForm]         = useState<Omit<Address, 'id'>>(EMPTY_ADDR)
+
+  const orders     = isAdmin ? allOrders : customerOrders
   const totalSpend = customerOrders?.reduce((s, o) => s + o.totalAmount, 0) ?? 0
-  const initials = fullName ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'
+  const initials   = fullName ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'
 
   const handleLogout = () => { logout(); navigate('/login') }
+
+  const handleSaveAddress = async () => {
+    if (!customer) return
+    if (!addrForm.street || !addrForm.city || !addrForm.state || !addrForm.postalCode) return
+    await addAddress({ customerId: customer.id, address: addrForm })
+    setAddrForm(EMPTY_ADDR)
+    setShowAddrForm(false)
+  }
+
+  const handleDeleteAddress = (addressId: string) => {
+    if (!customer) return
+    deleteAddress({ customerId: customer.id, addressId })
+  }
 
   return (
     <div className="max-w-lg space-y-5">
@@ -69,18 +95,101 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* My Addresses — customers only */}
+      {!isAdmin && (
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e8e8e8] dark:border-[#3a3a3a] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+              <MapPin size={15} className="text-blue-500" /> My Addresses
+            </div>
+            <button
+              onClick={() => setShowAddrForm((v) => !v)}
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              <Plus size={13} /> Add New
+            </button>
+          </div>
+
+          {/* Add address form */}
+          {showAddrForm && (
+            <div className="border border-blue-100 dark:border-blue-900/40 rounded-lg p-3 space-y-2 bg-blue-50/50 dark:bg-blue-900/10">
+              {[
+                { key: 'street',     label: 'Street *',      placeholder: '123 MG Road' },
+                { key: 'city',       label: 'City *',         placeholder: 'Mumbai' },
+                { key: 'state',      label: 'State *',        placeholder: 'Maharashtra' },
+                { key: 'country',    label: 'Country',        placeholder: 'India' },
+                { key: 'postalCode', label: 'Postal Code *',  placeholder: '400001' },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key} className="flex gap-2 items-center">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{label}</label>
+                  <input
+                    value={(addrForm as Record<string, string>)[key]}
+                    onChange={(e) => setAddrForm((f) => ({ ...f, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="flex-1 px-2 py-1 border border-gray-200 dark:border-[#444] rounded text-xs bg-white dark:bg-[#333] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleSaveAddress} disabled={addingAddr}>
+                  {addingAddr ? <Loader2 size={12} className="animate-spin mr-1" /> : null} Save Address
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowAddrForm(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Saved addresses list */}
+          {customer?.addresses?.length === 0 && !showAddrForm && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 py-2">No saved addresses yet. Add one above.</p>
+          )}
+          <div className="space-y-2">
+            {customer?.addresses?.map((addr) => (
+              <div key={addr.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg border border-gray-100 dark:border-[#3a3a3a] bg-gray-50 dark:bg-[#333]">
+                <div className="flex gap-2 items-start">
+                  <MapPin size={13} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <p>{addr.street}</p>
+                    <p>{addr.city}, {addr.state} — {addr.postalCode}</p>
+                    <p className="text-gray-400">{addr.country}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {addr.isDefault && <Star size={11} className="text-yellow-500 fill-yellow-400" />}
+                  <button
+                    onClick={() => handleDeleteAddress(addr.id)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    title="Remove address"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
+        {!isAdmin && (
+          <Button
+            className="flex-1 gap-2 text-sm bg-blue-600 hover:bg-blue-700 min-w-[120px]"
+            onClick={() => navigate('/products')}
+          >
+            <ShoppingBag size={15} /> Browse Products
+          </Button>
+        )}
         <Button
           variant="outline"
-          className="flex-1 gap-2 text-sm border-[#e8e8e8] dark:border-[#444] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#333]"
+          className="flex-1 gap-2 text-sm border-[#e8e8e8] dark:border-[#444] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#333] min-w-[110px]"
           onClick={() => navigate('/orders')}
         >
           <ClipboardList size={15} /> My Orders
         </Button>
         <Button
           variant="outline"
-          className="flex-1 gap-2 text-sm text-red-600 dark:text-red-400 border-[#e8e8e8] dark:border-[#444] dark:bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200"
+          className="flex-1 gap-2 text-sm text-red-600 dark:text-red-400 border-[#e8e8e8] dark:border-[#444] dark:bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 min-w-[100px]"
           onClick={handleLogout}
         >
           <LogOut size={15} /> Sign Out

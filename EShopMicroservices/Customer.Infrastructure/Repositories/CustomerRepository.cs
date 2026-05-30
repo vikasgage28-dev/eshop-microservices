@@ -1,3 +1,4 @@
+using Customer.Core.Entities;
 using Customer.Core.Interfaces;
 using Customer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,28 @@ namespace Customer.Infrastructure.Repositories
             if (customer is null) return false;
 
             _context.Customers.Remove(customer);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<Address?> AddAddressAsync(Guid customerId, Address address)
+        {
+            var exists = await _context.Customers.AnyAsync(c => c.Id == customerId);
+            if (!exists) return null;
+
+            address.CustomerId = customerId;
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+            return address;
+        }
+
+        public async Task<bool> DeleteAddressAsync(Guid customerId, Guid addressId)
+        {
+            var address = await _context.Addresses
+                .FirstOrDefaultAsync(a => a.Id == addressId && a.CustomerId == customerId);
+            if (address is null) return false;
+
+            _context.Addresses.Remove(address);
             await _context.SaveChangesAsync();
             return true;
         }

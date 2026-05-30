@@ -1,5 +1,5 @@
 import { Package, ShoppingCart, Users, TrendingUp } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, orderStatusColor } from '@/lib/utils'
 import { useGetProductsQuery } from '@/api/catalogApi'
 import { useGetOrdersQuery } from '@/api/orderingApi'
 import { useGetCustomersQuery } from '@/api/customerApi'
@@ -95,12 +95,7 @@ export default function DashboardPage() {
                   <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{order.customerEmail}</td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      order.status === 'Delivered'  ? 'bg-green-100 text-green-700'   :
-                      order.status === 'Cancelled'  ? 'bg-red-100 text-red-700'       :
-                      order.status === 'Shipped'    ? 'bg-indigo-100 text-indigo-700' :
-                      order.status === 'Processing' ? 'bg-purple-100 text-purple-700' :
-                      order.status === 'Confirmed'  ? 'bg-blue-100 text-blue-700'     :
-                      'bg-yellow-100 text-yellow-700'
+                      orderStatusColor[order.status] ?? 'bg-gray-100 text-gray-700'
                     }`}>
                       {order.statusName ?? order.status}
                     </span>
