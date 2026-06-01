@@ -69,7 +69,7 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Phase 14: Authentication Deep Dive — STARTING NOW
+## 📍 CURRENT STAGE — Phase 14: Authentication Deep Dive — IN PROGRESS
 
 ### Key Credentials (never changes)
 ```
@@ -151,7 +151,7 @@ Deferred (do later — not blocking):
 
 ---
 
-### Phase 14 — Authentication Deep Dive — NEXT ⬅️
+### Phase 14 — Authentication Deep Dive — IN PROGRESS ⬅️
 ```
 Philosophy:
 → API Gateway owns auth validation — services trust the gateway (correct microservice pattern)
@@ -163,10 +163,10 @@ Complete Authentication Sequence:
 ─────────────────────────────────────────────────────────────────
 🟢 No Azure Needed — Implement In Order
 ─────────────────────────────────────────────────────────────────
-  1.  Silent Token Refresh        ⏳  Auto-renew JWT before expiry — Axios interceptor (80% done!)
-  2.  Refresh Token Rotation      ⏳  Each refresh → new token, old one invalidated immediately
-  3.  JWT RS256 (Asymmetric)      ⏳  Upgrade HS256 shared secret → RS256 public/private key pair
-  4.  2FA — Email OTP             ⏳  MailKit + Gmail SMTP — 6-digit code sent to email
+  1.  Silent Token Refresh        ✅  COMPLETE — baseQueryWithReauth.ts wraps all RTK Query APIs
+  2.  Refresh Token Rotation      ✅  COMPLETE — already in backend, frontend now stores new token
+  3.  JWT RS256 (Asymmetric)      ✅  COMPLETE — private.pem signs, public.pem verifies
+  4.  2FA — Email OTP             ⏳  MailKit + Gmail SMTP — 6-digit code sent to email  ← NEXT
   5.  2FA — TOTP (Authenticator)  ⏳  Google Authenticator / Authy — 30s rotating code (QRCoder NuGet)
   6.  SMS OTP                     ⏳  Twilio / MSG91 — OTP on mobile number
   7.  Magic Links                 ⏳  Passwordless — HMAC-signed link emailed to user (Slack/Notion style)
@@ -198,10 +198,80 @@ Complete Authentication Sequence:
   25. SCIM                        ⏳  Auto-provision/deprovision users from company directory
   26. Zero Trust Architecture     ⏳  Never trust the network — verify every request every time
 
-Next immediate step: Item 1 — Silent Token Refresh
-→ Backend RefreshTokenCommandHandler already complete
-→ Axios interceptor partially set up in authClient.ts
-→ Wire up: intercept 401 → call POST /api/auth/refresh → retry original request
+─────────────────────────────────────────────────────────────────
+Item 1 — Silent Token Refresh ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+Problem: RTK Query uses native fetch (not Axios) → Axios interceptors don't work
+Solution: Custom BaseQueryFn wrapper (RTK Query pattern)
+
+Files created/changed:
+→ eshop-frontend/src/api/baseQueryWithReauth.ts  (NEW)
+     createBaseQueryWithReauth(baseUrl) factory function
+     Intercepts 401 → POST /api/auth/refresh → retries original request
+     Module-level refreshPromise singleton prevents duplicate refresh calls (race condition fix)
+     On refresh fail → dispatch(logout()) → user sent to login page
+→ eshop-frontend/src/features/auth/authSlice.ts
+     Added updateTokens action — updates token + refreshToken ONLY, preserves userId/email/roles
+→ eshop-frontend/src/api/catalogApi.ts     — swapped fetchBaseQuery → createBaseQueryWithReauth
+→ eshop-frontend/src/api/customerApi.ts   — same swap
+→ eshop-frontend/src/api/orderingApi.ts   — same swap
+→ eshop-frontend/src/api/identityApi.ts   — same swap
+
+Race condition solution:
+→ 5 simultaneous 401s → only 1 refresh call fires → all 5 await same promise → all retry ✅
+
+─────────────────────────────────────────────────────────────────
+Item 2 — Refresh Token Rotation ✅ COMPLETE (backend already had it)
+─────────────────────────────────────────────────────────────────
+Backend (already existed):
+→ RefreshTokenCommandHandler.cs — GenerateRefreshToken() every call → UpdateRefreshTokenAsync()
+→ Old refresh token overwritten in DB — cannot be reused
+→ Stolen old token → GetByRefreshTokenAsync returns null → 401
+
+Frontend (completed via Item 1):
+→ updateTokens() stores NEW refreshToken from refresh response into Redux + localStorage
+→ Old token gone from both DB and client simultaneously
+
+Not implemented (advanced, deferred):
+→ Reuse detection (token family / history table) — requires separate DB table
+
+─────────────────────────────────────────────────────────────────
+Item 3 — JWT RS256 Asymmetric Signing ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+Why RS256 over HS256:
+→ HS256 = 1 shared secret → anyone who has it can forge tokens
+→ RS256 = private key signs (Identity.API only) + public key verifies (anyone)
+→ Services/Gateway only need public key → private key never leaves Identity.API
+→ Industry standard for microservices (Auth0, Google, Microsoft all use RS256)
+→ Required for API Gateway integration (Phase 15)
+
+Files changed:
+→ EShopMicroservices/Identity.Infrastructure/Services/JwtTokenService.cs
+     Removed: SymmetricSecurityKey + HmacSha256
+     Added: RSA.Create() + ImportFromPem(privateKeyPem) + RsaSha256
+→ EShopMicroservices/Identity.API/Program.cs
+     Removed: SymmetricSecurityKey + SecretKey from config
+     Added: RSA.Create() + ImportFromPem(publicKeyPem) + RsaSecurityKey
+→ EShopMicroservices/Identity.API/appsettings.json
+     Removed: SecretKey
+     Added: PrivateKeyPath = "private.pem", PublicKeyPath = "public.pem"
+→ .gitignore — added **/private.pem (NEVER commit private key!)
+
+Key files on disk (not in git):
+→ Identity.API/private.pem — RSA 2048-bit private key (signs tokens)
+→ Identity.API/public.pem  — RSA 2048-bit public key (verifies tokens, shareable)
+
+Verification: paste token at jwt.io → header shows "alg": "RS256" (was "HS256")
+
+Key architecture decisions:
+→ Services stay open (no [Authorize]) — API Gateway validates once at perimeter
+→ public.pem can be shared with API Gateway / other services safely
+→ generate-keys.ps1 (in .gitignore) — regenerate keys anytime with: pwsh -File generate-keys.ps1
+
+Next immediate step: Item 4 — 2FA Email OTP
+→ MailKit NuGet package + Gmail App Password (free, no Twilio needed)
+→ Backend: generate 6-digit OTP, store with 5-min expiry, verify on submit
+→ Frontend: new /verify-otp page after login if 2FA enabled on account
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
@@ -421,7 +491,7 @@ Phase 12.4 — Identity Service completed:
    → AppIdentityUser : IdentityUser (Infrastructure-only, maps to ApplicationUser)
    → AppIdentityDbContext (IdentityDbContext<AppIdentityUser>, EF Core 10)
    → AuthRepository: wraps UserManager + SignInManager + maps to ApplicationUser POCOs
-   → JwtTokenService: generates signed JWTs (HS256) + refresh tokens (RandomNumberGenerator)
+   → JwtTokenService: generates signed JWTs (upgraded HS256→RS256) + refresh tokens (RandomNumberGenerator)
    → IdentityDataSeeder: seeds Admin + Customer roles + 2 seed users (idempotent)
    → InfrastructureServiceExtensions: registers Identity, EF Core, services
    → EF Core Migration: InitialIdentitySchema

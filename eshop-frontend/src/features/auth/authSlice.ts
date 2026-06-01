@@ -76,6 +76,12 @@ const authSlice = createSlice({
       state.roles = roles
       persist(state)
     },
+    // Used by silent token refresh — only updates tokens, preserves userId/email/fullName/roles
+    updateTokens: (state, action: PayloadAction<{ token: string; refreshToken: string }>) => {
+      state.token        = action.payload.token
+      state.refreshToken = action.payload.refreshToken
+      persist(state)
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -108,5 +114,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { logout, clearError, setCredentials } = authSlice.actions
+export const { logout, clearError, setCredentials, updateTokens } = authSlice.actions
 export default authSlice.reducer

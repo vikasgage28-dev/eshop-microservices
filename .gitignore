@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# RSA private key — NEVER commit this!
+**/private.pem
+# Key generation script — not needed in source control
+generate-keys.ps1
+
 # User-specific files
 *.rsuser
 *.suo

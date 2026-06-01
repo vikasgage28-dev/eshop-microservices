@@ -1,7 +1,7 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { RootState } from '@/app/store'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import type { Order } from '@/types/ordering.types'
 import { API_URLS } from '@/lib/constants'
+import { createBaseQueryWithReauth } from './baseQueryWithReauth'
 
 // ── Request type — matches PlaceOrderCommand on backend ──────────────────────
 export interface PlaceOrderItem {
@@ -20,14 +20,7 @@ export interface PlaceOrderRequest {
 
 export const orderingApi = createApi({
   reducerPath: 'orderingApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URLS.ordering}/api`,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.token
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-      return headers
-    },
-  }),
+  baseQuery: createBaseQueryWithReauth(`${API_URLS.ordering}/api`),
   tagTypes: ['Order'],
   endpoints: (builder) => ({
     getOrders: builder.query<Order[], void>({

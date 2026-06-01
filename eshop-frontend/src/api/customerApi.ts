@@ -1,18 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { RootState } from '@/app/store'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import type { Address, Customer } from '@/types/customer.types'
 import { API_URLS } from '@/lib/constants'
+import { createBaseQueryWithReauth } from './baseQueryWithReauth'
 
 export const customerApi = createApi({
   reducerPath: 'customerApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URLS.customer}/api`,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.token
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-      return headers
-    },
-  }),
+  baseQuery: createBaseQueryWithReauth(`${API_URLS.customer}/api`),
   tagTypes: ['Customer'],
   endpoints: (builder) => ({
     getCustomers: builder.query<Customer[], void>({

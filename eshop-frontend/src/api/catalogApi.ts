@@ -1,18 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { RootState } from '@/app/store'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import type { Product, Category, Review, PagedResult } from '@/types/catalog.types'
 import { API_URLS } from '@/lib/constants'
+import { createBaseQueryWithReauth } from './baseQueryWithReauth'
 
 export const catalogApi = createApi({
   reducerPath: 'catalogApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URLS.catalog}/api`,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.token
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-      return headers
-    },
-  }),
+  baseQuery: createBaseQueryWithReauth(`${API_URLS.catalog}/api`),
   tagTypes: ['Product', 'Category', 'Review'],
   endpoints: (builder) => ({
     getProducts: builder.query<PagedResult<Product>, { page?: number; pageSize?: number; search?: string; categoryId?: string }>({
