@@ -159,6 +159,13 @@ Philosophy:
 → Each auth mode implemented in Identity.API + React frontend — end-to-end working demo
 → No Azure needed until items 20-22 — months of learning first!
 
+Completed so far:
+✅ Item 1 — Silent Token Refresh    (baseQueryWithReauth.ts — RTK Query 401 interceptor)
+✅ Item 2 — Refresh Token Rotation  (backend already had it, frontend stores new token)
+✅ Item 3 — JWT RS256 Asymmetric    (private.pem signs, public.pem verifies)
+✅ Item 4 — 2FA Email OTP           (MailKit + Gmail SMTP + TOTP math, 2-min expiry)
+🔄 Item 9 — OAuth 2.0 + PKCE       (IN PROGRESS — Authorization Code flow ← CURRENT)
+
 Complete Authentication Sequence:
 ─────────────────────────────────────────────────────────────────
 🟢 No Azure Needed — Implement In Order
@@ -360,10 +367,10 @@ Key architecture decisions:
 → useRef (not useState) for Strict Mode guard — ref persists across double-invoke, state does not
 → pending2FAUserId in Redux — safe in-memory, cleared on logout, not in URL or localStorage
 
-Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
-→ QRCoder NuGet — generate QR code for Google Authenticator / Authy
-→ User scans QR → app shows 30s rotating code → verify → 2FA enabled
-→ No email needed — fully offline, most secure 2FA method
+Next immediate step: Item 9 — OAuth 2.0 + PKCE
+→ Authorization Code flow with PKCE — industry standard, powers Google/GitHub login
+→ Auth0 free tier as Authorization Server — no infrastructure cost
+→ eShop becomes OAuth client — real-world enterprise pattern
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
