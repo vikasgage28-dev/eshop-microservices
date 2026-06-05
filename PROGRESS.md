@@ -166,14 +166,14 @@ Complete Authentication Sequence:
   1.  Silent Token Refresh        ✅  COMPLETE — baseQueryWithReauth.ts wraps all RTK Query APIs
   2.  Refresh Token Rotation      ✅  COMPLETE — already in backend, frontend now stores new token
   3.  JWT RS256 (Asymmetric)      ✅  COMPLETE — private.pem signs, public.pem verifies
-  4.  2FA — Email OTP             ⏳  MailKit + Gmail SMTP — 6-digit code sent to email  ← NEXT
-  5.  2FA — TOTP (Authenticator)  ⏳  Google Authenticator / Authy — 30s rotating code (QRCoder NuGet)
-  6.  SMS OTP                     ⏳  Twilio / MSG91 — OTP on mobile number
+  4.  2FA — Email OTP             ✅  COMPLETE — MailKit + Gmail SMTP + TOTP math, 2-min expiry
+  5.  2FA — TOTP (Authenticator)  ⏳  QRCoder + OtpNet, Google Authenticator / Authy
+  6.  SMS OTP                     ⏳  Twilio / MSG91, OTP on mobile number
   7.  Magic Links                 ⏳  Passwordless — HMAC-signed link emailed to user (Slack/Notion style)
   8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
-  9.  OAuth 2.0 + PKCE            ⏳  Authorization Code flow — Auth0 free tier, industry standard
-  10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc (on top of OAuth 2.0)
-  11. Social Logins               ⏳  Google + GitHub via Auth0 — uses OIDC internally
+  9.  OAuth 2.0 + PKCE            🔄  IN PROGRESS — Authorization Code + PKCE flow  ← CURRENT
+  10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc
+  11. Social Logins               ⏳  Google + GitHub login — unlocked by OAuth + OIDC
   12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
   13. Device Authorization Grant  ⏳  GitHub CLI / Netflix TV / IoT — code shown on device
   14. PAT (Personal Access Token) ⏳  GitHub-style long-lived scoped developer tokens
@@ -268,10 +268,102 @@ Key architecture decisions:
 → public.pem can be shared with API Gateway / other services safely
 → generate-keys.ps1 (in .gitignore) — regenerate keys anytime with: pwsh -File generate-keys.ps1
 
-Next immediate step: Item 4 — 2FA Email OTP
-→ MailKit NuGet package + Gmail App Password (free, no Twilio needed)
-→ Backend: generate 6-digit OTP, store with 5-min expiry, verify on submit
-→ Frontend: new /verify-otp page after login if 2FA enabled on account
+─────────────────────────────────────────────────────────────────
+Item 4 — 2FA Email OTP ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+How it works (TOTP — no DB table for OTP codes):
+→ OTP = HMAC(SecurityStamp + CurrentTimeWindow) — pure math, nothing stored
+→ SecurityStamp already exists in AspNetUsers — changes on password change → invalidates pending OTP
+→ TwoFactorEnabled column already in AspNetUsers — no migration needed
+→ Backend recomputes same HMAC on verify — if matches → valid, if time window passed → invalid
+→ 2-minute expiry (set via DataProtectionTokenProviderOptions.TokenLifespan)
+
+Login flow change:
+→ Password correct + TwoFactorEnabled=1 → return { requires2FA: true, userId } (NO JWT yet)
+→ Frontend redirects to /verify-otp → calls POST /send-otp → email sent
+→ User enters 6-digit code → POST /verify-otp → code verified → JWT issued NOW
+
+Backend files created/changed:
+→ Identity.Core/Interfaces/IEmailService.cs                          (NEW)
+     SendOtpEmailAsync(toEmail, toName, otpCode) — interface only, no MailKit dependency in Core
+→ Identity.Core/Interfaces/IAuthRepository.cs
+     Added: GetTwoFactorEnabledAsync, SetTwoFactorEnabledAsync, GenerateTwoFactorTokenAsync, VerifyTwoFactorTokenAsync
+→ Identity.Core/Entities/ApplicationUser.cs
+     Added: TwoFactorEnabled property (maps from AspNetUsers.TwoFactorEnabled)
+→ Identity.Core/Features/Auth/Commands/Login/LoginCommand.cs
+     Added: Requires2FA bool to LoginResult
+→ Identity.Core/Features/Auth/Commands/Login/LoginCommandHandler.cs
+     Added: GetTwoFactorEnabledAsync check → early return with Requires2FA=true (no JWT)
+→ Identity.Core/Features/Auth/Commands/SendOtp/                       (NEW folder)
+     SendOtpCommand.cs + SendOtpCommandHandler.cs
+     Handler: GenerateTwoFactorTokenAsync → SendOtpEmailAsync
+→ Identity.Core/Features/Auth/Commands/VerifyOtp/                     (NEW folder)
+     VerifyOtpCommand.cs + VerifyOtpCommandHandler.cs
+     Handler: VerifyTwoFactorTokenAsync → if valid → GenerateAccessToken + GenerateRefreshToken
+→ Identity.Core/Features/Auth/Commands/Enable2FA/                     (NEW folder)
+     Enable2FACommand.cs + Enable2FACommandHandler.cs
+     Handler: SetTwoFactorEnabledAsync(enabled)
+→ Identity.Infrastructure/Services/MailKitEmailService.cs              (NEW)
+     Connects to Gmail SMTP (smtp.gmail.com:587 StartTls) using App Password
+     Sends branded HTML email with large OTP code
+→ Identity.Infrastructure/Repositories/AuthRepository.cs
+     Implemented 4 new 2FA methods using UserManager built-ins
+     Updated ToModel() mapping to include TwoFactorEnabled
+→ Identity.Infrastructure/Extensions/InfrastructureServiceExtensions.cs
+     DataProtectionTokenProviderOptions.TokenLifespan = 2 minutes
+     Registered IEmailService → MailKitEmailService (Scoped)
+→ Identity.API/Controllers/AuthController.cs
+     POST /api/auth/send-otp        — public (no JWT yet)
+     POST /api/auth/verify-otp      — public (no JWT yet)
+     POST /api/auth/toggle-2fa      — [Authorize] (userId from JWT claim)
+     GET  /api/auth/2fa-status      — [Authorize]
+     Login endpoint: returns Requires2FA=true branch
+→ Identity.API/DTOs/AuthDtos.cs
+     Added: Requires2FA to AuthResponse, SendOtpRequest, VerifyOtpRequest, Toggle2FARequest
+→ Identity.API/appsettings.json
+     Added: EmailSettings (SmtpHost, SmtpPort, FromName, FromEmail, AppPassword)
+→ User Secrets: EmailSettings:FromEmail + EmailSettings:AppPassword (never in git!)
+
+Frontend files created/changed:
+→ eshop-frontend/src/api/authClient.ts
+     Added: requires2FA to AuthResponse type
+     Added: sendOtp(), verifyOtp(), toggle2FA(), get2FAStatus() API methods
+→ eshop-frontend/src/features/auth/authSlice.ts
+     Added: requires2FA, pending2FAUserId, pending2FAEmail to AuthState
+     Login fulfilled: if requires2FA → store userId temporarily, no token
+     Added: clear2FAPending action
+→ eshop-frontend/src/hooks/useAuth.ts
+     Exposed: requires2FA, pending2FAUserId, pending2FAEmail, completeLogin, clear2FAPending
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+     Added: useEffect watching requires2FA → navigate to /verify-otp
+→ eshop-frontend/src/pages/auth/VerifyOtpPage.tsx                     (NEW)
+     Auto-sends OTP on mount (useRef guard prevents React Strict Mode double-send)
+     6 individual digit inputs — auto-advance + paste support
+     Single countdown = OTP expiry (2 min, matches email and backend)
+     Resend silently unlocks after 60s (no separate timer shown — standard UX)
+     Code expired state: Verify button disabled, resend highlighted
+→ eshop-frontend/src/routes/AppRouter.tsx
+     Added: /verify-otp public route → VerifyOtpPage
+→ eshop-frontend/src/pages/profile/ProfilePage.tsx
+     Added: 2FA security card with toggle switch (loads status on mount, calls toggle-2fa)
+
+Key bugs fixed during implementation:
+→ Duplicate email: React 18 Strict Mode runs effects twice — fixed with useRef hasSentOtp guard
+→ Two confusing timers: removed separate resend countdown — one timer only (OTP expiry = 2 min)
+→ Token lifespan: reduced from 5 min to 2 min — email and UI countdown both updated
+
+Key architecture decisions:
+→ TOTP (RFC 6238) — same math as Google/GitHub. No OTP table in DB ever.
+→ SecurityStamp as shared secret — password change auto-invalidates pending OTPs
+→ JWT issued ONLY after both factors verified — no partial auth state with a token
+→ ISmsService NOT implemented — Email only (free). SMS needs Twilio (paid).
+→ useRef (not useState) for Strict Mode guard — ref persists across double-invoke, state does not
+→ pending2FAUserId in Redux — safe in-memory, cleared on logout, not in URL or localStorage
+
+Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
+→ QRCoder NuGet — generate QR code for Google Authenticator / Authy
+→ User scans QR → app shows 30s rotating code → verify → 2FA enabled
+→ No email needed — fully offline, most secure 2FA method
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅

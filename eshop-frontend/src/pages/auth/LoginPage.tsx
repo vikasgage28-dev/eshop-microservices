@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, isLoading, error, isAuthenticated, isAdmin, clearError } = useAuth()
+  const { login, isLoading, error, isAuthenticated, isAdmin, requires2FA, clearError } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +15,11 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated) navigate(isAdmin ? '/dashboard' : '/products', { replace: true })
   }, [isAuthenticated, isAdmin, navigate])
+
+  useEffect(() => {
+    // Redirect to OTP page when 2FA is required
+    if (requires2FA) navigate('/verify-otp', { replace: true })
+  }, [requires2FA, navigate])
 
   useEffect(() => {
     return () => { clearError() }

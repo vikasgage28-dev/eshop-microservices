@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Identity.Infrastructure.Extensions
 {
@@ -32,9 +33,14 @@ namespace Identity.Infrastructure.Extensions
             .AddEntityFrameworkStores<AppIdentityDbContext>()
             .AddDefaultTokenProviders();
 
+            // 2FA — Email OTP token lifespan (2 minutes)
+            services.Configure<DataProtectionTokenProviderOptions>(options =>
+                options.TokenLifespan = TimeSpan.FromMinutes(2));
+
             // Services
             services.AddScoped<ITokenService,   JwtTokenService>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IEmailService,   MailKitEmailService>();
 
             // Seeder
             services.AddScoped<IdentityDataSeeder>();

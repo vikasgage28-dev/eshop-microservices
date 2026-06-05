@@ -1,7 +1,10 @@
 using Identity.API.DTOs;
+using Identity.Core.Features.Auth.Commands.Enable2FA;
 using Identity.Core.Features.Auth.Commands.Login;
 using Identity.Core.Features.Auth.Commands.RefreshToken;
 using Identity.Core.Features.Auth.Commands.Register;
+using Identity.Core.Features.Auth.Commands.SendOtp;
+using Identity.Core.Features.Auth.Commands.VerifyOtp;
 using Identity.Core.Features.Auth.Queries.GetAllUsers;
 using Identity.Core.Features.Auth.Queries.GetUserById;
 using MediatR;
@@ -61,6 +64,15 @@ namespace Identity.API.Controllers
             if (!result.Success)
                 return Unauthorized(new { message = result.Error });
 
+            // 2FA required — return partial response; client calls /send-otp next
+            if (result.Requires2FA)
+                return Ok(new AuthResponse
+                {
+                    Requires2FA = true,
+                    UserId      = result.UserId,
+                    Email       = result.Email
+                });
+
             return Ok(new AuthResponse
             {
                 Token        = result.Token!,
@@ -70,6 +82,84 @@ namespace Identity.API.Controllers
                 FullName     = result.FullName,
                 Roles        = result.Roles
             });
+        }
+
+        // POST api/auth/send-otp
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
+        {
+            var result = await _mediator.Send(new SendOtpCommand { UserId = request.UserId });
+
+            if (!result.Success)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(new { message = "OTP sent to your registered email." });
+        }
+
+        // POST api/auth/verify-otp
+        [HttpPost("verify-otp")]
+        public async Task<ActionResult<AuthResponse>> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            var result = await _mediator.Send(new VerifyOtpCommand
+            {
+                UserId = request.UserId,
+                Code   = request.Code
+            });
+
+            if (!result.Success)
+                return Unauthorized(new { message = result.Error });
+
+            return Ok(new AuthResponse
+            {
+                Token        = result.Token!,
+                RefreshToken = result.RefreshToken!,
+                UserId       = result.UserId,
+                Email        = result.Email,
+                FullName     = result.FullName,
+                Roles        = result.Roles
+            });
+        }
+
+        // POST api/auth/toggle-2fa  — requires valid JWT
+        [HttpPost("toggle-2fa")]
+        [Authorize]
+        public async Task<IActionResult> Toggle2FA([FromBody] Toggle2FARequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                      ?? User.FindFirstValue("sub");
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var result = await _mediator.Send(new Enable2FACommand
+            {
+                UserId  = userId,
+                Enabled = request.Enabled
+            });
+
+            if (!result.Success)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(new { twoFactorEnabled = request.Enabled });
+        }
+
+        // GET api/auth/2fa-status  — requires valid JWT
+        [HttpGet("2fa-status")]
+        [Authorize]
+        public async Task<IActionResult> Get2FAStatus()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                      ?? User.FindFirstValue("sub");
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var user = await _mediator.Send(new GetUserByIdQuery(userId));
+            if (user is null) return NotFound();
+
+            // TwoFactorEnabled is in IdentityUser base — we need to expose it
+            // We'll return it from a dedicated repository method via the GetMe-like pattern
+            return Ok(new { twoFactorEnabled = user.TwoFactorEnabled });
         }
 
         // POST api/auth/refresh

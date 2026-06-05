@@ -3,6 +3,7 @@ import ProtectedRoute from './ProtectedRoute'
 import MainLayout from '@/components/layout/MainLayout'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
+import VerifyOtpPage from '@/pages/auth/VerifyOtpPage'
 import DashboardPage from '@/pages/home/DashboardPage'
 import ProductsPage from '@/pages/products/ProductsPage'
 import ProductDetailPage from '@/pages/products/ProductDetailPage'
@@ -21,6 +22,7 @@ export default function AppRouter() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
 
         {/* Protected routes — any logged-in user */}
         <Route element={<ProtectedRoute />}>

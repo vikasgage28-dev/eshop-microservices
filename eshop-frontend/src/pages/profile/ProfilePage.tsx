@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck, User, Mail, Hash, ClipboardList, MapPin, Plus, Trash2, Loader2, Star, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { authApi } from '@/api/authClient'
 import { useGetOrdersByCustomerQuery, useGetOrdersQuery } from '@/api/orderingApi'
 import { useGetCustomerByEmailQuery, useAddAddressMutation, useDeleteAddressMutation } from '@/api/customerApi'
 import { Button } from '@/components/ui/button'
@@ -21,12 +22,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 const EMPTY_ADDR = { street: '', city: '', state: '', country: 'India', postalCode: '', isDefault: false }
 
 export default function ProfilePage() {
-  const { fullName, email, userId, roles, isAdmin, logout } = useAuth()  // userId used for display only
+  const { fullName, email, userId, roles, isAdmin, token, logout } = useAuth()
   const navigate = useNavigate()
 
   const { data: allOrders }      = useGetOrdersQuery(undefined,              { skip: !isAdmin })
   const { data: customer }       = useGetCustomerByEmailQuery(email ?? '',   { skip: !email || isAdmin })
-  // Orders are keyed by Customer profile ID (not Identity userId) — must wait for customer to load
   const { data: customerOrders } = useGetOrdersByCustomerQuery(customer?.id ?? '', { skip: isAdmin || !customer?.id })
 
   const [addAddress, { isLoading: addingAddr }] = useAddAddressMutation()
@@ -35,11 +35,33 @@ export default function ProfilePage() {
   const [showAddrForm, setShowAddrForm] = useState(false)
   const [addrForm, setAddrForm]         = useState<Omit<Address, 'id'>>(EMPTY_ADDR)
 
+  // 2FA state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [toggling2FA, setToggling2FA]           = useState(false)
+
+  useEffect(() => {
+    if (!token) return
+    authApi.get2FAStatus(token).then((r) => setTwoFactorEnabled(r.twoFactorEnabled)).catch(() => {})
+  }, [token])
+
   const orders     = isAdmin ? allOrders : customerOrders
   const totalSpend = customerOrders?.reduce((s, o) => s + o.totalAmount, 0) ?? 0
   const initials   = fullName ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'
 
   const handleLogout = () => { logout(); navigate('/login') }
+
+  const handle2FAToggle = async () => {
+    if (!token) return
+    setToggling2FA(true)
+    try {
+      const result = await authApi.toggle2FA(token, !twoFactorEnabled)
+      setTwoFactorEnabled(result.twoFactorEnabled)
+    } catch {
+      // ignore
+    } finally {
+      setToggling2FA(false)
+    }
+  }
 
   const handleSaveAddress = async () => {
     if (!customer) return
@@ -169,6 +191,32 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Security — 2FA */}
+      <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e8e8e8] dark:border-[#3a3a3a] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={15} className={twoFactorEnabled ? 'text-green-500' : 'text-gray-400'} />
+            <div>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Two-Factor Authentication</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {twoFactorEnabled ? 'Enabled — OTP required on every login' : 'Disabled — password only'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handle2FAToggle}
+            disabled={toggling2FA}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${twoFactorEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+            aria-label="Toggle 2FA"
+          >
+            {toggling2FA
+              ? <Loader2 size={12} className="absolute inset-0 m-auto text-white animate-spin" />
+              : <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${twoFactorEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+            }
+          </button>
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">

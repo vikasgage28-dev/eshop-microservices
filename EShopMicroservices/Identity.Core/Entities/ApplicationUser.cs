@@ -15,5 +15,6 @@ namespace Identity.Core.Entities
         public DateTime  CreatedAt           { get; set; } = DateTime.UtcNow;
         public string?   RefreshToken        { get; set; }
         public DateTime? RefreshTokenExpiry  { get; set; }
+        public bool      TwoFactorEnabled    { get; set; }
     }
 }

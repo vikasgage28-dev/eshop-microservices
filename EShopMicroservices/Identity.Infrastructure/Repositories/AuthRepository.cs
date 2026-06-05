@@ -33,7 +33,8 @@ namespace Identity.Infrastructure.Repositories
             LastName           = u.LastName,
             CreatedAt          = u.CreatedAt,
             RefreshToken       = u.RefreshToken,
-            RefreshTokenExpiry = u.RefreshTokenExpiry
+            RefreshTokenExpiry = u.RefreshTokenExpiry,
+            TwoFactorEnabled   = u.TwoFactorEnabled
         };
 
         // ── IAuthRepository ───────────────────────────────────────────────
@@ -112,6 +113,37 @@ namespace Identity.Infrastructure.Repositories
             return identityUser is null
                 ? new List<string>()
                 : await _userManager.GetRolesAsync(identityUser);
+        }
+
+        // ── 2FA ───────────────────────────────────────────────────────────────
+
+        public async Task<bool> GetTwoFactorEnabledAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            return user is not null && user.TwoFactorEnabled;
+        }
+
+        public async Task SetTwoFactorEnabledAsync(string userId, bool enabled)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return;
+            await _userManager.SetTwoFactorEnabledAsync(user, enabled);
+        }
+
+        public async Task<string> GenerateTwoFactorTokenAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                       ?? throw new InvalidOperationException($"User {userId} not found.");
+            // Uses the built-in "Email" token provider (TOTP math, no DB write)
+            return await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+        }
+
+        public async Task<bool> VerifyTwoFactorTokenAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return false;
+            return await _userManager.VerifyTwoFactorTokenAsync(
+                user, TokenOptions.DefaultEmailProvider, token);
         }
     }
 }

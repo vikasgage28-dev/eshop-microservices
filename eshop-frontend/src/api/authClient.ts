@@ -27,6 +27,7 @@ export interface AuthResponse {
   roles: string[]
   token: string
   refreshToken: string
+  requires2FA?: boolean
 }
 
 export const authApi = {
@@ -38,4 +39,23 @@ export const authApi = {
 
   refresh: (refreshToken: string) =>
     authClient.post<AuthResponse>('/refresh', { refreshToken }).then((r) => r.data),
+
+  sendOtp: (userId: string) =>
+    authClient.post<{ message: string }>('/send-otp', { userId }).then((r) => r.data),
+
+  verifyOtp: (userId: string, code: string) =>
+    authClient.post<AuthResponse>('/verify-otp', { userId, code }).then((r) => r.data),
+
+  toggle2FA: (token: string, enabled: boolean) =>
+    authClient.post<{ twoFactorEnabled: boolean }>(
+      '/toggle-2fa',
+      { enabled },
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).then((r) => r.data),
+
+  get2FAStatus: (token: string) =>
+    authClient.get<{ twoFactorEnabled: boolean }>(
+      '/2fa-status',
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).then((r) => r.data),
 }

@@ -12,5 +12,11 @@ namespace Identity.Core.Interfaces
         Task UpdateRefreshTokenAsync(string userId, string refreshToken, DateTime expiry);
         Task<ApplicationUser?> GetByRefreshTokenAsync(string refreshToken);
         Task<IList<string>> GetRolesAsync(ApplicationUser user);
+
+        // ── 2FA ───────────────────────────────────────────────────────────
+        Task<bool>   GetTwoFactorEnabledAsync(string userId);
+        Task         SetTwoFactorEnabledAsync(string userId, bool enabled);
+        Task<string> GenerateTwoFactorTokenAsync(string userId);
+        Task<bool>   VerifyTwoFactorTokenAsync(string userId, string token);
     }
 }
