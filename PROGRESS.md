@@ -1382,23 +1382,23 @@ Custom built:     useAuth, useCart, useDebounce
 
 ### 🔑 Phase 14 — Authentication Deep Dive (with React UI!)
 > UI must exist before Auth makes sense to implement and test end-to-end!
-> Logical sequence: Concepts → Already built → Standard flows → Enterprise → Advanced → Passwordless
+> Logical sequence: Completed → Current → Standard flows → Enterprise → Advanced → Passwordless
 > Total cost: £0 — all tools free tier or local
 
-**Already done in Identity.API (✅):**
+**Foundation already built before Phase 14 (✅):**
 ```
-JWT Authentication       — email + password → JWT token
+JWT Authentication       — email + password → JWT token (HS256, then upgraded to RS256)
 Refresh Token            — silent re-auth without re-login
 Role-based auth          — Admin / User roles in JWT claims
 ```
 
 **Tools used in Phase 14:**
 ```
-Auth0 free tier          — OAuth 2.0, OIDC, Social Logins, Refresh Tokens, M2M
-Azure AD B2C free tier   — Consumer identity, Social Logins via Azure
-Entra ID free tier       — Enterprise employee login
+Identity.API             — custom JWT + 2FA + TOTP + MailKit (Phase 14 items 1-4)
+Auth0 free tier          — OAuth 2.0, OIDC, Social Logins (Phase 14 items 9-12)
+Azure AD B2C free tier   — Consumer identity, Social Logins via Azure (Phase 15)
+Entra ID free tier       — Enterprise employee login (Phase 15)
 Keycloak (local)         — SAML 2.0, SSO — runs as local Java app, zero cost
-ASP.NET Core Identity    — 2FA built-in (GenerateTwoFactorTokenAsync)
 MailKit NuGet            — sends OTP email (Gmail SMTP free)
 Fido2.NET NuGet          — Passkeys / WebAuthn implementation
 Local self-signed certs  — mTLS between microservices
@@ -1406,27 +1406,38 @@ Local self-signed certs  — mTLS between microservices
 
 | # | Auth Method | Tool | Cost | Status |
 |---|------------|------|------|--------|
-| 76 | **Session vs Token** — concept, when to use which | Theory | 🟢 Free | ⏳ |
-| 77 | **OAuth 2.0 concepts** — flows, tokens, scopes, grants | Theory | 🟢 Free | ⏳ |
-| 78 | **OAuth 2.0 — Authorization Code + PKCE** — React SPA login | Auth0 | 🟢 Free | ⏳ |
-| 79 | **OAuth 2.0 — Client Credentials** — microservice to microservice | Auth0 | 🟢 Free | ⏳ |
-| 80 | **OAuth 2.0 — Refresh Token flow** — silent re-auth | Auth0 | 🟢 Free | ⏳ |
-| 81 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT | Auth0 | 🟢 Free | ⏳ |
-| 82 | **OAuth 2.1** — updated spec (PKCE mandatory, implicit removed) | Theory | 🟢 Free | ⏳ |
-| 83 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery | Auth0 | 🟢 Free | ⏳ |
-| 84 | **Social Logins** — Google + GitHub via Auth0 | Auth0 | 🟢 Free | ⏳ |
-| 85 | **2FA — Email OTP** — Identity built-in + MailKit (no Google Authenticator!) | MailKit | 🟢 Free | ⏳ |
-| 86 | **Magic Links** — passwordless email login (HMAC signed token) | Identity.API | 🟢 Free | ⏳ |
-| 87 | **Azure AD B2C** — consumer identity, Azure native OIDC | Azure free | 🟢 Free | ⏳ |
-| 88 | **Azure AD B2C + React** — replace Auth0 with AD B2C | Azure free | 🟢 Free | ⏳ |
-| 89 | **Social Logins via Azure AD B2C** — Google + Microsoft | Azure free | 🟢 Free | ⏳ |
-| 90 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
-| 91 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow | Keycloak local | 🟢 Free | ⏳ |
-| 92 | **API Key Authentication** — developer / service account access | Identity.API | 🟢 Free | ⏳ |
-| 93 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID, no password | Fido2.NET | 🟢 Free | ⏳ |
-| 94 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth | Local certs | 🟢 Free | ⏳ |
-| 95 | **Zero Trust concept** — never trust, always verify architecture | Theory | 🟢 Free | ⏳ |
-| 96 | **Risk-based / Adaptive Auth** — new device triggers extra verification | Identity.API | 🟢 Free | ⏳ |
+| **✅ COMPLETED** | | | | |
+| 76 | **Silent Token Refresh** — baseQueryWithReauth intercepts 401, retries with new token | RTK Query | 🟢 Free | ✅ Done |
+| 77 | **Refresh Token Rotation** — new refresh token on every use, old one invalidated in DB | Identity.API | 🟢 Free | ✅ Done |
+| 78 | **JWT RS256 Asymmetric Signing** — private.pem signs, public.pem verifies (never share private key) | Identity.API | 🟢 Free | ✅ Done |
+| 79 | **2FA — Email OTP** — TOTP math + MailKit + Gmail SMTP, 2-min expiry, no OTP table in DB | MailKit | 🟢 Free | ✅ Done |
+| **🔄 IN PROGRESS** | | | | |
+| 80 | **OAuth 2.0 + PKCE** — Authorization Code flow, React SPA as OAuth client, Auth0 as Auth Server | Auth0 | 🟢 Free | 🔄 Current |
+| **⏳ NEXT — OAuth / OIDC / Social** | | | | |
+| 81 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery doc (/.well-known) | Auth0 | 🟢 Free | ⏳ |
+| 82 | **Social Logins** — Google + GitHub "Login with" via Auth0 (unlocked by OAuth + OIDC) | Auth0 | 🟢 Free | ⏳ |
+| 83 | **OAuth 2.0 — Client Credentials** — machine-to-machine, no user involved (B2B APIs) | Auth0 | 🟢 Free | ⏳ |
+| **⏳ NEXT — Advanced 2FA / Passwordless** | | | | |
+| 84 | **2FA — TOTP Authenticator App** — QR code setup, Google Authenticator / Authy (30s codes) | OtpNet | 🟢 Free | ⏳ |
+| 85 | **Magic Links** — passwordless email login, HMAC-signed expiring link (Slack/Notion style) | Identity.API | 🟢 Free | ⏳ |
+| 86 | **Step-up Auth** — re-verify identity for sensitive actions (cancel order > ₹10,000) | Identity.API | 🟢 Free | ⏳ |
+| 87 | **SMS OTP** — OTP on mobile number (requires paid Twilio / MSG91 account) | Twilio | 🔴 Paid | ⏳ |
+| **⏳ NEXT — Developer / Service Auth** | | | | |
+| 88 | **API Key Authentication** — Stripe-style, for service accounts and external integrations | Identity.API | 🟢 Free | ⏳ |
+| 89 | **PAT (Personal Access Token)** — GitHub-style long-lived scoped developer tokens | Identity.API | 🟢 Free | ⏳ |
+| **⏳ NEXT — Enterprise / Advanced** | | | | |
+| 90 | **Azure AD B2C** — consumer identity, Azure-native OIDC with custom policies + branding | Azure free | 🟢 Free | ⏳ |
+| 91 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
+| 92 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow (Salesforce/Workday style) | Keycloak local | 🟢 Free | ⏳ |
+| 93 | **Risk-based / Adaptive Auth** — new device/location detected → extra challenge | Identity.API | 🟢 Free | ⏳ |
+| 94 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT (code shown on device) | Auth0 | 🟢 Free | ⏳ |
+| **⏳ NEXT — Passwordless / Hardware** | | | | |
+| 95 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID login, no password at all | Fido2.NET | 🟢 Free | ⏳ |
+| 96 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth (local self-signed certs) | Local certs | 🟢 Free | ⏳ |
+| 97 | **QR Code Login** — WhatsApp Web style, scan QR with phone to log in on desktop | Identity.API | 🟢 Free | ⏳ |
+| **⏳ CONCEPTS** | | | | |
+| 98 | **Session vs Token** — concept deep-dive, when to use which, tradeoffs | Theory | 🟢 Free | ⏳ |
+| 99 | **Zero Trust Architecture** — never trust the network, verify every request every time | Theory | 🟢 Free | ⏳ |
 
 ---
 
