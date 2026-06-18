@@ -18,5 +18,10 @@ namespace Identity.Core.Interfaces
         Task         SetTwoFactorEnabledAsync(string userId, bool enabled);
         Task<string> GenerateTwoFactorTokenAsync(string userId);
         Task<bool>   VerifyTwoFactorTokenAsync(string userId, string token);
+
+        // ── Social Login ──────────────────────────────────────────────────
+        // Finds existing user by email OR creates a new Customer account.
+        // Called after the external provider's access token has been validated.
+        Task<ApplicationUser> FindOrCreateSocialUserAsync(SocialUserInfo userInfo);
     }
 }

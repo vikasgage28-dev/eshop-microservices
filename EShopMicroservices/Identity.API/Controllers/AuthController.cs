@@ -4,6 +4,7 @@ using Identity.Core.Features.Auth.Commands.Login;
 using Identity.Core.Features.Auth.Commands.RefreshToken;
 using Identity.Core.Features.Auth.Commands.Register;
 using Identity.Core.Features.Auth.Commands.SendOtp;
+using Identity.Core.Features.Auth.Commands.SocialLogin;
 using Identity.Core.Features.Auth.Commands.VerifyOtp;
 using Identity.Core.Features.Auth.Queries.GetAllUsers;
 using Identity.Core.Features.Auth.Queries.GetUserById;
@@ -160,6 +161,31 @@ namespace Identity.API.Controllers
             // TwoFactorEnabled is in IdentityUser base — we need to expose it
             // We'll return it from a dedicated repository method via the GetMe-like pattern
             return Ok(new { twoFactorEnabled = user.TwoFactorEnabled });
+        }
+
+        // POST api/auth/social-login
+        // Public — no JWT yet. Validates provider token server-side, issues our own JWT.
+        [HttpPost("social-login")]
+        public async Task<ActionResult<AuthResponse>> SocialLogin([FromBody] SocialLoginRequest request)
+        {
+            var result = await _mediator.Send(new SocialLoginCommand
+            {
+                Provider    = request.Provider,
+                AccessToken = request.AccessToken
+            });
+
+            if (!result.Success)
+                return Unauthorized(new { message = result.Error });
+
+            return Ok(new AuthResponse
+            {
+                Token        = result.Token!,
+                RefreshToken = result.RefreshToken!,
+                UserId       = result.UserId,
+                Email        = result.Email,
+                FullName     = result.FullName,
+                Roles        = result.Roles
+            });
         }
 
         // POST api/auth/refresh

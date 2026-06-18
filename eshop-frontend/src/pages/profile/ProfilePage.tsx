@@ -8,6 +8,7 @@ import { useGetCustomerByEmailQuery, useAddAddressMutation, useDeleteAddressMuta
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import type { Address } from '@/types/customer.types'
+import { useAuth0 } from '@auth0/auth0-react'
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [toggling2FA, setToggling2FA]           = useState(false)
+  const { user: auth0User, isAuthenticated: isAuth0User } = useAuth0()
 
   useEffect(() => {
     if (!token) return
@@ -75,9 +77,44 @@ export default function ProfilePage() {
     if (!customer) return
     deleteAddress({ customerId: customer.id, addressId })
   }
-
+  
   return (
     <div className="max-w-lg space-y-5">
+      {/* Auth0 Profile Card — shown only when logged in via Auth0 */}
+      {isAuth0User && auth0User && (
+        <div className="bg-white rounded-xl border border-blue-100 p-6 mb-6">
+          <div className="flex items-center gap-4">
+            <img
+              src={auth0User.picture}
+              alt={auth0User.name}
+              className="w-16 h-16 rounded-full border-2 border-blue-500"
+            />
+            <div>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+                Signed in via Auth0 — OAuth 2.0 + OIDC
+              </p>
+              <p className="text-lg font-bold text-gray-900">{auth0User.name}</p>
+              <p className="text-sm text-gray-500">{auth0User.email}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">
+              OIDC id_token claims
+            </p>
+            <p className="text-xs text-gray-600">
+              <span className="font-mono text-blue-600">sub</span> — {auth0User.sub}
+            </p>
+            <p className="text-xs text-gray-600">
+              <span className="font-mono text-blue-600">email_verified</span> — {String(auth0User.email_verified)}
+            </p>
+            <p className="text-xs text-gray-600">
+              <span className="font-mono text-blue-600">updated_at</span> — {auth0User.updated_at}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Avatar card */}
       <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e8e8e8] dark:border-[#3a3a3a] p-6 flex items-center gap-5">
         <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
