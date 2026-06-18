@@ -28,6 +28,33 @@ namespace Identity.API.DTOs
         public string? Email        { get; init; }
         public string? FullName     { get; init; }
         public IList<string> Roles  { get; init; } = new List<string>();
+        // 2FA — when true, Token/RefreshToken are empty; client must call /send-otp then /verify-otp
+        public bool    Requires2FA  { get; init; }
+    }
+
+    public class SendOtpRequest
+    {
+        public string UserId { get; set; } = string.Empty;
+    }
+
+    public class VerifyOtpRequest
+    {
+        public string UserId { get; set; } = string.Empty;
+        public string Code   { get; set; } = string.Empty;
+    }
+
+    public class Toggle2FARequest
+    {
+        public bool Enabled { get; set; }
+    }
+
+    public class SocialLoginRequest
+    {
+        /// <summary>"auth0" | "google" | "github"</summary>
+        public string Provider    { get; set; } = "auth0";
+
+        /// <summary>Access token obtained by the SPA from the OAuth provider.</summary>
+        public string AccessToken { get; set; } = string.Empty;
     }
 
     public class UserDto

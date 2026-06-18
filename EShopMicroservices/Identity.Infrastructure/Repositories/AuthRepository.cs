@@ -33,7 +33,8 @@ namespace Identity.Infrastructure.Repositories
             LastName           = u.LastName,
             CreatedAt          = u.CreatedAt,
             RefreshToken       = u.RefreshToken,
-            RefreshTokenExpiry = u.RefreshTokenExpiry
+            RefreshTokenExpiry = u.RefreshTokenExpiry,
+            TwoFactorEnabled   = u.TwoFactorEnabled
         };
 
         // ── IAuthRepository ───────────────────────────────────────────────
@@ -112,6 +113,85 @@ namespace Identity.Infrastructure.Repositories
             return identityUser is null
                 ? new List<string>()
                 : await _userManager.GetRolesAsync(identityUser);
+        }
+
+        // ── 2FA ───────────────────────────────────────────────────────────────
+
+        public async Task<bool> GetTwoFactorEnabledAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            return user is not null && user.TwoFactorEnabled;
+        }
+
+        public async Task SetTwoFactorEnabledAsync(string userId, bool enabled)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return;
+            await _userManager.SetTwoFactorEnabledAsync(user, enabled);
+        }
+
+        public async Task<string> GenerateTwoFactorTokenAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                       ?? throw new InvalidOperationException($"User {userId} not found.");
+            // Uses the built-in "Email" token provider (TOTP math, no DB write)
+            return await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+        }
+
+        public async Task<bool> VerifyTwoFactorTokenAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return false;
+            return await _userManager.VerifyTwoFactorTokenAsync(
+                user, TokenOptions.DefaultEmailProvider, token);
+        }
+
+        // ── Social Login ──────────────────────────────────────────────────────
+        public async Task<ApplicationUser> FindOrCreateSocialUserAsync(SocialUserInfo userInfo)
+        {
+            var loginInfo = new UserLoginInfo(userInfo.Provider, userInfo.ProviderUserId, userInfo.Provider);
+
+            // 1. Look up by provider + providerUserId in AspNetUserLogins (most reliable)
+            //    This correctly handles same email on different providers (Google vs GitHub)
+            var existingByLogin = await _userManager.FindByLoginAsync(userInfo.Provider, userInfo.ProviderUserId);
+            if (existingByLogin is not null)
+                return ToModel(existingByLogin);
+
+            // 2. Same email already registered as a normal app user → link the social login to it
+            //    e.g. user registered with email+password, now signs in with Google (same email)
+            var existingByEmail = await _userManager.FindByEmailAsync(userInfo.Email);
+            if (existingByEmail is not null)
+            {
+                // Record in AspNetUserLogins so next login hits path 1 directly
+                await _userManager.AddLoginAsync(existingByEmail, loginInfo);
+                return ToModel(existingByEmail);
+            }
+
+            // 3. Brand new user — create Customer account + record provider in AspNetUserLogins
+            var newUser = new AppIdentityUser
+            {
+                UserName       = userInfo.Email,
+                Email          = userInfo.Email,
+                FirstName      = userInfo.FirstName,
+                LastName       = userInfo.LastName,
+                EmailConfirmed = userInfo.EmailVerified,
+                CreatedAt      = DateTime.UtcNow
+            };
+
+            // Random password — user will never type it (login is always via OAuth provider)
+            var randomPassword = $"{Guid.NewGuid():N}Aa1!";
+            var result = await _userManager.CreateAsync(newUser, randomPassword);
+
+            if (!result.Succeeded)
+                throw new InvalidOperationException(
+                    $"Failed to create social user: {string.Join("; ", result.Errors.Select(e => e.Description))}");
+
+            await _userManager.AddToRoleAsync(newUser, "Customer");
+
+            // Record in AspNetUserLogins — marks this as a social user permanently
+            await _userManager.AddLoginAsync(newUser, loginInfo);
+
+            return ToModel(newUser);
         }
     }
 }

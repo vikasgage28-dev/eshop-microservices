@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Identity.Infrastructure.Services
 {
@@ -20,14 +19,19 @@ namespace Identity.Infrastructure.Services
 
         public string GenerateAccessToken(ApplicationUser user, IList<string> roles)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey   = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured.");
-            var issuer      = jwtSettings["Issuer"]    ?? "Identity.API";
-            var audience    = jwtSettings["Audience"]  ?? "EShopClients";
-            var expiryMins  = int.Parse(jwtSettings["ExpiryMinutes"] ?? "60");
+            var jwtSettings    = _configuration.GetSection("JwtSettings");
+            var privateKeyPath = jwtSettings["PrivateKeyPath"] ?? throw new InvalidOperationException("JWT PrivateKeyPath not configured.");
+            var issuer         = jwtSettings["Issuer"]         ?? "Identity.API";
+            var audience       = jwtSettings["Audience"]       ?? "EShopClients";
+            var expiryMins     = int.Parse(jwtSettings["ExpiryMinutes"] ?? "60");
 
-            var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            // ── Load RSA private key from PEM file ─────────────────────────────
+            var pemContent = File.ReadAllText(privateKeyPath);
+            using var rsa  = RSA.Create();
+            rsa.ImportFromPem(pemContent);
+
+            var key   = new RsaSecurityKey(rsa.ExportParameters(includePrivateParameters: true));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             var claims = new List<Claim>
             {

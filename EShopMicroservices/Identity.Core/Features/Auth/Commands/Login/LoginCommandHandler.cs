@@ -21,6 +21,20 @@ namespace Identity.Core.Features.Auth.Commands.Login
             if (user is null)
                 return new LoginResult { Success = false, Error = "Invalid email or password." };
 
+            // ── 2FA check ────────────────────────────────────────────────────
+            var twoFactorEnabled = await _authRepository.GetTwoFactorEnabledAsync(user.Id);
+            if (twoFactorEnabled)
+            {
+                // Don't issue a JWT yet — tell the frontend to collect the OTP
+                return new LoginResult
+                {
+                    Success     = true,
+                    Requires2FA = true,
+                    UserId      = user.Id,
+                    Email       = user.Email
+                };
+            }
+
             var roles        = await _authRepository.GetRolesAsync(user);
             var token        = _tokenService.GenerateAccessToken(user, roles);
             var refreshToken = _tokenService.GenerateRefreshToken();

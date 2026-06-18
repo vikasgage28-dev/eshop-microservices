@@ -10,11 +10,15 @@ interface AuthState {
   roles: string[]
   isLoading: boolean
   error: string | null
+  // 2FA — temporary state while OTP is pending
+  requires2FA: boolean
+  pending2FAUserId: string | null
+  pending2FAEmail: string | null
 }
 
 const stored = localStorage.getItem('auth')
 const initial: AuthState = stored
-  ? { ...JSON.parse(stored), isLoading: false, error: null }
+  ? { ...JSON.parse(stored), isLoading: false, error: null, requires2FA: false, pending2FAUserId: null, pending2FAEmail: null }
   : {
       token: null,
       refreshToken: null,
@@ -24,6 +28,9 @@ const initial: AuthState = stored
       roles: [],
       isLoading: false,
       error: null,
+      requires2FA: false,
+      pending2FAUserId: null,
+      pending2FAEmail: null,
     }
 
 export const login = createAsyncThunk('auth/login', async (payload: LoginPayload, { rejectWithValue }) => {
@@ -61,6 +68,9 @@ const authSlice = createSlice({
       state.fullName = null
       state.roles = []
       state.error = null
+      state.requires2FA = false
+      state.pending2FAUserId = null
+      state.pending2FAEmail = null
       localStorage.removeItem('auth')
     },
     clearError: (state) => {
@@ -74,6 +84,20 @@ const authSlice = createSlice({
       state.email = email
       state.fullName = fullName
       state.roles = roles
+      state.requires2FA = false
+      state.pending2FAUserId = null
+      state.pending2FAEmail = null
+      persist(state)
+    },
+    clear2FAPending: (state) => {
+      state.requires2FA = false
+      state.pending2FAUserId = null
+      state.pending2FAEmail = null
+    },
+    // Used by silent token refresh — only updates tokens, preserves userId/email/fullName/roles
+    updateTokens: (state, action: PayloadAction<{ token: string; refreshToken: string }>) => {
+      state.token        = action.payload.token
+      state.refreshToken = action.payload.refreshToken
       persist(state)
     },
   },
@@ -82,11 +106,18 @@ const authSlice = createSlice({
       .addCase(login.pending, (state) => { state.isLoading = true; state.error = null })
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false
-        const { token, refreshToken, userId, email, fullName, roles } = action.payload
-        state.token = token; state.refreshToken = refreshToken
-        state.userId = userId; state.email = email
-        state.fullName = fullName; state.roles = roles
-        persist(state)
+        const { token, refreshToken, userId, email, fullName, roles, requires2FA } = action.payload
+        if (requires2FA) {
+          // Don't store token — wait for OTP verification
+          state.requires2FA = true
+          state.pending2FAUserId = userId ?? null
+          state.pending2FAEmail = email ?? null
+        } else {
+          state.token = token; state.refreshToken = refreshToken
+          state.userId = userId; state.email = email
+          state.fullName = fullName; state.roles = roles
+          persist(state)
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false
@@ -108,5 +139,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { logout, clearError, setCredentials } = authSlice.actions
+export const { logout, clearError, setCredentials, updateTokens, clear2FAPending } = authSlice.actions
 export default authSlice.reducer

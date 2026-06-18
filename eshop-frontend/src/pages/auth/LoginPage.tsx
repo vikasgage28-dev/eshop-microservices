@@ -3,18 +3,25 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Store, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import { useAuth0 } from '@auth0/auth0-react'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, isLoading, error, isAuthenticated, isAdmin, clearError } = useAuth()
+  const { login, isLoading, error, isAuthenticated, isAdmin, requires2FA, clearError } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
+  const { loginWithRedirect } = useAuth0()
 
   useEffect(() => {
     if (isAuthenticated) navigate(isAdmin ? '/dashboard' : '/products', { replace: true })
   }, [isAuthenticated, isAdmin, navigate])
+
+  useEffect(() => {
+    // Redirect to OTP page when 2FA is required
+    if (requires2FA) navigate('/verify-otp', { replace: true })
+  }, [requires2FA, navigate])
 
   useEffect(() => {
     return () => { clearError() }
@@ -89,6 +96,22 @@ export default function LoginPage() {
             {isLoading ? 'Signing in…' : 'Sign In'}
           </Button>
         </form>
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm text-gray-400">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Auth0 Social Login */}
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+          onClick={() => loginWithRedirect({ authorizationParams: { prompt: 'login' } })}
+        >
+          <img src="https://cdn.auth0.com/styleguide/latest/lib/logos/img/favicon.png" className="w-5 h-5" />
+          Continue with Auth0
+        </Button>
 
         <p className="mt-6 text-center text-sm text-gray-500">
           No account?{' '}

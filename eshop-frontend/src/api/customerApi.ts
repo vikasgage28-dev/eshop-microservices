@@ -1,18 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { RootState } from '@/app/store'
-import type { Customer } from '@/types/customer.types'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import type { Address, Customer } from '@/types/customer.types'
 import { API_URLS } from '@/lib/constants'
+import { createBaseQueryWithReauth } from './baseQueryWithReauth'
 
 export const customerApi = createApi({
   reducerPath: 'customerApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URLS.customer}/api`,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.token
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-      return headers
-    },
-  }),
+  baseQuery: createBaseQueryWithReauth(`${API_URLS.customer}/api`),
   tagTypes: ['Customer'],
   endpoints: (builder) => ({
     getCustomers: builder.query<Customer[], void>({
@@ -40,6 +33,21 @@ export const customerApi = createApi({
       query: (id) => ({ url: `/customers/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Customer'],
     }),
+    addAddress: builder.mutation<Address, { customerId: string; address: Omit<Address, 'id'> }>({
+      query: ({ customerId, address }) => ({
+        url: `/customers/${customerId}/addresses`,
+        method: 'POST',
+        body: address,
+      }),
+      invalidatesTags: ['Customer'],
+    }),
+    deleteAddress: builder.mutation<void, { customerId: string; addressId: string }>({
+      query: ({ customerId, addressId }) => ({
+        url: `/customers/${customerId}/addresses/${addressId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Customer'],
+    }),
   }),
 })
 
@@ -50,4 +58,6 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
+  useAddAddressMutation,
+  useDeleteAddressMutation,
 } = customerApi

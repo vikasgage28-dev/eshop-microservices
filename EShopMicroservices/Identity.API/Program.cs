@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -63,9 +63,12 @@ builder.Services.AddFluentValidationAutoValidation();
 // Infrastructure (Identity + EF Core + JwtTokenService + AuthRepository)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey   = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured.");
+// JWT Authentication — RS256 (asymmetric: verify with public key only)
+var jwtSettings    = builder.Configuration.GetSection("JwtSettings");
+var publicKeyPath  = jwtSettings["PublicKeyPath"] ?? throw new InvalidOperationException("JWT PublicKeyPath not configured.");
+var publicKeyPem   = File.ReadAllText(publicKeyPath);
+var rsaPublic      = RSA.Create();
+rsaPublic.ImportFromPem(publicKeyPem);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -82,7 +85,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer              = jwtSettings["Issuer"],
         ValidAudience            = jwtSettings["Audience"],
-        IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        IssuerSigningKey         = new RsaSecurityKey(rsaPublic)   // public key only — secret never exposed
     };
 });
 

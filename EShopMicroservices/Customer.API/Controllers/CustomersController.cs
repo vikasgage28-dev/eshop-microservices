@@ -1,5 +1,7 @@
 using Customer.API.DTOs;
 using Customer.Core.Entities;
+using Customer.Core.Features.Addresses.Commands.AddAddress;
+using Customer.Core.Features.Addresses.Commands.DeleteAddress;
 using Customer.Core.Features.Customers.Commands.CreateCustomer;
 using Customer.Core.Features.Customers.Commands.DeleteCustomer;
 using Customer.Core.Features.Customers.Commands.UpdateCustomer;
@@ -75,6 +77,25 @@ namespace Customer.API.Controllers
             return NoContent();
         }
 
+        // POST api/customers/{id}/addresses
+        [HttpPost("{id:guid}/addresses")]
+        public async Task<ActionResult<AddressDto>> AddAddress(Guid id, [FromBody] AddAddressCommand command)
+        {
+            command.CustomerId = id;
+            var address = await _mediator.Send(command);
+            if (address is null) return NotFound();
+            return Ok(ToAddressDto(address));
+        }
+
+        // DELETE api/customers/{id}/addresses/{addressId}
+        [HttpDelete("{id:guid}/addresses/{addressId:guid}")]
+        public async Task<IActionResult> DeleteAddress(Guid id, Guid addressId)
+        {
+            var deleted = await _mediator.Send(new DeleteAddressCommand { CustomerId = id, AddressId = addressId });
+            if (!deleted) return NotFound();
+            return NoContent();
+        }
+
         private static CustomerDto ToDto(Core.Entities.Customer c) => new()
         {
             Id        = c.Id,
@@ -85,16 +106,18 @@ namespace Customer.API.Controllers
             Phone     = c.Phone,
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
-            Addresses = c.Addresses.Select(a => new AddressDto
-            {
-                Id         = a.Id,
-                Street     = a.Street,
-                City       = a.City,
-                State      = a.State,
-                Country    = a.Country,
-                PostalCode = a.PostalCode,
-                IsDefault  = a.IsDefault
-            }).ToList()
+            Addresses = c.Addresses.Select(ToAddressDto).ToList()
+        };
+
+        private static AddressDto ToAddressDto(Address a) => new()
+        {
+            Id         = a.Id,
+            Street     = a.Street,
+            City       = a.City,
+            State      = a.State,
+            Country    = a.Country,
+            PostalCode = a.PostalCode,
+            IsDefault  = a.IsDefault
         };
     }
 }

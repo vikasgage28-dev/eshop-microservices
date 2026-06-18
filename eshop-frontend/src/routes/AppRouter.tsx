@@ -3,6 +3,7 @@ import ProtectedRoute from './ProtectedRoute'
 import MainLayout from '@/components/layout/MainLayout'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
+import VerifyOtpPage from '@/pages/auth/VerifyOtpPage'
 import DashboardPage from '@/pages/home/DashboardPage'
 import ProductsPage from '@/pages/products/ProductsPage'
 import ProductDetailPage from '@/pages/products/ProductDetailPage'
@@ -13,6 +14,7 @@ import OrderDetailPage from '@/pages/orders/OrderDetailPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
 import CustomersPage from '@/pages/customers/CustomersPage'
 import AdminPage from '@/pages/admin/AdminPage'
+import Auth0CallbackPage from '@/pages/auth/Auth0CallbackPage'
 
 export default function AppRouter() {
   return (
@@ -21,6 +23,8 @@ export default function AppRouter() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
+        <Route path="/auth0/callback" element={<Auth0CallbackPage />} />
 
         {/* Protected routes — any logged-in user */}
         <Route element={<ProtectedRoute />}>

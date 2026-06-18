@@ -69,58 +69,408 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Stage 34: Phase 13 React Frontend COMPLETE — Next: Phase 13 Azure Static Web Apps Deployment
+## 📍 CURRENT STAGE — Phase 14: Authentication Deep Dive — IN PROGRESS
 
-### Where We Stopped
+### Key Credentials (never changes)
 ```
-Phase 13 — React Frontend COMPLETE! ✅
+Admin:    admin@eshop.com         / Admin@12345
+Customer: vikasgage28@gmail.com   / Customer@12345  (also used for Gmail SMTP + Google OAuth)
+Currency: INR (₹) — en-IN locale
+UI Theme: Lenovo Vantage Blue (#0067c0), 165px Sidebar
+Frontend: http://localhost:5173 (Vite dev server)
+Aspire:   https://localhost:17222 (dashboard)
+Ports:    catalog=5010, customer=5011/5022(gRPC), ordering=5012, identity=5013
+JWT:      RS256, 60-min expiry, private.pem signs, public.pem verifies
+2FA:      Email OTP — 2-min expiry — vikasgage28@gmail.com receives codes
+Gmail:    SMTP App Password in User Secrets (EmailSettings:AppPassword)
+Auth0:    dev-p6qgjp2d5mvexwg7.us.auth0.com — Google social login enabled
+```
 
-React 19 + TypeScript + Vite 8 frontend built and running at http://localhost:5173
-Connected live to all 4 backend APIs via .NET Aspire (localhost ports).
+---
 
+### Phase 13 — React Frontend COMPLETE ✅ (Fully Polished)
+```
+Phase 13 — React 19 Frontend — ALL DONE ✅
+
+Stack: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Shadcn/ui
+State: Redux Toolkit + RTK Query + Axios JWT interceptor
+Router: React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
+
+Pages Built:
+→ Login / Register  — wider 700px cards, show/hide password, inline errors
+→ Products          — RTK Query, search debounce, category filter, pagination, Picsum images
+→ Product Detail    — full info, reviews, qty selector, Add to Cart
+→ Admin (Products)  — CRUD table with Create/Edit/Delete dialog (Admin only)
+→ Cart              — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
+→ Checkout          — saved address selector + new address form + save-to-profile checkbox
+→ Orders            — table with status badges, click row → Order Detail
+→ Order Detail      — full order info, items list, Cancel Order for Pending
+→ Customers         — admin-only, search, Register (from site users), Unregister, address count badge
+→ Dashboard         — stat cards (Products/Orders/Customers/Revenue) + Recent Orders table
+→ Profile           — avatar, account info, role badges, order stats, addresses, actions
+
+Address Management (Customer DB ↔ Checkout):
+→ CustomerDB stores structured Address records (street, city, state, country, postalCode, isDefault)
+→ OrderingDB stores flat shipping address string snapshot at order time
+→ Profile page — full CRUD for saved addresses (Add / Delete)
+→ Checkout — saved address cards selector + "Use different address" + "Save to profile" checkbox
+→ AddAddress / DeleteAddress commands + handlers + ICustomerRepository + controller endpoints
+→ RTK Query tag invalidation keeps Profile and Checkout in sync
+
+Customer Registration Flow (Admin):
+→ GET /api/auth/users — fetches all Identity users
+→ Filters out users who already have a Customer profile (by email)
+→ Admin picks from dropdown → creates Customer profile → list refreshes
+
+Bug Fixes Applied:
+→ ProfilePage orders: was using Identity userId (wrong) → now uses customer.id (correct)
+→ OrdersPage: same fix applied earlier (customer.id lookup by email first)
+→ CheckoutPage: alert() replaced with amber inline validation error banner
+→ Dashboard status colors: extracted to shared orderStatusColor in lib/utils.ts
+
+Polish Applied:
+→ Shared orderStatusColor constant in lib/utils.ts — OrdersPage + DashboardPage both use it
+→ Orders page: added <h1> heading (consistent with all other pages)
+→ Checkout success: "Continue Shopping" → "Browse Products"
+→ Profile page: "Browse Products" button added for customers (admins excluded)
+→ Customers table: Addresses column with blue pill badge showing count per customer
+
+Custom Hooks:
+→ useAuth — reads Redux auth slice, exposes email/userId/roles/isAdmin/fullName
+→ useCart — cart Redux slice CRUD + computed totals
+→ useDebounce — debounced search inputs (300ms)
+→ useDarkMode — localStorage persistence, Moon/Sun toggle in TopBar
+
+UI Design:
+→ Lenovo Vantage style — #0067c0 blue, 165px sidebar, solid active state, #f4f4f4 bg
+→ Base font 20px in index.css → rem-based Tailwind (text-sm/xs) scales proportionally
+→ Dark mode — full dark theme via Tailwind dark: variants, toggled in TopBar
+
+Deferred (do later — not blocking):
+→ Azure Static Web Apps deploy — shifting to Phase 15 (Cloud Deploy) with all services
+→ Zod + React Hook Form — optional upgrade (forms work fine with useState)
+→ React 19 new hooks (useTransition, useOptimistic) — optional deep dive
+→ Categories admin page — optional (products work without it)
+```
+
+---
+
+### Phase 14 — Authentication Deep Dive — IN PROGRESS ⬅️
+```
+Philosophy:
+→ API Gateway owns auth validation — services trust the gateway (correct microservice pattern)
+→ Individual services do NOT add [Authorize] — gateway handles it (like Netflix, Uber)
+→ Each auth mode implemented in Identity.API + React frontend — end-to-end working demo
+→ No Azure needed until items 20-22 — months of learning first!
+
+Completed so far:
+✅ Item 1 — Silent Token Refresh    (baseQueryWithReauth.ts — RTK Query 401 interceptor)
+✅ Item 2 — Refresh Token Rotation  (backend already had it, frontend stores new token)
+✅ Item 3 — JWT RS256 Asymmetric    (private.pem signs, public.pem verifies)
+✅ Item 4 — 2FA Email OTP           (MailKit + Gmail SMTP + TOTP math, 2-min expiry)
+✅ Item 9 — OAuth 2.0 + PKCE       (Auth0 + Google social login, AspNetUserLogins tracking)
+
+Complete Authentication Sequence:
+─────────────────────────────────────────────────────────────────
+🟢 No Azure Needed — Implement In Order
+─────────────────────────────────────────────────────────────────
+  1.  Silent Token Refresh        ✅  COMPLETE — baseQueryWithReauth.ts wraps all RTK Query APIs
+  2.  Refresh Token Rotation      ✅  COMPLETE — already in backend, frontend now stores new token
+  3.  JWT RS256 (Asymmetric)      ✅  COMPLETE — private.pem signs, public.pem verifies
+  4.  2FA — Email OTP             ✅  COMPLETE — MailKit + Gmail SMTP + TOTP math, 2-min expiry
+  5.  2FA — TOTP (Authenticator)  ⏳  QRCoder + OtpNet, Google Authenticator / Authy
+  6.  SMS OTP                     ⏳  Twilio / MSG91, OTP on mobile number
+  7.  Magic Links                 ⏳  Passwordless — HMAC-signed link emailed to user (Slack/Notion style)
+  8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
+  9.  OAuth 2.0 + PKCE            ✅  COMPLETE — Auth0 + Google login, AspNetUserLogins tracking
+  10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc
+  11. Social Logins               ⏳  Google + GitHub login — unlocked by OAuth + OIDC
+  12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
+  13. Device Authorization Grant  ⏳  GitHub CLI / Netflix TV / IoT — code shown on device
+  14. PAT (Personal Access Token) ⏳  GitHub-style long-lived scoped developer tokens
+  15. API Key Auth                ⏳  Stripe-style — for service accounts and external integrations
+  16. Risk-based / Adaptive Auth  ⏳  New device/location detected → triggers extra challenge
+  17. QR Code Login               ⏳  WhatsApp Web style — scan QR with phone to log in on desktop
+  18. Passkeys / WebAuthn         ⏳  Fingerprint / Face ID — Fido2.NET NuGet (future of auth!)
+  19. mTLS                        ⏳  Certificate-based service-to-service — local self-signed certs
+
+─────────────────────────────────────────────────────────────────
+🔵 Needs Azure — Do Later (Phase 15 onwards)
+─────────────────────────────────────────────────────────────────
+  20. Azure AD B2C                ⏳  Consumer identity — OIDC with custom policies + branding
+  21. Entra ID (Azure AD)         ⏳  Enterprise — "Login with Microsoft" for employees
+  22. Workload Identity           ⏳  AKS pod gets Azure token automatically — no passwords in K8s
+
+─────────────────────────────────────────────────────────────────
+🟣 Enterprise / Advanced — After Azure Phase
+─────────────────────────────────────────────────────────────────
+  23. SAML 2.0 + SSO             ⏳  Corporate SSO — Keycloak as local IdP (Salesforce/Workday style)
+  24. DPoP                        ⏳  Banking-grade — binds access token to client key pair (FAPI)
+  25. SCIM                        ⏳  Auto-provision/deprovision users from company directory
+  26. Zero Trust Architecture     ⏳  Never trust the network — verify every request every time
+
+─────────────────────────────────────────────────────────────────
+Item 1 — Silent Token Refresh ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+Problem: RTK Query uses native fetch (not Axios) → Axios interceptors don't work
+Solution: Custom BaseQueryFn wrapper (RTK Query pattern)
+
+Files created/changed:
+→ eshop-frontend/src/api/baseQueryWithReauth.ts  (NEW)
+     createBaseQueryWithReauth(baseUrl) factory function
+     Intercepts 401 → POST /api/auth/refresh → retries original request
+     Module-level refreshPromise singleton prevents duplicate refresh calls (race condition fix)
+     On refresh fail → dispatch(logout()) → user sent to login page
+→ eshop-frontend/src/features/auth/authSlice.ts
+     Added updateTokens action — updates token + refreshToken ONLY, preserves userId/email/roles
+→ eshop-frontend/src/api/catalogApi.ts     — swapped fetchBaseQuery → createBaseQueryWithReauth
+→ eshop-frontend/src/api/customerApi.ts   — same swap
+→ eshop-frontend/src/api/orderingApi.ts   — same swap
+→ eshop-frontend/src/api/identityApi.ts   — same swap
+
+Race condition solution:
+→ 5 simultaneous 401s → only 1 refresh call fires → all 5 await same promise → all retry ✅
+
+─────────────────────────────────────────────────────────────────
+Item 2 — Refresh Token Rotation ✅ COMPLETE (backend already had it)
+─────────────────────────────────────────────────────────────────
+Backend (already existed):
+→ RefreshTokenCommandHandler.cs — GenerateRefreshToken() every call → UpdateRefreshTokenAsync()
+→ Old refresh token overwritten in DB — cannot be reused
+→ Stolen old token → GetByRefreshTokenAsync returns null → 401
+
+Frontend (completed via Item 1):
+→ updateTokens() stores NEW refreshToken from refresh response into Redux + localStorage
+→ Old token gone from both DB and client simultaneously
+
+Not implemented (advanced, deferred):
+→ Reuse detection (token family / history table) — requires separate DB table
+
+─────────────────────────────────────────────────────────────────
+Item 3 — JWT RS256 Asymmetric Signing ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+Why RS256 over HS256:
+→ HS256 = 1 shared secret → anyone who has it can forge tokens
+→ RS256 = private key signs (Identity.API only) + public key verifies (anyone)
+→ Services/Gateway only need public key → private key never leaves Identity.API
+→ Industry standard for microservices (Auth0, Google, Microsoft all use RS256)
+→ Required for API Gateway integration (Phase 15)
+
+Files changed:
+→ EShopMicroservices/Identity.Infrastructure/Services/JwtTokenService.cs
+     Removed: SymmetricSecurityKey + HmacSha256
+     Added: RSA.Create() + ImportFromPem(privateKeyPem) + RsaSha256
+→ EShopMicroservices/Identity.API/Program.cs
+     Removed: SymmetricSecurityKey + SecretKey from config
+     Added: RSA.Create() + ImportFromPem(publicKeyPem) + RsaSecurityKey
+→ EShopMicroservices/Identity.API/appsettings.json
+     Removed: SecretKey
+     Added: PrivateKeyPath = "private.pem", PublicKeyPath = "public.pem"
+→ .gitignore — added **/private.pem (NEVER commit private key!)
+
+Key files on disk (not in git):
+→ Identity.API/private.pem — RSA 2048-bit private key (signs tokens)
+→ Identity.API/public.pem  — RSA 2048-bit public key (verifies tokens, shareable)
+
+Verification: paste token at jwt.io → header shows "alg": "RS256" (was "HS256")
+
+Key architecture decisions:
+→ Services stay open (no [Authorize]) — API Gateway validates once at perimeter
+→ public.pem can be shared with API Gateway / other services safely
+→ generate-keys.ps1 (in .gitignore) — regenerate keys anytime with: pwsh -File generate-keys.ps1
+
+─────────────────────────────────────────────────────────────────
+Item 4 — 2FA Email OTP ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+How it works (TOTP — no DB table for OTP codes):
+→ OTP = HMAC(SecurityStamp + CurrentTimeWindow) — pure math, nothing stored
+→ SecurityStamp already exists in AspNetUsers — changes on password change → invalidates pending OTP
+→ TwoFactorEnabled column already in AspNetUsers — no migration needed
+→ Backend recomputes same HMAC on verify — if matches → valid, if time window passed → invalid
+→ 2-minute expiry (set via DataProtectionTokenProviderOptions.TokenLifespan)
+
+Login flow change:
+→ Password correct + TwoFactorEnabled=1 → return { requires2FA: true, userId } (NO JWT yet)
+→ Frontend redirects to /verify-otp → calls POST /send-otp → email sent
+→ User enters 6-digit code → POST /verify-otp → code verified → JWT issued NOW
+
+Backend files created/changed:
+→ Identity.Core/Interfaces/IEmailService.cs                          (NEW)
+     SendOtpEmailAsync(toEmail, toName, otpCode) — interface only, no MailKit dependency in Core
+→ Identity.Core/Interfaces/IAuthRepository.cs
+     Added: GetTwoFactorEnabledAsync, SetTwoFactorEnabledAsync, GenerateTwoFactorTokenAsync, VerifyTwoFactorTokenAsync
+→ Identity.Core/Entities/ApplicationUser.cs
+     Added: TwoFactorEnabled property (maps from AspNetUsers.TwoFactorEnabled)
+→ Identity.Core/Features/Auth/Commands/Login/LoginCommand.cs
+     Added: Requires2FA bool to LoginResult
+→ Identity.Core/Features/Auth/Commands/Login/LoginCommandHandler.cs
+     Added: GetTwoFactorEnabledAsync check → early return with Requires2FA=true (no JWT)
+→ Identity.Core/Features/Auth/Commands/SendOtp/                       (NEW folder)
+     SendOtpCommand.cs + SendOtpCommandHandler.cs
+     Handler: GenerateTwoFactorTokenAsync → SendOtpEmailAsync
+→ Identity.Core/Features/Auth/Commands/VerifyOtp/                     (NEW folder)
+     VerifyOtpCommand.cs + VerifyOtpCommandHandler.cs
+     Handler: VerifyTwoFactorTokenAsync → if valid → GenerateAccessToken + GenerateRefreshToken
+→ Identity.Core/Features/Auth/Commands/Enable2FA/                     (NEW folder)
+     Enable2FACommand.cs + Enable2FACommandHandler.cs
+     Handler: SetTwoFactorEnabledAsync(enabled)
+→ Identity.Infrastructure/Services/MailKitEmailService.cs              (NEW)
+     Connects to Gmail SMTP (smtp.gmail.com:587 StartTls) using App Password
+     Sends branded HTML email with large OTP code
+→ Identity.Infrastructure/Repositories/AuthRepository.cs
+     Implemented 4 new 2FA methods using UserManager built-ins
+     Updated ToModel() mapping to include TwoFactorEnabled
+→ Identity.Infrastructure/Extensions/InfrastructureServiceExtensions.cs
+     DataProtectionTokenProviderOptions.TokenLifespan = 2 minutes
+     Registered IEmailService → MailKitEmailService (Scoped)
+→ Identity.API/Controllers/AuthController.cs
+     POST /api/auth/send-otp        — public (no JWT yet)
+     POST /api/auth/verify-otp      — public (no JWT yet)
+     POST /api/auth/toggle-2fa      — [Authorize] (userId from JWT claim)
+     GET  /api/auth/2fa-status      — [Authorize]
+     Login endpoint: returns Requires2FA=true branch
+→ Identity.API/DTOs/AuthDtos.cs
+     Added: Requires2FA to AuthResponse, SendOtpRequest, VerifyOtpRequest, Toggle2FARequest
+→ Identity.API/appsettings.json
+     Added: EmailSettings (SmtpHost, SmtpPort, FromName, FromEmail, AppPassword)
+→ User Secrets: EmailSettings:FromEmail + EmailSettings:AppPassword (never in git!)
+
+Frontend files created/changed:
+→ eshop-frontend/src/api/authClient.ts
+     Added: requires2FA to AuthResponse type
+     Added: sendOtp(), verifyOtp(), toggle2FA(), get2FAStatus() API methods
+→ eshop-frontend/src/features/auth/authSlice.ts
+     Added: requires2FA, pending2FAUserId, pending2FAEmail to AuthState
+     Login fulfilled: if requires2FA → store userId temporarily, no token
+     Added: clear2FAPending action
+→ eshop-frontend/src/hooks/useAuth.ts
+     Exposed: requires2FA, pending2FAUserId, pending2FAEmail, completeLogin, clear2FAPending
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+     Added: useEffect watching requires2FA → navigate to /verify-otp
+→ eshop-frontend/src/pages/auth/VerifyOtpPage.tsx                     (NEW)
+     Auto-sends OTP on mount (useRef guard prevents React Strict Mode double-send)
+     6 individual digit inputs — auto-advance + paste support
+     Single countdown = OTP expiry (2 min, matches email and backend)
+     Resend silently unlocks after 60s (no separate timer shown — standard UX)
+     Code expired state: Verify button disabled, resend highlighted
+→ eshop-frontend/src/routes/AppRouter.tsx
+     Added: /verify-otp public route → VerifyOtpPage
+→ eshop-frontend/src/pages/profile/ProfilePage.tsx
+     Added: 2FA security card with toggle switch (loads status on mount, calls toggle-2fa)
+
+Key bugs fixed during implementation:
+→ Duplicate email: React 18 Strict Mode runs effects twice — fixed with useRef hasSentOtp guard
+→ Two confusing timers: removed separate resend countdown — one timer only (OTP expiry = 2 min)
+→ Token lifespan: reduced from 5 min to 2 min — email and UI countdown both updated
+
+Key architecture decisions:
+→ TOTP (RFC 6238) — same math as Google/GitHub. No OTP table in DB ever.
+→ SecurityStamp as shared secret — password change auto-invalidates pending OTPs
+→ JWT issued ONLY after both factors verified — no partial auth state with a token
+→ ISmsService NOT implemented — Email only (free). SMS needs Twilio (paid).
+→ useRef (not useState) for Strict Mode guard — ref persists across double-invoke, state does not
+→ pending2FAUserId in Redux — safe in-memory, cleared on logout, not in URL or localStorage
+
+─────────────────────────────────────────────────────────────────
+Item 9 — OAuth 2.0 + PKCE + Social Login ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
 What was built:
-→ Full project scaffold (Vite 8, React 19, TypeScript, Tailwind CSS v4, Shadcn/ui)
-→ Redux Toolkit store + typed hooks (useAppSelector, useAppDispatch)
-→ RTK Query — createApi, baseQuery with JWT header, all endpoints
-→ Axios JWT interceptor for login/register/refresh
-→ React Router DOM v7 — nested layouts, ProtectedRoute, role-based redirect
-→ Auth slice — login, logout, register, token + user in Redux
-→ Login page + Register page (wider cards, placeholders, dark text fix)
-→ Products page — RTK Query, search debounce, category filter, pagination, Picsum images
-→ Product Detail page — full info, reviews, qty selector, Add to Cart
-→ Admin page — product CRUD table with Create/Edit/Delete dialog (Admin only)
-→ Cart page — Redux slice, qty controls, remove, subtotal, live badge in Sidebar
-→ Checkout page — shipping address form, lookup customer by email, PlaceOrder API
-→ Orders page — table with status badges, click row → Order Detail
-→ Order Detail page — full order info, items list, Cancel Order for Pending
-→ Customers page — admin-only list with search
-→ Dashboard — stat cards (Products, Orders, Customers, Revenue) + Recent Orders table
-→ Profile page — avatar, account info, role badges, order stats, actions
-→ Dark mode — useDarkMode hook, localStorage persistence, Moon/Sun toggle in TopBar
-→ Lenovo Vantage UI design — 165px sidebar, solid blue active state, flat borders, #f4f4f4 bg
-→ Font scaling — all text uses rem-based Tailwind classes (text-sm, text-xs, etc.)
-  Base font size: 20px in index.css → all text scales proportionally
-→ Auth pages — wider cards (700px), all inputs have placeholders, dark text fix
-→ Custom hooks: useAuth, useCart, useDebounce, useDarkMode
+→ Social Login via Auth0 as Authorization Server (Google as identity provider)
+→ Full OAuth 2.0 Authorization Code Flow + PKCE (handled by @auth0/auth0-react SDK)
+→ OIDC /userinfo endpoint validation on backend (never trust frontend claims)
+→ AspNetUserLogins table used to track social users vs app users in DB
+→ Account linking — existing app user signing in with Google links both accounts
 
-CustomerDataSeeder.cs fixed:
-→ alice.smith@eshop.com → alice@eshop.com (matches Identity seeder)
+Key concepts learned:
+→ OAuth 2.0 = authorization framework (can this app access your data?)
+→ PKCE = prevents authorization code interception attacks (code_verifier + code_challenge)
+→ OIDC = identity layer on top of OAuth (who are you? → id_token with sub, email, name)
+→ Auth0 = Authorization Server middleman (handles Google/GitHub/Microsoft in one integration)
+→ ProviderKey (sub claim) = permanent unique ID per user per provider — never changes
+→ Enterprise = software for large organizations (SSO, SCIM, Active Directory, SAML)
 
-Key credentials:
-→ Admin:    admin@eshop.com / Admin@12345
-→ Customer: alice@eshop.com / Customer@12345
-→ Currency: INR (₹) — en-IN locale
+Auth0 setup:
+→ Auth0 tenant: dev-p6qgjp2d5mvexwg7.us.auth0.com
+→ App name: eShop (Single Page Application)
+→ Allowed Callback URL: http://localhost:5173/auth0/callback
+→ Allowed Web Origins: http://localhost:5173
+→ Username-Password-Authentication: DISABLED (Google only)
+→ Google social connection: ENABLED
+→ Credentials in .env.local (never in git): VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, VITE_AUTH0_CALLBACK_URL
 
-Remaining in Phase 13:
-→ Azure Static Web Apps deployment (FREE CI/CD from GitHub) — next step!
-→ Zod + React Hook Form (forms currently use plain useState — optional upgrade)
-→ React 19 new hooks (useTransition, useOptimistic — optional deep dive)
-→ Categories admin page (optional — products work without it)
+Backend files created/changed:
+→ Identity.Core/Interfaces/ISocialAuthProvider.cs                    (NEW)
+     SocialUserInfo record: Provider, ProviderUserId, Email, FirstName, LastName, Picture, EmailVerified
+     ISocialAuthProvider interface: GetUserInfoAsync(accessToken) → SocialUserInfo?
+→ Identity.Core/Features/Auth/Commands/SocialLogin/                  (NEW folder)
+     SocialLoginCommand.cs — carries Provider + AccessToken from frontend
+     SocialLoginCommandHandler.cs — 3 steps: validate token → find/create user → issue JWT
+→ Identity.Core/Interfaces/IAuthRepository.cs
+     Added: FindOrCreateSocialUserAsync(SocialUserInfo) → ApplicationUser
+→ Identity.Infrastructure/Services/Auth0UserInfoService.cs           (NEW)
+     Implements ISocialAuthProvider
+     Calls https://{domain}/userinfo with Bearer token (OIDC standard)
+     Parses { sub, email, name, picture, email_verified } → SocialUserInfo
+     Sets Provider = "Auth0" on returned record
+→ Identity.Infrastructure/Repositories/AuthRepository.cs
+     FindOrCreateSocialUserAsync — 3 scenarios:
+       Path 1: FindByLoginAsync(provider, sub) → found → fast return (returning social user)
+       Path 2: FindByEmailAsync → found → AddLoginAsync → link Google to app account
+       Path 3: not found → CreateAsync (random password) + AddToRoleAsync("Customer") + AddLoginAsync
+→ Identity.Infrastructure/Extensions/InfrastructureServiceExtensions.cs
+     Added: services.AddHttpClient<ISocialAuthProvider, Auth0UserInfoService>()
+→ Identity.API/Controllers/AuthController.cs
+     Added: POST /api/auth/social-login — public (no JWT yet), validates + issues our JWT
+→ Identity.API/DTOs/AuthDtos.cs
+     Added: SocialLoginRequest { Provider, AccessToken }
+→ Identity.API/appsettings.json
+     Added: Auth0:Domain = dev-p6qgjp2d5mvexwg7.us.auth0.com
 
-### Next: Phase 13 remaining → Azure Static Web Apps Deploy
-→ az staticwebapp create + GitHub Actions auto-generated yml
-→ frontend/eshop-frontend → Static Web App (FREE tier)
-→ VITE_API_BASE_URL → point to Azure APIs
+Frontend files created/changed:
+→ eshop-frontend/package.json
+     Added: @auth0/auth0-react v2.17.0
+→ eshop-frontend/.env.local (never in git)
+     VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, VITE_AUTH0_CALLBACK_URL
+→ eshop-frontend/src/main.tsx
+     Wrapped app in <Auth0Provider domain clientId authorizationParams>
+     scope: "openid profile email" — requests OIDC claims
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+     Added: "Continue with Auth0" button
+     Uses loginWithRedirect({ authorizationParams: { prompt: 'login' } })
+     prompt: 'login' forces Auth0 login screen even if session exists
+→ eshop-frontend/src/pages/auth/Auth0CallbackPage.tsx               (NEW)
+     useRef guard prevents React Strict Mode double-execution
+     getAccessTokenSilently() → gets Auth0 access token (PKCE done by SDK)
+     POST /social-login → receives our RS256 JWT
+     dispatch(setCredentials) → stored in Redux (same as normal login)
+     navigate('/products', { replace: true })
+→ eshop-frontend/src/routes/AppRouter.tsx
+     Added: /auth0/callback public route → Auth0CallbackPage
+→ eshop-frontend/src/pages/profile/ProfilePage.tsx
+     Added: OIDC learning card — shows raw id_token claims (sub, email_verified, updated_at)
+     Visible only when logged in via Auth0
+→ eshop-frontend/src/api/authClient.ts
+     Added: socialLogin({ provider, accessToken }) → AuthResponse
+
+DB tables involved:
+→ AspNetUsers — all users (social + app) stored here
+→ AspNetUserLogins — ONLY social users have rows here
+     LoginProvider = "Auth0", ProviderKey = "google-oauth2|abc123", UserId = guid
+→ Query to see social users: SELECT u.Email, l.LoginProvider, l.ProviderKey FROM AspNetUsers u JOIN AspNetUserLogins l ON u.Id = l.UserId
+
+Key architecture decisions:
+→ Auth0 token used ONLY for validation (call /userinfo) — then discarded
+→ Our own RS256 JWT always issued — all microservices only know our tokens
+→ ISocialAuthProvider in Core — Infrastructure implements (Clean Architecture)
+→ AddHttpClient<> (IHttpClientFactory) — proper connection pooling, no socket exhaustion
+→ AspNetUserLogins used (not custom table) — ASP.NET Identity built-in, no migration needed
+→ ProviderKey (sub) = permanent — never changes even if user changes name/email on Google
+→ Account linking — same email on Google + app account → automatically merged
+
+Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
+→ QR code generation (QRCoder NuGet) — user scans with Google Authenticator / Authy
+→ OtpNet NuGet for TOTP math (RFC 6238) — 30-second rotating codes
+→ No email needed — works offline — industry standard for 2FA
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
@@ -340,7 +690,7 @@ Phase 12.4 — Identity Service completed:
    → AppIdentityUser : IdentityUser (Infrastructure-only, maps to ApplicationUser)
    → AppIdentityDbContext (IdentityDbContext<AppIdentityUser>, EF Core 10)
    → AuthRepository: wraps UserManager + SignInManager + maps to ApplicationUser POCOs
-   → JwtTokenService: generates signed JWTs (HS256) + refresh tokens (RandomNumberGenerator)
+   → JwtTokenService: generates signed JWTs (upgraded HS256→RS256) + refresh tokens (RandomNumberGenerator)
    → IdentityDataSeeder: seeds Admin + Customer roles + 2 seed users (idempotent)
    → InfrastructureServiceExtensions: registers Identity, EF Core, services
    → EF Core Migration: InitialIdentitySchema
@@ -1132,23 +1482,23 @@ Custom built:     useAuth, useCart, useDebounce
 
 ### 🔑 Phase 14 — Authentication Deep Dive (with React UI!)
 > UI must exist before Auth makes sense to implement and test end-to-end!
-> Logical sequence: Concepts → Already built → Standard flows → Enterprise → Advanced → Passwordless
+> Logical sequence: Completed → Current → Standard flows → Enterprise → Advanced → Passwordless
 > Total cost: £0 — all tools free tier or local
 
-**Already done in Identity.API (✅):**
+**Foundation already built before Phase 14 (✅):**
 ```
-JWT Authentication       — email + password → JWT token
+JWT Authentication       — email + password → JWT token (HS256, then upgraded to RS256)
 Refresh Token            — silent re-auth without re-login
 Role-based auth          — Admin / User roles in JWT claims
 ```
 
 **Tools used in Phase 14:**
 ```
-Auth0 free tier          — OAuth 2.0, OIDC, Social Logins, Refresh Tokens, M2M
-Azure AD B2C free tier   — Consumer identity, Social Logins via Azure
-Entra ID free tier       — Enterprise employee login
+Identity.API             — custom JWT + 2FA + TOTP + MailKit (Phase 14 items 1-4)
+Auth0 free tier          — OAuth 2.0, OIDC, Social Logins (Phase 14 items 9-12)
+Azure AD B2C free tier   — Consumer identity, Social Logins via Azure (Phase 15)
+Entra ID free tier       — Enterprise employee login (Phase 15)
 Keycloak (local)         — SAML 2.0, SSO — runs as local Java app, zero cost
-ASP.NET Core Identity    — 2FA built-in (GenerateTwoFactorTokenAsync)
 MailKit NuGet            — sends OTP email (Gmail SMTP free)
 Fido2.NET NuGet          — Passkeys / WebAuthn implementation
 Local self-signed certs  — mTLS between microservices
@@ -1156,27 +1506,30 @@ Local self-signed certs  — mTLS between microservices
 
 | # | Auth Method | Tool | Cost | Status |
 |---|------------|------|------|--------|
-| 76 | **Session vs Token** — concept, when to use which | Theory | 🟢 Free | ⏳ |
-| 77 | **OAuth 2.0 concepts** — flows, tokens, scopes, grants | Theory | 🟢 Free | ⏳ |
-| 78 | **OAuth 2.0 — Authorization Code + PKCE** — React SPA login | Auth0 | 🟢 Free | ⏳ |
-| 79 | **OAuth 2.0 — Client Credentials** — microservice to microservice | Auth0 | 🟢 Free | ⏳ |
-| 80 | **OAuth 2.0 — Refresh Token flow** — silent re-auth | Auth0 | 🟢 Free | ⏳ |
-| 81 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT | Auth0 | 🟢 Free | ⏳ |
-| 82 | **OAuth 2.1** — updated spec (PKCE mandatory, implicit removed) | Theory | 🟢 Free | ⏳ |
-| 83 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery | Auth0 | 🟢 Free | ⏳ |
-| 84 | **Social Logins** — Google + GitHub via Auth0 | Auth0 | 🟢 Free | ⏳ |
-| 85 | **2FA — Email OTP** — Identity built-in + MailKit (no Google Authenticator!) | MailKit | 🟢 Free | ⏳ |
-| 86 | **Magic Links** — passwordless email login (HMAC signed token) | Identity.API | 🟢 Free | ⏳ |
-| 87 | **Azure AD B2C** — consumer identity, Azure native OIDC | Azure free | 🟢 Free | ⏳ |
-| 88 | **Azure AD B2C + React** — replace Auth0 with AD B2C | Azure free | 🟢 Free | ⏳ |
-| 89 | **Social Logins via Azure AD B2C** — Google + Microsoft | Azure free | 🟢 Free | ⏳ |
-| 90 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
-| 91 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow | Keycloak local | 🟢 Free | ⏳ |
-| 92 | **API Key Authentication** — developer / service account access | Identity.API | 🟢 Free | ⏳ |
-| 93 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID, no password | Fido2.NET | 🟢 Free | ⏳ |
-| 94 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth | Local certs | 🟢 Free | ⏳ |
-| 95 | **Zero Trust concept** — never trust, always verify architecture | Theory | 🟢 Free | ⏳ |
-| 96 | **Risk-based / Adaptive Auth** — new device triggers extra verification | Identity.API | 🟢 Free | ⏳ |
+| 76 | **Silent Token Refresh** — baseQueryWithReauth intercepts 401, retries with new token | RTK Query | 🟢 Free | ✅ Done |
+| 77 | **Refresh Token Rotation** — new refresh token on every use, old one invalidated in DB | Identity.API | 🟢 Free | ✅ Done |
+| 78 | **JWT RS256 Asymmetric Signing** — private.pem signs, public.pem verifies (never share private key) | Identity.API | 🟢 Free | ✅ Done |
+| 79 | **2FA — Email OTP** — TOTP math + MailKit + Gmail SMTP, 2-min expiry, no OTP table in DB | MailKit | 🟢 Free | ✅ Done |
+| 80 | **OAuth 2.0 + PKCE** — Authorization Code flow, React SPA as OAuth client, Auth0 as Auth Server | Auth0 | 🟢 Free | 🔄 In Progress |
+| 81 | **OpenID Connect (OIDC)** — ID Token, userinfo endpoint, discovery doc (/.well-known) | Auth0 | 🟢 Free | ⏳ |
+| 82 | **Social Logins** — Google + GitHub "Login with" via Auth0 (unlocked by OAuth + OIDC) | Auth0 | 🟢 Free | ⏳ |
+| 83 | **OAuth 2.0 — Client Credentials** — machine-to-machine, no user involved (B2B APIs) | Auth0 | 🟢 Free | ⏳ |
+| 84 | **2FA — TOTP Authenticator App** — QR code setup, Google Authenticator / Authy (30s codes) | OtpNet | 🟢 Free | ⏳ |
+| 85 | **Magic Links** — passwordless email login, HMAC-signed expiring link (Slack/Notion style) | Identity.API | 🟢 Free | ⏳ |
+| 86 | **Step-up Auth** — re-verify identity for sensitive actions (cancel order > ₹10,000) | Identity.API | 🟢 Free | ⏳ |
+| 87 | **SMS OTP** — OTP on mobile number (requires paid Twilio / MSG91 account) | Twilio | 🔴 Paid | ⏳ |
+| 88 | **API Key Authentication** — Stripe-style, for service accounts and external integrations | Identity.API | 🟢 Free | ⏳ |
+| 89 | **PAT (Personal Access Token)** — GitHub-style long-lived scoped developer tokens | Identity.API | 🟢 Free | ⏳ |
+| 90 | **Azure AD B2C** — consumer identity, Azure-native OIDC with custom policies + branding | Azure free | 🟢 Free | ⏳ |
+| 91 | **Entra ID (Azure AD)** — enterprise employee login (Login with Microsoft) | Azure free | 🟢 Free | ⏳ |
+| 92 | **SAML 2.0 + SSO** — corporate SSO, SP-initiated flow (Salesforce/Workday style) | Keycloak local | 🟢 Free | ⏳ |
+| 93 | **Risk-based / Adaptive Auth** — new device/location detected → extra challenge | Identity.API | 🟢 Free | ⏳ |
+| 94 | **OAuth 2.0 — Device Authorization** — CLI / smart TV / IoT (code shown on device) | Auth0 | 🟢 Free | ⏳ |
+| 95 | **Passkeys / WebAuthn (FIDO2)** — fingerprint/Face ID login, no password at all | Fido2.NET | 🟢 Free | ⏳ |
+| 96 | **Mutual TLS (mTLS)** — certificate-based service-to-service auth (local self-signed certs) | Local certs | 🟢 Free | ⏳ |
+| 97 | **QR Code Login** — WhatsApp Web style, scan QR with phone to log in on desktop | Identity.API | 🟢 Free | ⏳ |
+| 98 | **Session vs Token** — concept deep-dive, when to use which, tradeoffs | Theory | 🟢 Free | ⏳ |
+| 99 | **Zero Trust Architecture** — never trust the network, verify every request every time | Theory | 🟢 Free | ⏳ |
 
 ---
 
