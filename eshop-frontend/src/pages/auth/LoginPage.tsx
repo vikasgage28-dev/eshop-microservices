@@ -103,15 +103,26 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        {/* Auth0 Social Login */}
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
-          onClick={() => loginWithRedirect({ authorizationParams: { prompt: 'login' } })}
-        >
-          <img src="https://cdn.auth0.com/styleguide/latest/lib/logos/img/favicon.png" className="w-5 h-5" />
-          Continue with Auth0
-        </Button>
+        {/* Social Login Buttons */}
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+            onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2', prompt: 'login' } })}
+          >
+            <img src="https://www.google.com/favicon.ico" className="w-5 h-5" />
+            Continue with Google
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+            onClick={() => loginWithRedirect({ authorizationParams: { connection: 'github', prompt: 'login' } })}
+          >
+            <img src="https://github.com/favicon.ico" className="w-5 h-5" />
+            Continue with GitHub
+          </Button>
+        </div>
 
         <p className="mt-6 text-center text-sm text-gray-500">
           No account?{' '}
