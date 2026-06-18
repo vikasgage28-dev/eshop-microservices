@@ -169,6 +169,7 @@ Completed so far:
 ✅ Item 3 — JWT RS256 Asymmetric    (private.pem signs, public.pem verifies)
 ✅ Item 4 — 2FA Email OTP           (MailKit + Gmail SMTP + TOTP math, 2-min expiry)
 ✅ Item 9 — OAuth 2.0 + PKCE       (Auth0 + Google social login, AspNetUserLogins tracking)
+✅ Item 11 — Social Logins         (Google + GitHub — separate buttons, Auth0 connection routing)
 
 Complete Authentication Sequence:
 ─────────────────────────────────────────────────────────────────
@@ -184,7 +185,7 @@ Complete Authentication Sequence:
   8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
   9.  OAuth 2.0 + PKCE            ✅  COMPLETE — Auth0 + Google login, AspNetUserLogins tracking
   10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc
-  11. Social Logins               ⏳  Google + GitHub login — unlocked by OAuth + OIDC
+  11. Social Logins               ✅  COMPLETE — Google + GitHub via Auth0 connection routing
   12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
   13. Device Authorization Grant  ⏳  GitHub CLI / Netflix TV / IoT — code shown on device
   14. PAT (Personal Access Token) ⏳  GitHub-style long-lived scoped developer tokens
@@ -467,10 +468,47 @@ Key architecture decisions:
 → ProviderKey (sub) = permanent — never changes even if user changes name/email on Google
 → Account linking — same email on Google + app account → automatically merged
 
-Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
-→ QR code generation (QRCoder NuGet) — user scans with Google Authenticator / Authy
-→ OtpNet NuGet for TOTP math (RFC 6238) — 30-second rotating codes
-→ No email needed — works offline — industry standard for 2FA
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+Item 11 — Social Logins (Google + GitHub) ✅ COMPLETE
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+What was built:
+→ GitHub added as second social provider via Auth0 dashboard
+→ Replaced single "Continue with Auth0" button with two provider-specific buttons
+→ Google and GitHub buttons route directly to their provider using Auth0 connection parameter
+→ Zero backend changes needed — Auth0UserInfoService works for any Auth0 provider
+
+Key concepts learned:
+→ Auth0 has TWO levels of enabling a connection:
+    Level 1 — Enable connection globally (Authentication → Social → GitHub → ON)
+    Level 2 — Enable connection for your specific app (Applications → eShop → Connections tab → github ON)
+    Missing Level 2 → "the connection is not enabled" error
+→ connection parameter — routes Auth0 directly to a provider, skips Auth0's own login UI
+    connection: 'google-oauth2'  → goes straight to Google login
+    connection: 'github'         → goes straight to GitHub login
+→ ProviderKey in AspNetUserLogins — github|abc123 vs google-oauth2|xyz — unique per provider
+→ Same backend flow for both — /userinfo returns same shape regardless of social provider
+
+Auth0 setup:
+→ GitHub OAuth App created at github.com/settings/developers
+→ Callback URL set to: https://dev-p6qgjp2d5mvexwg7.us.auth0.com/login/callback
+→ GitHub Client ID + Secret added to Auth0 Social → GitHub connection
+→ GitHub connection enabled for eShop app under Applications → Connections tab
+
+Frontend files changed:
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+    Replaced: single Auth0 button
+    With: two buttons in a flex column — Google + GitHub
+    onClick Google: loginWithRedirect({ authorizationParams: { connection: 'google-oauth2', prompt: 'login' } })
+    onClick GitHub: loginWithRedirect({ authorizationParams: { connection: 'github', prompt: 'login' } })
+
+DB result:
+→ AspNetUserLogins — LoginProvider="Auth0", ProviderKey="github|<id>" for GitHub users
+→ Same account linking logic — if email matches existing user, accounts are merged
+
+Next immediate step: Item 12 — OAuth 2.0 Client Credentials Flow
+→ Machine-to-machine auth — Ordering.API calls Catalog.API with a service token
+→ No user involved — purely service-to-service
+→ Identity.API issues tokens to trusted services via client_id + client_secret
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
