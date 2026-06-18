@@ -145,5 +145,53 @@ namespace Identity.Infrastructure.Repositories
             return await _userManager.VerifyTwoFactorTokenAsync(
                 user, TokenOptions.DefaultEmailProvider, token);
         }
+
+        // ── Social Login ──────────────────────────────────────────────────────
+        public async Task<ApplicationUser> FindOrCreateSocialUserAsync(SocialUserInfo userInfo)
+        {
+            var loginInfo = new UserLoginInfo(userInfo.Provider, userInfo.ProviderUserId, userInfo.Provider);
+
+            // 1. Look up by provider + providerUserId in AspNetUserLogins (most reliable)
+            //    This correctly handles same email on different providers (Google vs GitHub)
+            var existingByLogin = await _userManager.FindByLoginAsync(userInfo.Provider, userInfo.ProviderUserId);
+            if (existingByLogin is not null)
+                return ToModel(existingByLogin);
+
+            // 2. Same email already registered as a normal app user → link the social login to it
+            //    e.g. user registered with email+password, now signs in with Google (same email)
+            var existingByEmail = await _userManager.FindByEmailAsync(userInfo.Email);
+            if (existingByEmail is not null)
+            {
+                // Record in AspNetUserLogins so next login hits path 1 directly
+                await _userManager.AddLoginAsync(existingByEmail, loginInfo);
+                return ToModel(existingByEmail);
+            }
+
+            // 3. Brand new user — create Customer account + record provider in AspNetUserLogins
+            var newUser = new AppIdentityUser
+            {
+                UserName       = userInfo.Email,
+                Email          = userInfo.Email,
+                FirstName      = userInfo.FirstName,
+                LastName       = userInfo.LastName,
+                EmailConfirmed = userInfo.EmailVerified,
+                CreatedAt      = DateTime.UtcNow
+            };
+
+            // Random password — user will never type it (login is always via OAuth provider)
+            var randomPassword = $"{Guid.NewGuid():N}Aa1!";
+            var result = await _userManager.CreateAsync(newUser, randomPassword);
+
+            if (!result.Succeeded)
+                throw new InvalidOperationException(
+                    $"Failed to create social user: {string.Join("; ", result.Errors.Select(e => e.Description))}");
+
+            await _userManager.AddToRoleAsync(newUser, "Customer");
+
+            // Record in AspNetUserLogins — marks this as a social user permanently
+            await _userManager.AddLoginAsync(newUser, loginInfo);
+
+            return ToModel(newUser);
+        }
     }
 }

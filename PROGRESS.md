@@ -73,13 +73,17 @@ eshop-microservices/
 
 ### Key Credentials (never changes)
 ```
-Admin:    admin@eshop.com  / Admin@12345
-Customer: alice@eshop.com  / Customer@12345
+Admin:    admin@eshop.com         / Admin@12345
+Customer: vikasgage28@gmail.com   / Customer@12345  (also used for Gmail SMTP + Google OAuth)
 Currency: INR (₹) — en-IN locale
 UI Theme: Lenovo Vantage Blue (#0067c0), 165px Sidebar
 Frontend: http://localhost:5173 (Vite dev server)
 Aspire:   https://localhost:17222 (dashboard)
 Ports:    catalog=5010, customer=5011/5022(gRPC), ordering=5012, identity=5013
+JWT:      RS256, 60-min expiry, private.pem signs, public.pem verifies
+2FA:      Email OTP — 2-min expiry — vikasgage28@gmail.com receives codes
+Gmail:    SMTP App Password in User Secrets (EmailSettings:AppPassword)
+Auth0:    dev-p6qgjp2d5mvexwg7.us.auth0.com — Google social login enabled
 ```
 
 ---
@@ -164,7 +168,7 @@ Completed so far:
 ✅ Item 2 — Refresh Token Rotation  (backend already had it, frontend stores new token)
 ✅ Item 3 — JWT RS256 Asymmetric    (private.pem signs, public.pem verifies)
 ✅ Item 4 — 2FA Email OTP           (MailKit + Gmail SMTP + TOTP math, 2-min expiry)
-🔄 Item 9 — OAuth 2.0 + PKCE       (IN PROGRESS — Authorization Code flow ← CURRENT)
+✅ Item 9 — OAuth 2.0 + PKCE       (Auth0 + Google social login, AspNetUserLogins tracking)
 
 Complete Authentication Sequence:
 ─────────────────────────────────────────────────────────────────
@@ -178,7 +182,7 @@ Complete Authentication Sequence:
   6.  SMS OTP                     ⏳  Twilio / MSG91, OTP on mobile number
   7.  Magic Links                 ⏳  Passwordless — HMAC-signed link emailed to user (Slack/Notion style)
   8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
-  9.  OAuth 2.0 + PKCE            🔄  IN PROGRESS — Authorization Code + PKCE flow  ← CURRENT
+  9.  OAuth 2.0 + PKCE            ✅  COMPLETE — Auth0 + Google login, AspNetUserLogins tracking
   10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc
   11. Social Logins               ⏳  Google + GitHub login — unlocked by OAuth + OIDC
   12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
@@ -367,10 +371,106 @@ Key architecture decisions:
 → useRef (not useState) for Strict Mode guard — ref persists across double-invoke, state does not
 → pending2FAUserId in Redux — safe in-memory, cleared on logout, not in URL or localStorage
 
-Next immediate step: Item 9 — OAuth 2.0 + PKCE
-→ Authorization Code flow with PKCE — industry standard, powers Google/GitHub login
-→ Auth0 free tier as Authorization Server — no infrastructure cost
-→ eShop becomes OAuth client — real-world enterprise pattern
+─────────────────────────────────────────────────────────────────
+Item 9 — OAuth 2.0 + PKCE + Social Login ✅ COMPLETE
+─────────────────────────────────────────────────────────────────
+What was built:
+→ Social Login via Auth0 as Authorization Server (Google as identity provider)
+→ Full OAuth 2.0 Authorization Code Flow + PKCE (handled by @auth0/auth0-react SDK)
+→ OIDC /userinfo endpoint validation on backend (never trust frontend claims)
+→ AspNetUserLogins table used to track social users vs app users in DB
+→ Account linking — existing app user signing in with Google links both accounts
+
+Key concepts learned:
+→ OAuth 2.0 = authorization framework (can this app access your data?)
+→ PKCE = prevents authorization code interception attacks (code_verifier + code_challenge)
+→ OIDC = identity layer on top of OAuth (who are you? → id_token with sub, email, name)
+→ Auth0 = Authorization Server middleman (handles Google/GitHub/Microsoft in one integration)
+→ ProviderKey (sub claim) = permanent unique ID per user per provider — never changes
+→ Enterprise = software for large organizations (SSO, SCIM, Active Directory, SAML)
+
+Auth0 setup:
+→ Auth0 tenant: dev-p6qgjp2d5mvexwg7.us.auth0.com
+→ App name: eShop (Single Page Application)
+→ Allowed Callback URL: http://localhost:5173/auth0/callback
+→ Allowed Web Origins: http://localhost:5173
+→ Username-Password-Authentication: DISABLED (Google only)
+→ Google social connection: ENABLED
+→ Credentials in .env.local (never in git): VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, VITE_AUTH0_CALLBACK_URL
+
+Backend files created/changed:
+→ Identity.Core/Interfaces/ISocialAuthProvider.cs                    (NEW)
+     SocialUserInfo record: Provider, ProviderUserId, Email, FirstName, LastName, Picture, EmailVerified
+     ISocialAuthProvider interface: GetUserInfoAsync(accessToken) → SocialUserInfo?
+→ Identity.Core/Features/Auth/Commands/SocialLogin/                  (NEW folder)
+     SocialLoginCommand.cs — carries Provider + AccessToken from frontend
+     SocialLoginCommandHandler.cs — 3 steps: validate token → find/create user → issue JWT
+→ Identity.Core/Interfaces/IAuthRepository.cs
+     Added: FindOrCreateSocialUserAsync(SocialUserInfo) → ApplicationUser
+→ Identity.Infrastructure/Services/Auth0UserInfoService.cs           (NEW)
+     Implements ISocialAuthProvider
+     Calls https://{domain}/userinfo with Bearer token (OIDC standard)
+     Parses { sub, email, name, picture, email_verified } → SocialUserInfo
+     Sets Provider = "Auth0" on returned record
+→ Identity.Infrastructure/Repositories/AuthRepository.cs
+     FindOrCreateSocialUserAsync — 3 scenarios:
+       Path 1: FindByLoginAsync(provider, sub) → found → fast return (returning social user)
+       Path 2: FindByEmailAsync → found → AddLoginAsync → link Google to app account
+       Path 3: not found → CreateAsync (random password) + AddToRoleAsync("Customer") + AddLoginAsync
+→ Identity.Infrastructure/Extensions/InfrastructureServiceExtensions.cs
+     Added: services.AddHttpClient<ISocialAuthProvider, Auth0UserInfoService>()
+→ Identity.API/Controllers/AuthController.cs
+     Added: POST /api/auth/social-login — public (no JWT yet), validates + issues our JWT
+→ Identity.API/DTOs/AuthDtos.cs
+     Added: SocialLoginRequest { Provider, AccessToken }
+→ Identity.API/appsettings.json
+     Added: Auth0:Domain = dev-p6qgjp2d5mvexwg7.us.auth0.com
+
+Frontend files created/changed:
+→ eshop-frontend/package.json
+     Added: @auth0/auth0-react v2.17.0
+→ eshop-frontend/.env.local (never in git)
+     VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, VITE_AUTH0_CALLBACK_URL
+→ eshop-frontend/src/main.tsx
+     Wrapped app in <Auth0Provider domain clientId authorizationParams>
+     scope: "openid profile email" — requests OIDC claims
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+     Added: "Continue with Auth0" button
+     Uses loginWithRedirect({ authorizationParams: { prompt: 'login' } })
+     prompt: 'login' forces Auth0 login screen even if session exists
+→ eshop-frontend/src/pages/auth/Auth0CallbackPage.tsx               (NEW)
+     useRef guard prevents React Strict Mode double-execution
+     getAccessTokenSilently() → gets Auth0 access token (PKCE done by SDK)
+     POST /social-login → receives our RS256 JWT
+     dispatch(setCredentials) → stored in Redux (same as normal login)
+     navigate('/products', { replace: true })
+→ eshop-frontend/src/routes/AppRouter.tsx
+     Added: /auth0/callback public route → Auth0CallbackPage
+→ eshop-frontend/src/pages/profile/ProfilePage.tsx
+     Added: OIDC learning card — shows raw id_token claims (sub, email_verified, updated_at)
+     Visible only when logged in via Auth0
+→ eshop-frontend/src/api/authClient.ts
+     Added: socialLogin({ provider, accessToken }) → AuthResponse
+
+DB tables involved:
+→ AspNetUsers — all users (social + app) stored here
+→ AspNetUserLogins — ONLY social users have rows here
+     LoginProvider = "Auth0", ProviderKey = "google-oauth2|abc123", UserId = guid
+→ Query to see social users: SELECT u.Email, l.LoginProvider, l.ProviderKey FROM AspNetUsers u JOIN AspNetUserLogins l ON u.Id = l.UserId
+
+Key architecture decisions:
+→ Auth0 token used ONLY for validation (call /userinfo) — then discarded
+→ Our own RS256 JWT always issued — all microservices only know our tokens
+→ ISocialAuthProvider in Core — Infrastructure implements (Clean Architecture)
+→ AddHttpClient<> (IHttpClientFactory) — proper connection pooling, no socket exhaustion
+→ AspNetUserLogins used (not custom table) — ASP.NET Identity built-in, no migration needed
+→ ProviderKey (sub) = permanent — never changes even if user changes name/email on Google
+→ Account linking — same email on Google + app account → automatically merged
+
+Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
+→ QR code generation (QRCoder NuGet) — user scans with Google Authenticator / Authy
+→ OtpNet NuGet for TOTP math (RFC 6238) — 30-second rotating codes
+→ No email needed — works offline — industry standard for 2FA
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅

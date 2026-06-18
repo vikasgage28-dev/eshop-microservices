@@ -58,4 +58,8 @@ export const authApi = {
       '/2fa-status',
       { headers: { Authorization: `Bearer ${token}` } }
     ).then((r) => r.data),
+
+  // OAuth 2.0 Social Login — send provider access token, receive our own JWT
+  socialLogin: (payload: { provider: string; accessToken: string }) =>
+    authClient.post<AuthResponse>('/social-login', payload).then((r) => r.data),
 }

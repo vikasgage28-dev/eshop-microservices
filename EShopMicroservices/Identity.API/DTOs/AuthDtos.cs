@@ -48,6 +48,15 @@ namespace Identity.API.DTOs
         public bool Enabled { get; set; }
     }
 
+    public class SocialLoginRequest
+    {
+        /// <summary>"auth0" | "google" | "github"</summary>
+        public string Provider    { get; set; } = "auth0";
+
+        /// <summary>Access token obtained by the SPA from the OAuth provider.</summary>
+        public string AccessToken { get; set; } = string.Empty;
+    }
+
     public class UserDto
     {
         public string  UserId    { get; init; } = string.Empty;

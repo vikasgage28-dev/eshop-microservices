@@ -42,6 +42,9 @@ namespace Identity.Infrastructure.Extensions
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IEmailService,   MailKitEmailService>();
 
+            // Social Login — HttpClient for calling provider /userinfo endpoints
+            services.AddHttpClient<ISocialAuthProvider, Auth0UserInfoService>();
+
             // Seeder
             services.AddScoped<IdentityDataSeeder>();
 
