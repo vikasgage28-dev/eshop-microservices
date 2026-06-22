@@ -1578,33 +1578,31 @@ Local self-signed certs  — mTLS between microservices
 > ALL old monolith Azure resources deleted. Everything built fresh for microservices.
 > Old Dockerfile + docker-compose.yml (monolith era) replaced entirely.
 
-```
-Execution order summary:
-  Stage 1  → Dockerize locally (FREE — zero Azure)
-  Stage 2  → Clean Azure slate — delete all monolith resources
-  Stage 3  → Azure Data Layer (SQL x4, Cosmos DB, Blob Storage, Service Bus)
-  Stage 4  → Secrets + Central Config (Key Vault + App Configuration)
-  Stage 5  → Container Registry (ACR)
-  Stage 6  → CI/CD Pipelines + Security Scanning (Trivy)
-  Stage 7  → Kubernetes Concepts (pure learning — FREE, no cluster yet)
-  Stage 8  → AKS Deployment (cluster up — start paying here)
-  Stage 9  → Entra ID (Azure AD) — "Login with Microsoft" for Admin users
-  Stage 10 → Azure AD B2C — Consumer identity (customer login via Azure)
-  Stage 11 → Istio Service Mesh (mTLS — PROMISED in Phase 12.7!)
-  Stage 12 → Workload Identity + KEDA (event-driven autoscaling)
-  Stage 13 → Observability (App Insights + Log Analytics + distributed tracing)
-  Stage 14 → Helm Charts (package + version microservice deployments)
-  Stage 15 → DNS + SSL + Azure Front Door
-  Stage 16 → Azure Load Testing
-  Stage 17 → GitOps — ArgoCD (2026 standard — Git is source of truth)
-  Stage 18 → Multi-Environment (DEV → STAGING → PROD with approval gates)
+| Stage | Topic | Cost | Status |
+|-------|-------|------|--------|
+| 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ⏳ |
+| 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-dev | 🟢 Free | ⏳ |
+| 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Service Bus | 🟢 Free | ⏳ |
+| 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ⏳ |
+| 5  | Container Registry — ACR (acreshopdev) | 🟡 ~₹400/mo | ⏳ |
+| 6  | CI/CD Pipelines + Trivy security scanning | 🟢 Free | ⏳ |
+| 7  | Kubernetes Concepts — pure learning, no cluster cost | 🟢 Free | ⏳ |
+| 8  | AKS Deployment — cluster up, all 4 services running in K8s | 🟡 ~₹2,500/mo | ⏳ |
+| 9  | **Entra ID (Azure AD)** — "Login with Microsoft" for Admin users | 🟢 Free | ⏳ |
+| 10 | **Azure AD B2C** — Consumer identity for customer login | 🟢 Free | ⏳ |
+| 11 | Istio Service Mesh — mTLS zero-trust (PROMISED in Phase 12.7!) | 🟢 Free | ⏳ |
+| 12 | Workload Identity + KEDA — pod identity + event-driven autoscaling | 🟢 Free | ⏳ |
+| 13 | Observability — App Insights + Log Analytics + distributed tracing | 🟢 Free | ⏳ |
+| 14 | Helm Charts — package + version all microservice deployments | 🟢 Free | ⏳ |
+| 15 | DNS + SSL + Azure Front Door — HTTPS + custom domain + CDN/WAF | 🟡 ~₹40/mo | ⏳ |
+| 16 | Azure Load Testing — prove HPA + KEDA autoscale under real load | 🟢 Free | ⏳ |
+| 17 | GitOps — ArgoCD (Git is source of truth, 2026 standard) | 🟢 Free | ⏳ |
+| 18 | Multi-Environment — DEV → STAGING → PROD with approval gates | 🟢 Free | ⏳ |
 
-Why Stages 9 + 10 come right after AKS (Stage 8):
-  → OAuth redirect URIs need REAL deployed URLs (not localhost) — app must be live first
-  → Static Web Apps frontend must be deployed — auth flows redirect back to it
-  → Entra ID before B2C — Entra is simpler, teaches Azure AD concepts that B2C builds on
-  → Both are application-layer auth — logical to complete before infrastructure hardening (Istio)
-```
+> **Why Stages 9 + 10 come right after AKS (Stage 8):**
+> OAuth redirect URIs need REAL deployed URLs — app must be live first.
+> Entra ID (simpler) teaches Azure AD concepts that B2C builds on.
+> Both are application-layer auth — complete before infrastructure hardening (Istio).
 
 ---
 
