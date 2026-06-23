@@ -1,66 +1,103 @@
-version: '3.8'
+name: eshop
 
 services:
 
-  # ================================
-  # SQL Server Service
-  # ================================
+  # ── SQL Server ────────────────────────────────────────────────────────────────
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2025-latest
-    container_name: eshop-sqlserver
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=${SA_PASSWORD}
-      - MSSQL_PID=Developer
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
     ports:
-      - "${SQL_PORT}:1433"
+      - "1433:1433"
     volumes:
-      - sqlserver_data:/var/opt/mssql
-    networks:
-      - eshop-network
+      - sqlserver-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD}", "-Q", "SELECT 1", "-No"]
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" -No
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # ================================
-  # EShop API Service
-  # ================================
-  eshop-api:
+  # ── Catalog.API ───────────────────────────────────────────────────────────────
+  catalog-api:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: eshop-container
-    environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENV}
-      - ConnectionStrings__DefaultConnection=Server=${SQL_SERVER_NAME},1433;Database=${SQL_DATABASE};User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      context: ./EShopMicroservices
+      dockerfile: Catalog.API/Dockerfile
     ports:
-      - "${API_PORT}:80"
+      - "5010:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__CatalogDb: "Server=sqlserver,1433;Database=CatalogDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Cors__AllowedOrigins__2: "http://localhost:3000"
     depends_on:
       sqlserver:
         condition: service_healthy
-    networks:
-      - eshop-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
 
-# ================================
-# Volumes
-# ================================
+  # ── Customer.API ──────────────────────────────────────────────────────────────
+  customer-api:
+    build:
+      context: ./EShopMicroservices
+      dockerfile: Customer.API/Dockerfile
+    ports:
+      - "5011:5011"
+      - "5022:5022"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__CustomerDb: "Server=sqlserver,1433;Database=CustomerDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Cors__AllowedOrigins__2: "http://localhost:3000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  # ── Ordering.API ──────────────────────────────────────────────────────────────
+  ordering-api:
+    build:
+      context: ./EShopMicroservices
+      dockerfile: Ordering.API/Dockerfile
+    ports:
+      - "5012:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__OrderingDb: "Server=sqlserver,1433;Database=OrderingDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      ServiceUrls__CustomerApiGrpc: "http://customer-api:5022"
+      Cors__AllowedOrigins__2: "http://localhost:3000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      customer-api:
+        condition: service_started
+
+  # ── Identity.API ──────────────────────────────────────────────────────────────
+  identity-api:
+    build:
+      context: ./EShopMicroservices
+      dockerfile: Identity.API/Dockerfile
+    ports:
+      - "5013:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__IdentityDb: "Server=sqlserver,1433;Database=IdentityDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      EmailSettings__FromEmail: ${GMAIL_FROM_EMAIL}
+      EmailSettings__AppPassword: ${GMAIL_APP_PASSWORD}
+      Cors__AllowedOrigins__2: "http://localhost:3000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  # ── React Frontend ────────────────────────────────────────────────────────────
+  eshop-frontend:
+    build:
+      context: ./eshop-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - catalog-api
+      - customer-api
+      - ordering-api
+      - identity-api
+
 volumes:
-  sqlserver_data:
-    name: eshop-sqlserver-data
-
-# ================================
-# Networks
-# ================================
-networks:
-  eshop-network:
-    name: eshop-network
-    driver: bridge
+  sqlserver-data:
