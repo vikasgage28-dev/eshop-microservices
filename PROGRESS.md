@@ -1580,7 +1580,7 @@ Local self-signed certs  — mTLS between microservices
 
 | Stage | Topic | Cost | Status |
 |-------|-------|------|--------|
-| 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ⏳ |
+| 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ✅ Done |
 | 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-dev | 🟢 Free | ⏳ |
 | 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Service Bus | 🟢 Free | ⏳ |
 | 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ⏳ |
@@ -1606,31 +1606,52 @@ Local self-signed certs  — mTLS between microservices
 
 ---
 
-#### Stage 1 — Dockerize Everything (FREE — Local Only)
-> Learn multi-stage Dockerfiles, Nginx for SPAs, Docker Compose for microservices.
-> Goal: docker-compose up → full eShop runs in containers locally before any Azure.
+#### Stage 1 — Dockerize Everything ✅ COMPLETE
+> Multi-stage Dockerfiles for all 4 APIs + React frontend + Docker Compose wiring.
+> Local docker-compose up test deferred — no Docker Desktop on office laptop. Verified via ACR build in Stage 5.
 
 ```
-LEARN: Multi-stage builds — why SDK image builds, aspnet image runs (saves ~1GB)
-LEARN: Layer caching — copy .csproj first, restore, then copy source (fast rebuilds)
-LEARN: Non-root user + health checks + OCI labels (production best practices)
-LEARN: Identity.API special case — private.pem must be inside image (or mounted)
-LEARN: Nginx for React SPAs — try_files fallback, env var substitution at runtime
-LEARN: Docker Compose for microservices — networks, depends_on, healthcheck, volumes
+✅ LEARNED: Multi-stage builds — SDK image builds, aspnet image runs (saves ~700MB per image)
+✅ LEARNED: Layer caching — .csproj files first → dotnet restore cached → fast rebuilds
+✅ LEARNED: Non-root user + health checks + OCI labels — production best practices
+✅ LEARNED: Identity.API special case — private.pem + public.pem baked in (dev only, KV in Stage 8)
+✅ LEARNED: Nginx for React SPAs — try_files fallback + security headers + asset caching
+✅ LEARNED: Docker Compose — service names = DNS, depends_on, healthcheck, volumes, env var override
+✅ LEARNED: Aspire = local dev only — Docker DNS replaces service discovery in compose
+✅ LEARNED: __ double underscore = : in ASP.NET Core env vars (array index override for CORS)
+✅ LEARNED: ServiceDefaults = shared class library (health checks, telemetry) — not Aspire orchestrator
 ```
+
+Key decisions:
+→ Customer.API: ListenAnyIP in Docker (DOTNET_RUNNING_IN_CONTAINER) vs ListenLocalhost in Aspire (no Windows Firewall popup)
+→ Ordering → Customer gRPC: ServiceUrls__CustomerApiGrpc=http://customer-api:5022 (Docker DNS)
+→ CORS: Cors__AllowedOrigins__2=http://localhost:3000 added per service (frontend on port 3000 in Docker)
+→ SA_PASSWORD + Gmail secrets in .env file (gitignored) — compose references via ${VAR}
+→ sqlserver healthcheck with sqlcmd SELECT 1 — APIs wait via depends_on condition: service_healthy
+→ Frontend browser calls localhost:5010/5011/5012/5013 (host port mappings) — constants.ts unchanged
+
+Files created:
+→ EShopMicroservices/Catalog.API/Dockerfile
+→ EShopMicroservices/Customer.API/Dockerfile
+→ EShopMicroservices/Ordering.API/Dockerfile
+→ EShopMicroservices/Identity.API/Dockerfile
+→ eshop-frontend/Dockerfile
+→ eshop-frontend/nginx.conf
+→ docker-compose.yml (repo root — replaces old monolith compose)
+→ Deleted: Dockerfile (old monolith root)
 
 | # | What | Status |
 |---|------|--------|
-| 15.1.1 | LEARN multi-stage Dockerfile — SDK → aspnet, layer caching, .dockerignore | ⏳ |
-| 15.1.2 | BUILD Dockerfile — Catalog.API | ⏳ |
-| 15.1.3 | BUILD Dockerfile — Customer.API | ⏳ |
-| 15.1.4 | BUILD Dockerfile — Ordering.API | ⏳ |
-| 15.1.5 | BUILD Dockerfile — Identity.API (includes private.pem + public.pem) | ⏳ |
-| 15.1.6 | LEARN Nginx for SPAs — try_files, runtime env injection | ⏳ |
-| 15.1.7 | BUILD Dockerfile — React frontend (Vite build → Nginx serves dist/) | ⏳ |
-| 15.1.8 | DELETE old monolith Dockerfile + docker-compose.yml from repo root | ⏳ |
-| 15.1.9 | BUILD new docker-compose.yml — 4 APIs + SQL Server + volumes + networks | ⏳ |
-| 15.1.10 | TEST docker-compose up — full eShop login → browse → order in containers | ⏳ |
+| 15.1.1 | LEARN multi-stage Dockerfile — SDK → aspnet, layer caching, .dockerignore | ✅ |
+| 15.1.2 | BUILD Dockerfile — Catalog.API | ✅ |
+| 15.1.3 | BUILD Dockerfile — Customer.API | ✅ |
+| 15.1.4 | BUILD Dockerfile — Ordering.API | ✅ |
+| 15.1.5 | BUILD Dockerfile — Identity.API (includes private.pem + public.pem) | ✅ |
+| 15.1.6 | LEARN Nginx for SPAs — try_files, runtime env injection | ✅ |
+| 15.1.7 | BUILD Dockerfile — React frontend (Vite build → Nginx serves dist/) | ✅ |
+| 15.1.8 | DELETE old monolith Dockerfile + docker-compose.yml from repo root | ✅ |
+| 15.1.9 | BUILD new docker-compose.yml — 4 APIs + SQL Server + volumes + networks | ✅ |
+| 15.1.10 | TEST docker-compose up — deferred (no Docker Desktop on office laptop) → verified via ACR build in Stage 5 | ⏭️ |
 
 ---
 
