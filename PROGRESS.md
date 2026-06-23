@@ -1581,8 +1581,8 @@ Local self-signed certs  — mTLS between microservices
 | Stage | Topic | Cost | Status |
 |-------|-------|------|--------|
 | 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ✅ Done |
-| 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-dev | 🟢 Free | ⏳ |
-| 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Service Bus | 🟢 Free | ⏳ |
+| 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-microservices | 🟢 Free | ✅ Done |
+| 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Storage Queues | 🟢 Free | ✅ Done |
 | 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ⏳ |
 | 5  | Container Registry — ACR (acreshopdev) | 🟡 ~₹400/mo | ⏳ |
 | 6  | CI/CD Pipelines + Trivy security scanning | 🟢 Free | ⏳ |
@@ -1655,44 +1655,58 @@ Files created:
 
 ---
 
-#### Stage 2 — Clean Azure Slate
-> Delete ALL monolith resources. Start fresh. One resource group for everything new.
+#### Stage 2 — Clean Azure Slate ✅ COMPLETE
+> Deleted all old monolith resources. Created single fresh resource group for everything.
 
 ```
-LEARN: Resource Group delete cascade — one delete removes all child resources
-LEARN: Why clean slate matters — no config conflicts, no billing surprises
+✅ LEARNED: One resource group for all environments (dev/staging/prod via K8s namespaces — cost efficient for learning)
+✅ LEARNED: Resource Group delete cascade — one delete removes all child resources
+✅ LEARNED: Terraform (Phase 17) will codify everything — terraform destroy/apply for zero cost when not studying
+✅ DECISION: rg-eshop-microservices — one RG for entire learning journey
+✅ DECISION: Multi-env (Stage 18) via K8s namespaces in ONE cluster — not separate clusters (saves ~₹7,500/mo)
 ```
 
 | # | What | Status |
 |---|------|--------|
-| 15.2.1 | LIST resources in rg-eshop-prod + rg-eshop-shared (confirm before delete) | ⏳ |
-| 15.2.2 | DELETE rg-eshop-prod (App Service, SQL, Cosmos, KV, APIM, AppInsights, SB, ACS, Logic App, App Config, Storage, VNet, NSG) | ⏳ |
-| 15.2.3 | DELETE rg-eshop-shared (Automation Account, Runbooks, Schedules) | ⏳ |
-| 15.2.4 | CREATE rg-eshop-dev — single resource group for all microservices resources | ⏳ |
+| 15.2.1 | LIST + DELETE old monolith resource groups (rg-eshop-prod, rg-eshop-shared) | ✅ |
+| 15.2.2 | CREATE rg-eshop-microservices — single resource group for all resources | ✅ |
 
 ---
 
-#### Stage 3 — Azure Data Layer (Brand New)
-> All 4 databases + Cosmos DB + Blob Storage + Service Bus created fresh.
+#### Stage 3 — Azure Data Layer ✅ COMPLETE
+> All 4 SQL databases + Cosmos DB + Storage Account (blob + queues) created fresh.
 
 ```
-LEARN: Azure SQL — one server, multiple databases (cost efficient, shared compute)
-LEARN: Azure SQL free tier — 32GB per DB, 1 free offer per subscription
-LEARN: Cosmos DB — partitions, containers, RU/s, free tier (1 per subscription)
-LEARN: Blob Storage — containers, access tiers, Managed Identity vs SAS tokens
-LEARN: Service Bus — queues vs topics, message TTL, dead-letter queue
+✅ LEARNED: Azure SQL — one server, multiple databases (cost efficient, shared compute)
+✅ LEARNED: Database per service — each microservice owns its data, no cross-DB queries
+✅ LEARNED: Cosmos DB — partitions, containers, partition key = most queried field (/productId)
+✅ LEARNED: Storage Account = blob + queues in ONE resource (replaced Service Bus — ~₹0.03/mo)
+✅ DECISION: Service Bus replaced with Azure Storage Queue (nearly free vs ₹83/2 days)
+✅ DECISION: Storage account name must be globally unique across all Azure — steshop2026
 ```
+
+Key resources created:
+→ sql-eshop-dev          — Azure SQL Server (Serverless Gen5, auto-pause 60min)
+→ CatalogDb              — products, categories
+→ CustomerDb             — customers, addresses
+→ OrderingDb             — orders, order items
+→ IdentityDb             — users, roles, JWT refresh tokens
+→ cosmos-eshop-dev       — Cosmos DB NoSQL (free tier) — EShopDb/reviews (/productId partition)
+→ steshop2026            — Storage Account (Standard_LRS)
+→ product-images         — Blob container (product images)
+→ order-placed-catalog   — Storage Queue (catalog stock reduction events)
+→ order-placed-customer  — Storage Queue (customer notification events)
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.3.1 | CREATE Azure SQL Server — sql-eshop-dev (Central India) | 🟢 Free | ⏳ |
-| 15.3.2 | CREATE CatalogDb on sql-eshop-dev | 🟢 Free | ⏳ |
-| 15.3.3 | CREATE IdentityDb on sql-eshop-dev | 🟢 Free | ⏳ |
-| 15.3.4 | CREATE OrderingDb on sql-eshop-dev | 🟢 Free | ⏳ |
-| 15.3.5 | CREATE CustomerDb on sql-eshop-dev | 🟢 Free | ⏳ |
-| 15.3.6 | CREATE Cosmos DB account (free tier) — EShopDb → reviews container | 🟢 Free | ⏳ |
-| 15.3.7 | CREATE Blob Storage — steshopdev → product-images container | 🟢 Free | ⏳ |
-| 15.3.8 | CREATE Service Bus — sb-eshop-dev (Basic tier) → order-placed queue | 🟢 Free | ⏳ |
+| 15.3.1 | CREATE Azure SQL Server — sql-eshop-dev (Central India) | 🟢 Free | ✅ |
+| 15.3.2 | CREATE CatalogDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.3 | CREATE CustomerDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.4 | CREATE OrderingDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.5 | CREATE IdentityDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.6 | ADD firewall rule — AllowAzureServices (0.0.0.0 → 0.0.0.0) | 🟢 Free | ✅ |
+| 15.3.7 | CREATE Cosmos DB (free tier) — EShopDb → reviews container (/productId) | 🟢 Free | ✅ |
+| 15.3.8 | CREATE Storage Account — steshop2026 → product-images blob + 2 queues | 🟢 Free | ✅ |
 
 ---
 
