@@ -18,10 +18,21 @@ builder.AddServiceDefaults();
 // Solution: dedicated HTTP/2-only port for gRPC, separate HTTP/1.1 port for REST.
 // In production (HTTPS), a single port with Http1AndHttp2 works via ALPN.
 builder.WebHost.UseUrls();
+var inDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenLocalhost(5011, lo => lo.Protocols = HttpProtocols.Http1);    // REST + Swagger
-    options.ListenLocalhost(5022, lo => lo.Protocols = HttpProtocols.Http2);    // gRPC (h2c)
+    if (inDocker)
+    {
+        // 0.0.0.0 = all interfaces — required for Docker container networking
+        options.ListenAnyIP(5011, lo => lo.Protocols = HttpProtocols.Http1);
+        options.ListenAnyIP(5022, lo => lo.Protocols = HttpProtocols.Http2);
+    }
+    else
+    {
+        // 127.0.0.1 = localhost only — avoids Windows Firewall popup in local dev
+        options.ListenLocalhost(5011, lo => lo.Protocols = HttpProtocols.Http1);
+        options.ListenLocalhost(5022, lo => lo.Protocols = HttpProtocols.Http2);
+    }
 });
 
 // ── CORS — origins come from appsettings.json, never hardcoded ──────────────
