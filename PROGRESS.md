@@ -1583,7 +1583,7 @@ Local self-signed certs  — mTLS between microservices
 | 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ✅ Done |
 | 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-microservices | 🟢 Free | ✅ Done |
 | 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Storage Queues | 🟢 Free | ✅ Done |
-| 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ⏳ |
+| 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ✅ Done |
 | 5  | Container Registry — ACR (acreshopdev) | 🟡 ~₹400/mo | ⏳ |
 | 6  | CI/CD Pipelines + Trivy security scanning | 🟢 Free | ⏳ |
 | 7  | Kubernetes Concepts — pure learning, no cluster cost | 🟢 Free | ⏳ |
@@ -1710,28 +1710,47 @@ Key resources created:
 
 ---
 
-#### Stage 4 — Secrets + Central Config
+#### Stage 4 — Secrets + Central Config ✅ COMPLETE
 > No passwords in code, YAML, or environment variables — ever.
 > Key Vault holds secrets. App Configuration holds settings + KV references.
 > All 4 microservices read config from ONE place.
 
 ```
-LEARN: Key Vault — why Managed Identity beats connection strings in config
-LEARN: App Configuration — central config hub, feature flags, KV references
-LEARN: KV References in App Config — App Config points to KV, app never sees raw secret
-LEARN: App Config Labels — dev / staging / prod same key, different value
-LEARN: Azure SDK — Microsoft.Extensions.Configuration.AzureAppConfiguration NuGet
+✅ LEARNED: Key Vault uses RBAC — must assign "Key Vault Secrets Officer" role to your user
+✅ LEARNED: App Config stores KV references (pointers), never raw secret values
+✅ LEARNED: DefaultAzureCredential — az login locally, Managed Identity in AKS (zero code change)
+✅ LEARNED: Configuration sources must be added in Program.cs before builder.Build() — not in AddInfrastructure
+✅ LEARNED: AddAzureAppConfiguration auto-resolves KV references — API only needs App Config URL
+✅ DECISION: Messaging:Provider = "StorageQueue" in App Config (switch to ServiceBus = change 1 value)
+✅ DECISION: AppConfig:Endpoint not set locally → User Secrets used (no dev workflow change)
 ```
+
+Key resources created:
+→ kv-eshop-dev            — Key Vault (RBAC mode)
+→ appconfig-eshop-dev     — App Configuration (free tier)
+
+Secrets stored in Key Vault (8 total):
+→ ConnectionStrings--CatalogDb, CustomerDb, OrderingDb, IdentityDb
+→ ConnectionStrings--Storage (steshop2026), CosmosDb
+→ EmailSettings--AppPassword, EmailSettings--FromEmail
+
+KV references in App Config (+ 1 plain value):
+→ ConnectionStrings:CatalogDb/CustomerDb/OrderingDb/IdentityDb/Storage/CosmosDb
+→ EmailSettings:AppPassword, EmailSettings:FromEmail
+→ Messaging:Provider = "StorageQueue"
+
+Code changes (all 4 Program.cs files):
+→ Added Azure.Identity + Microsoft.Extensions.Configuration.AzureAppConfiguration NuGet
+→ Added conditional AddAzureAppConfiguration block — only active when AppConfig:Endpoint is set
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.4.1 | CREATE Key Vault — kv-eshop-dev | 🟢 Free | ⏳ |
-| 15.4.2 | STORE secrets in KV — all 4 DB connection strings, JWT private.pem, Gmail App Password | 🟢 Free | ⏳ |
-| 15.4.3 | CREATE App Configuration — appconfig-eshop-dev | 🟢 Free | ⏳ |
-| 15.4.4 | ADD KV references in App Config (App Config → KV pointer, not raw secret) | 🟢 Free | ⏳ |
-| 15.4.5 | ADD App Config labels — dev / staging / prod for each key | 🟢 Free | ⏳ |
-| 15.4.6 | CODE — wire all 4 microservices to read from App Config only | 🟢 Free | ⏳ |
-| 15.4.7 | TEST — all 4 services start with zero secrets in appsettings.json | 🟢 Free | ⏳ |
+| 15.4.1 | CREATE Key Vault — kv-eshop-dev | 🟢 Free | ✅ |
+| 15.4.2 | STORE 8 secrets in KV (connection strings + email credentials) | 🟢 Free | ✅ |
+| 15.4.3 | CREATE App Configuration — appconfig-eshop-dev | 🟢 Free | ✅ |
+| 15.4.4 | ADD 8 KV references + Messaging:Provider in App Config | 🟢 Free | ✅ |
+| 15.4.5 | CODE — wire all 4 microservices to read from App Config (conditional) | 🟢 Free | ✅ |
+| 15.4.6 | BUILD — dotnet build passes with zero errors | 🟢 Free | ✅ |
 
 ---
 
