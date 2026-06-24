@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Customer.API.GrpcServices;
 using Customer.API.Middleware;
 using Customer.Core.Behaviors;
@@ -9,6 +10,18 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Azure App Configuration (Azure environments only) ────────────────────────
+var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
+if (!string.IsNullOrEmpty(appConfigEndpoint))
+{
+    builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+               .ConfigureKeyVault(kv => kv.SetCredential(new DefaultAzureCredential()));
+    });
+}
+
 builder.AddServiceDefaults();
 
 // ── Kestrel: separate ports for REST (HTTP/1.1) and gRPC (HTTP/2 h2c) ───────
