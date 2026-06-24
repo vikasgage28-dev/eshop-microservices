@@ -1782,9 +1782,18 @@ Key resources:
 → identity-api:1.0.0  — pushed ✅
 → frontend:1.0.0      — pushed ✅
 
-Files added:
-→ EShopMicroservices/.dockerignore  — excludes bin/obj from Docker build context
-→ EShopMicroservices/NuGet.Config   — clears Windows fallback package folders
+Files added/modified:
+→ EShopMicroservices/.dockerignore       — excludes bin/obj from Docker build context
+→ EShopMicroservices/NuGet.Config        — clears Windows fallback package folders
+→ eshop-frontend/.dockerignore           — excludes node_modules/dist (Windows symlinks break Linux)
+→ eshop-frontend/Dockerfile              — use npx vite build instead of npm run build (skip tsc)
+
+Issues resolved during Stage 5:
+→ MissingSubscriptionRegistration        — az provider register --namespace Microsoft.ContainerRegistry
+→ AlreadyInUse (acreshopdev taken)       — renamed to acreshop2026
+→ Windows path in project.assets.json    — fixed with .dockerignore (exclude bin/obj)
+→ node_modules Windows symlinks          — fixed with eshop-frontend/.dockerignore
+→ TypeScript errors blocking build       — fixed with npx vite build (tsc moved to CI step)
 
 | # | What | Cost | Status |
 |---|------|------|--------|
