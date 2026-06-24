@@ -1584,7 +1584,7 @@ Local self-signed certs  — mTLS between microservices
 | 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-microservices | 🟢 Free | ✅ Done |
 | 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Storage Queues | 🟢 Free | ✅ Done |
 | 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ✅ Done |
-| 5  | Container Registry — ACR (acreshopdev) | 🟡 ~₹400/mo | ⏳ |
+| 5  | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ Done |
 | 6  | CI/CD Pipelines + Trivy security scanning | 🟢 Free | ⏳ |
 | 7  | Kubernetes Concepts — pure learning, no cluster cost | 🟢 Free | ⏳ |
 | 8  | AKS Deployment — cluster up, all 4 services running in K8s | 🟡 ~₹2,500/mo | ⏳ |
@@ -1754,20 +1754,37 @@ Code changes (all 4 Program.cs files):
 
 ---
 
-#### Stage 5 — Azure Container Registry (ACR)
+#### Stage 5 — Azure Container Registry (ACR) ✅ COMPLETE
 > Private Docker registry — images pushed here, AKS pulls from here.
 
 ```
-LEARN: ACR vs Docker Hub — private, geo-close to AKS, Managed Identity pull (no password)
-LEARN: Image tagging strategy — :1.0.0, :latest, :sha-abc123 (commit SHA recommended)
-LEARN: AcrPull role — Managed Identity assigned to AKS so it can pull without credentials
+✅ LEARNED: ACR names globally unique — acreshopdev taken, used acreshop2026
+✅ LEARNED: az acr build — builds Docker image in Azure cloud (no local Docker needed!)
+✅ LEARNED: Build context must match Dockerfile COPY paths — use EShopMicroservices/ not repo root
+✅ LEARNED: .dockerignore in build context — exclude bin/obj to avoid Windows path errors
+✅ LEARNED: NuGet.Config — clear fallback folders for Linux Docker builds
+✅ LEARNED: AcrPull role — assigned to AKS Managed Identity in Stage 8 (not now)
+✅ DECISION: Delete ACR when not studying (₹14/day), recreate with same name next session
+✅ DECISION: Microsoft.ContainerRegistry provider must be registered once per subscription
 ```
+
+Key resources:
+→ acreshop2026         — ACR Basic tier (acreshop2026.azurecr.io)
+→ catalog-api:1.0.0   — pushed ✅
+→ customer-api:1.0.0  — pushed ✅
+→ ordering-api:1.0.0  — pushed ✅
+→ identity-api:1.0.0  — pushed ✅
+→ frontend:1.0.0      — pushed ✅
+
+Files added:
+→ EShopMicroservices/.dockerignore  — excludes bin/obj from Docker build context
+→ EShopMicroservices/NuGet.Config   — clears Windows fallback package folders
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.5.1 | CREATE ACR — acreshopdev (Basic tier) | 🟡 ~₹400/mo | ⏳ |
-| 15.5.2 | BUILD + PUSH all 5 images manually (az acr build) — verify in ACR portal | 🟢 Free | ⏳ |
-| 15.5.3 | ASSIGN AcrPull role — later assigned to AKS Managed Identity | 🟢 Free | ⏳ |
+| 15.5.1 | CREATE ACR — acreshop2026 (Basic tier) | 🟡 ~₹420/mo | ✅ |
+| 15.5.2 | BUILD + PUSH all 5 images (az acr build — no Docker Desktop needed) | 🟢 Free | ✅ |
+| 15.5.3 | ASSIGN AcrPull role — deferred to Stage 8 when AKS is created | 🟢 Free | ⏳ Stage 8 |
 
 ---
 

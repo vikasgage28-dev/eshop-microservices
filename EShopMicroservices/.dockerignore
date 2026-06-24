@@ -1,0 +1,6 @@
+# Exclude Windows build artifacts — these contain Windows paths
+# that break dotnet publish inside Linux Docker containers
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
