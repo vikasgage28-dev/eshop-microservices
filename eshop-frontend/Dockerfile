@@ -10,8 +10,10 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy source and build
+# Note: TypeScript type checking runs as a separate CI step (not here)
+# Docker only bundles — keeps build fast and focused
 COPY . .
-RUN npm run build
+RUN npx vite build
 
 # ================================
 # STAGE 2 — RUNTIME

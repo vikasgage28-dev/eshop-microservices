@@ -1764,6 +1764,12 @@ Code changes (all 4 Program.cs files):
 ✅ LEARNED: .dockerignore in build context — exclude bin/obj to avoid Windows path errors
 ✅ LEARNED: NuGet.Config — clear fallback folders for Linux Docker builds
 ✅ LEARNED: AcrPull role — assigned to AKS Managed Identity in Stage 8 (not now)
+✅ LEARNED: TypeScript checking vs Docker build — TWO separate concerns:
+            CI/CD Step 1 → npx tsc --noEmit   = validates types, no output, fast fail
+            CI/CD Step 2 → az acr build        = Dockerfile runs npx vite build (no tsc)
+            WHY: Docker job = bundle code only (fast, focused)
+                 CI job    = validate code quality (types, tests, security scan)
+            RULE: tsc errors caught in CI BEFORE Docker build even starts → no wasted time
 ✅ DECISION: Delete ACR when not studying (₹14/day), recreate with same name next session
 ✅ DECISION: Microsoft.ContainerRegistry provider must be registered once per subscription
 ```
@@ -1788,24 +1794,66 @@ Files added:
 
 ---
 
-#### Stage 6 — CI/CD Pipelines + Security Scanning
+#### Stage 6 — CI/CD Pipelines + Security Scanning + Versioning
 > Every PR builds and scans images. Every merge deploys automatically.
 > Trivy scans for CVEs before any image reaches ACR.
+> Git tags control semantic versions shown in UI and DLLs.
 
 ```
 LEARN: GitHub Actions OIDC — federated identity to Azure, no stored secrets needed
 LEARN: Build matrix — build all 5 images in parallel in one workflow
 LEARN: Trivy — open-source CVE scanner for Docker images and NuGet packages
 LEARN: Azure Static Web Apps CI/CD — deployment token, auto-deploy on push
+LEARN: TypeScript separation — tsc --noEmit in CI (validate), vite build in Dockerfile (bundle)
+```
+
+```
+VERSIONING STRATEGY (decided in Stage 5):
+─────────────────────────────────────────────────────────────────────
+Layer 1 — Docker Images (ACR):
+  Every commit → catalog-api:sha-a3f9c12    (automatic, always)
+  Every commit → catalog-api:latest          (automatic, always)
+  git tag v1.0.0 → catalog-api:1.0.0        (only on release)
+  AKS always uses SHA tag in production — never :latest
+
+Layer 2 — Semantic Versioning (Git Tags):
+  v1.0.0 → Stage 8 complete (first AKS deployment)
+  v1.1.0 → Stage 9 complete (Entra ID added)
+  v1.2.0 → Stage 10 complete (B2C added)
+  Rule: git tag = time machine → checkout any version, reproduce any bug
+
+Layer 3 — .NET DLLs (Directory.Build.props):
+  FileVersion:          1.0.0
+  InformationalVersion: 1.0.0-sha-a3f9c12
+  All 4 services inherit from one central file
+
+Layer 4 — Frontend UI:
+  VITE_APP_VERSION build arg → React footer shows version
+  git push only  → footer shows sha-a3f9c12
+  git tag v1.0.0 → footer shows v1.0.0  ✅
+
+CI/CD version logic:
+  if tag push  → VERSION = v1.0.0     (human-friendly, UI shows this)
+  if PR/commit → VERSION = sha-abc123  (technical, traceable)
+
+Real companies (Netflix, Amazon, Spotify) use this exact approach.
+Conventional Commits auto-bump versions:
+  fix: ...        → patch (1.0.0 → 1.0.1)
+  feat: ...       → minor (1.0.1 → 1.1.0)
+  BREAKING CHANGE → major (1.1.0 → 2.0.0)
+─────────────────────────────────────────────────────────────────────
 ```
 
 | # | What | Cost | Status |
 |---|------|------|--------|
 | 15.6.1 | CREATE Service Principal with OIDC federation (no stored client secrets) | 🟢 Free | ⏳ |
-| 15.6.2 | BUILD build-and-push.yml — PR → build all 5 images → Trivy scan → push to ACR | 🟢 Free | ⏳ |
+| 15.6.2 | BUILD build-and-push.yml — PR → tsc check → build 5 images → Trivy scan → push to ACR | 🟢 Free | ⏳ |
 | 15.6.3 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
-| 15.6.4 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
-| 15.6.5 | TEST — open PR → pipeline builds + scans → merge → images appear in ACR | ⏳ |
+| 15.6.4 | IMPLEMENT versioning — SHA tag always, semantic tag on git tag push | 🟢 Free | ⏳ |
+| 15.6.5 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ⏳ |
+| 15.6.6 | ADD VITE_APP_VERSION — frontend footer shows version from git tag | 🟢 Free | ⏳ |
+| 15.6.7 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
+| 15.6.8 | TEST — open PR → pipeline builds + scans → merge → images appear in ACR | ⏳ |
 
 ---
 
