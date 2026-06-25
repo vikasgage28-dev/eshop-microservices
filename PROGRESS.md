@@ -1836,9 +1836,16 @@ Issues resolved during Stage 5:
 ```
 LEARN: GitHub Actions OIDC — federated identity to Azure, no stored secrets needed
 LEARN: Build matrix — build all 5 images in parallel in one workflow
+LEARN: PR-vs-Push workflow split — PRs scan only, pushes deploy
 LEARN: Trivy — open-source CVE scanner for Docker images and NuGet packages
-LEARN: Azure Static Web Apps CI/CD — deployment token, auto-deploy on push
+LEARN: CodeQL — GitHub native SAST (Static Application Security Testing)
+LEARN: Code coverage gates — fail build if coverage drops below threshold
+LEARN: Build caching — cache NuGet + node_modules → 8min → 3min builds
+LEARN: Dependabot — auto-PRs for dependency updates (NuGet + npm + Docker)
+LEARN: Branch protection — block direct push to main, require CI checks
+LEARN: Status badges — README shows live build status (recruiter-friendly)
 LEARN: TypeScript separation — tsc --noEmit in CI (validate), vite build in Dockerfile (bundle)
+LEARN: Azure Static Web Apps CI/CD — deployment token, auto-deploy on push
 ```
 
 ```
@@ -1881,13 +1888,22 @@ Conventional Commits auto-bump versions:
 | # | What | Cost | Status |
 |---|------|------|--------|
 | 15.6.1 | CREATE Service Principal with OIDC federation (no stored client secrets) | 🟢 Free | ⏳ |
-| 15.6.2 | BUILD build-and-push.yml — PR → tsc check → build 5 images → Trivy scan → push to ACR | 🟢 Free | ⏳ |
-| 15.6.3 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
-| 15.6.4 | IMPLEMENT versioning — SHA tag always, semantic tag on git tag push | 🟢 Free | ⏳ |
-| 15.6.5 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ⏳ |
-| 15.6.6 | ADD VITE_APP_VERSION — frontend footer shows version from git tag | 🟢 Free | ⏳ |
-| 15.6.7 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
-| 15.6.8 | TEST — open PR → pipeline builds + scans → merge → images appear in ACR | ⏳ |
+| 15.6.2 | CONFIGURE GitHub repository secrets (AZURE_CLIENT_ID, TENANT_ID, SUBSCRIPTION_ID) | 🟢 Free | ⏳ |
+| 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check + scan, NO push) | 🟢 Free | ⏳ |
+| 15.6.4 | BUILD build-and-push.yml — runs on main push (build + scan + push to ACR) | 🟢 Free | ⏳ |
+| 15.6.5 | ADD build matrix — parallelize 5 image builds (catalog, customer, ordering, identity, frontend) | 🟢 Free | ⏳ |
+| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
+| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
+| 15.6.8 | ADD code coverage step — dotnet test --collect "Code Coverage" + fail if < 70% | 🟢 Free | ⏳ |
+| 15.6.9 | ADD build caching — cache NuGet packages + node_modules between runs | 🟢 Free | ⏳ |
+| 15.6.10 | IMPLEMENT versioning — SHA tag always, semantic tag on git tag push | 🟢 Free | ⏳ |
+| 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ⏳ |
+| 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from git tag | 🟢 Free | ⏳ |
+| 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Docker base + Actions updates | 🟢 Free | ⏳ |
+| 15.6.14 | CONFIGURE GitHub branch protection — main requires PR + passing checks | 🟢 Free | ⏳ |
+| 15.6.15 | ADD status badges to README — build, coverage, security scan | 🟢 Free | ⏳ |
+| 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
+| 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | ⏳ |
 
 ---
 
