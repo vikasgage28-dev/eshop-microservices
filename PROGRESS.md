@@ -1683,6 +1683,31 @@ Files created:
 ✅ LEARNED: Storage Account = blob + queues in ONE resource (replaced Service Bus — ~₹0.03/mo)
 ✅ DECISION: Service Bus replaced with Azure Storage Queue (nearly free vs ₹83/2 days)
 ✅ DECISION: Storage account name must be globally unique across all Azure — steshop2026
+
+🔴 COSTLY LESSONS (Jun 23-24, ₹313 mistake):
+✅ LEARNED: Default DB size = 32 GB × ₹9/GB/month = ₹288/month per DB! 🔴
+            ALWAYS set --max-size 1GB after creation for learning projects
+            Command: az sql db update --name <db> --max-size 1GB
+✅ LEARNED: General Purpose tier MINIMUM = 1 GB (not 100 MB)
+            Free Limit tier CANNOT be resized (locked at default 32 GB, but free)
+✅ LEARNED: Delete + Recreate cycle costs ~₹75 per round (vCore burst + 60min idle window)
+            NEVER delete/recreate to "save cost" — it INCREASES cost
+✅ LEARNED: vCore = variable cost (₹0 when paused, expensive when active)
+            Storage = fixed cost (charged even when paused, based on max-size)
+✅ LEARNED: Azure billing has 8-24 hour LAG
+            Today's cost display does NOT include last few hours of activity
+            Don't trust same-day cost — wait until next morning for accurate number
+✅ LEARNED: "Auto-pause" still bills for 60-min idle window before pausing
+            Each DB resume = 60min minimum compute charge even with no queries
+✅ LEARNED: CustomerDb not recreated → saved ₹10-15/month (recreate in Stage 8 only)
+
+OPTIMAL CONFIG (after lessons learned):
+  CatalogDb    Free Limit       32 GB    AutoPause 60min   ₹0/month
+  OrderingDb   Serverless GP    1 GB     AutoPause 60min   ₹9/month storage
+  IdentityDb   Serverless GP    1 GB     AutoPause 60min   ₹9/month storage
+  CustomerDb   DELETED (recreate in Stage 8 only)
+  ─────────────────────────────────────────────────────────────────
+  Expected:    ~₹25/month total (vs ₹860/month with defaults)
 ```
 
 Key resources created:
