@@ -69,7 +69,8 @@ eshop-microservices/
 
 ---
 
-## 📍 CURRENT STAGE — Phase 14: Authentication Deep Dive — IN PROGRESS
+## 📍 CURRENT STAGE — Phase 15: Cloud Deployment (AKS + Full Production Stack) — IN PROGRESS
+> Phase 14 Authentication Deep Dive is COMPLETE. Starting Phase 15 — Stage 1: Dockerize.
 
 ### Key Credentials (never changes)
 ```
@@ -169,6 +170,7 @@ Completed so far:
 ✅ Item 3 — JWT RS256 Asymmetric    (private.pem signs, public.pem verifies)
 ✅ Item 4 — 2FA Email OTP           (MailKit + Gmail SMTP + TOTP math, 2-min expiry)
 ✅ Item 9 — OAuth 2.0 + PKCE       (Auth0 + Google social login, AspNetUserLogins tracking)
+✅ Item 11 — Social Logins         (Google + GitHub — separate buttons, Auth0 connection routing)
 
 Complete Authentication Sequence:
 ─────────────────────────────────────────────────────────────────
@@ -184,7 +186,7 @@ Complete Authentication Sequence:
   8.  Step-up Auth                ⏳  Re-verify for sensitive actions (e.g. cancel order > ₹10,000)
   9.  OAuth 2.0 + PKCE            ✅  COMPLETE — Auth0 + Google login, AspNetUserLogins tracking
   10. OIDC (OpenID Connect)       ⏳  id_token + userinfo endpoint + discovery doc
-  11. Social Logins               ⏳  Google + GitHub login — unlocked by OAuth + OIDC
+  11. Social Logins               ✅  COMPLETE — Google + GitHub via Auth0 connection routing
   12. Client Credentials Flow     ⏳  Machine-to-machine OAuth — no user involved (B2B APIs)
   13. Device Authorization Grant  ⏳  GitHub CLI / Netflix TV / IoT — code shown on device
   14. PAT (Personal Access Token) ⏳  GitHub-style long-lived scoped developer tokens
@@ -467,10 +469,47 @@ Key architecture decisions:
 → ProviderKey (sub) = permanent — never changes even if user changes name/email on Google
 → Account linking — same email on Google + app account → automatically merged
 
-Next immediate step: Item 5 — 2FA TOTP (Authenticator App)
-→ QR code generation (QRCoder NuGet) — user scans with Google Authenticator / Authy
-→ OtpNet NuGet for TOTP math (RFC 6238) — 30-second rotating codes
-→ No email needed — works offline — industry standard for 2FA
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+Item 11 — Social Logins (Google + GitHub) ✅ COMPLETE
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+What was built:
+→ GitHub added as second social provider via Auth0 dashboard
+→ Replaced single "Continue with Auth0" button with two provider-specific buttons
+→ Google and GitHub buttons route directly to their provider using Auth0 connection parameter
+→ Zero backend changes needed — Auth0UserInfoService works for any Auth0 provider
+
+Key concepts learned:
+→ Auth0 has TWO levels of enabling a connection:
+    Level 1 — Enable connection globally (Authentication → Social → GitHub → ON)
+    Level 2 — Enable connection for your specific app (Applications → eShop → Connections tab → github ON)
+    Missing Level 2 → "the connection is not enabled" error
+→ connection parameter — routes Auth0 directly to a provider, skips Auth0's own login UI
+    connection: 'google-oauth2'  → goes straight to Google login
+    connection: 'github'         → goes straight to GitHub login
+→ ProviderKey in AspNetUserLogins — github|abc123 vs google-oauth2|xyz — unique per provider
+→ Same backend flow for both — /userinfo returns same shape regardless of social provider
+
+Auth0 setup:
+→ GitHub OAuth App created at github.com/settings/developers
+→ Callback URL set to: https://dev-p6qgjp2d5mvexwg7.us.auth0.com/login/callback
+→ GitHub Client ID + Secret added to Auth0 Social → GitHub connection
+→ GitHub connection enabled for eShop app under Applications → Connections tab
+
+Frontend files changed:
+→ eshop-frontend/src/pages/auth/LoginPage.tsx
+    Replaced: single Auth0 button
+    With: two buttons in a flex column — Google + GitHub
+    onClick Google: loginWithRedirect({ authorizationParams: { connection: 'google-oauth2', prompt: 'login' } })
+    onClick GitHub: loginWithRedirect({ authorizationParams: { connection: 'github', prompt: 'login' } })
+
+DB result:
+→ AspNetUserLogins — LoginProvider="Auth0", ProviderKey="github|<id>" for GitHub users
+→ Same account linking logic — if email matches existing user, accounts are merged
+
+Next immediate step: Item 12 — OAuth 2.0 Client Credentials Flow
+→ Machine-to-machine auth — Ordering.API calls Catalog.API with a service token
+→ No user involved — purely service-to-service
+→ Identity.API issues tokens to trusted services via client_id + client_secret
 ```
 
 ### Previous: Phase 12.7 — gRPC Service-to-Service Communication COMPLETE! ✅
@@ -1533,46 +1572,670 @@ Local self-signed certs  — mTLS between microservices
 
 ---
 
-### ☁️ Phase 15 — Cloud Deployment (App Config + Multi-Env + AKS)
-> Deploy the COMPLETE, AUTHENTICATED app (UI + Auth + Services) in one go!
-> App Config and Key Vault are wired here — where multi-pod value is REAL!
+### ☁️ Phase 15 — Cloud Deployment (AKS + Full Production Stack)
+> Deploy the COMPLETE, AUTHENTICATED microservices app from scratch — everything new.
+> Logical + learning sequence: understand concept → implement → verify → move on.
+> ALL old monolith Azure resources deleted. Everything built fresh for microservices.
+> Old Dockerfile + docker-compose.yml (monolith era) replaced entirely.
 
-**Phase 15a — Containerization & Config**
+| Stage | Topic | Cost | Status |
+|-------|-------|------|--------|
+| 1  | Dockerize locally — multi-stage Dockerfiles + docker-compose | 🟢 Free | ✅ Done |
+| 2  | Clean Azure slate — delete all monolith RGs, create rg-eshop-microservices | 🟢 Free | ✅ Done |
+| 3  | Azure Data Layer — SQL x4, Cosmos DB, Blob Storage, Storage Queues | 🟢 Free | ✅ Done |
+| 4  | Secrets + Central Config — Key Vault + App Configuration | 🟢 Free | ✅ Done |
+| 5  | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ Done |
+| 6  | CI/CD Pipelines + Trivy security scanning | 🟢 Free | ⏳ |
+| 7  | Kubernetes Concepts — pure learning, no cluster cost | 🟢 Free | ⏳ |
+| 8  | AKS Deployment — cluster up, all 4 services running in K8s | 🟡 ~₹2,500/mo | ⏳ |
+| 9  | **Entra ID (Azure AD)** — "Login with Microsoft" for Admin users | 🟢 Free | ⏳ |
+| 10 | **Azure AD B2C** — Consumer identity for customer login | 🟢 Free | ⏳ |
+| 11 | Istio Service Mesh — mTLS zero-trust (PROMISED in Phase 12.7!) | 🟢 Free | ⏳ |
+| 12 | Workload Identity + KEDA — pod identity + event-driven autoscaling | 🟢 Free | ⏳ |
+| 13 | Observability — App Insights + Log Analytics + distributed tracing | 🟢 Free | ⏳ |
+| 14 | Helm Charts — package + version all microservice deployments | 🟢 Free | ⏳ |
+| 15 | DNS + SSL + Azure Front Door — HTTPS + custom domain + CDN/WAF | 🟡 ~₹40/mo | ⏳ |
+| 16 | Azure Load Testing — prove HPA + KEDA autoscale under real load | 🟢 Free | ⏳ |
+| 17 | GitOps — ArgoCD (Git is source of truth, 2026 standard) | 🟢 Free | ⏳ |
+| 18 | Multi-Environment — DEV → STAGING → PROD with approval gates | 🟢 Free | ⏳ |
 
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 70 | Dockerfiles for all 4 microservices (multi-stage builds) | 🟢 Free | ⏳ |
-| 71 | Build images via GitHub Actions (no local Docker needed!) | 🟢 Free | ⏳ |
-| 72 | Azure Container Registry (ACR) — private image registry | 🟡 $5 | ⏳ |
-| 73 | Azure App Configuration — central config hub (settings + KV refs + feature flags) | 🟢 Free | ⏳ |
-| 74 | Key Vault references — secrets in KV, App Config holds pointers | 🟢 Free | ⏳ |
-| 75 | Each microservice reads from App Config only (one source of truth!) | 🟢 Free | ⏳ |
-| 76 | Managed Identity → AKS pulls from ACR + reads Key Vault (no passwords!) | 🟢 Free | ⏳ |
+> **Why Stages 9 + 10 come right after AKS (Stage 8):**
+> OAuth redirect URIs need REAL deployed URLs — app must be live first.
+> Entra ID (simpler) teaches Azure AD concepts that B2C builds on.
+> Both are application-layer auth — complete before infrastructure hardening (Istio).
 
-**Phase 15b — Multi-Environment Strategy**
+---
 
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 77 | Environment strategy concept (DEV → STAGING → PROD) | 🟢 Free | ⏳ |
-| 78 | App Config labels (dev / staging / prod) — same store, different values | 🟢 Free | ⏳ |
-| 79 | Pipeline with approval gates (GitHub Actions environments) | 🟢 Free | ⏳ |
-| 80 | Promote build: local → STAGING → PROD (swap!) | 🟢 Free | ⏳ |
+#### Stage 1 — Dockerize Everything ✅ COMPLETE
+> Multi-stage Dockerfiles for all 4 APIs + React frontend + Docker Compose wiring.
+> Local docker-compose up test deferred — no Docker Desktop on office laptop. Verified via ACR build in Stage 5.
 
-**Phase 15c — Kubernetes (AKS)**
+```
+✅ LEARNED: Multi-stage builds — SDK image builds, aspnet image runs (saves ~700MB per image)
+✅ LEARNED: Layer caching — .csproj files first → dotnet restore cached → fast rebuilds
+✅ LEARNED: Non-root user + health checks + OCI labels — production best practices
+✅ LEARNED: Identity.API special case — private.pem + public.pem baked in (dev only, KV in Stage 8)
+✅ LEARNED: Nginx for React SPAs — try_files fallback + security headers + asset caching
+✅ LEARNED: Docker Compose — service names = DNS, depends_on, healthcheck, volumes, env var override
+✅ LEARNED: Aspire = local dev only — Docker DNS replaces service discovery in compose
+✅ LEARNED: __ double underscore = : in ASP.NET Core env vars (array index override for CORS)
+✅ LEARNED: ServiceDefaults = shared class library (health checks, telemetry) — not Aspire orchestrator
+```
 
-| # | Topic | Cost | Status |
-|---|-------|------|--------|
-| 81 | Azure Container Apps (stepping stone before AKS!) | 🟡 $1-3 | ⏳ |
-| 82 | Kubernetes fundamentals (pods, deployments, services) | 🟢 Free | ⏳ |
-| 83 | Azure Kubernetes Service (AKS) cluster setup | 🟡 ~$5 | ⏳ |
-| 84 | Deploy ALL microservices + React SWA to AKS | 🟡 ~$5 | ⏳ |
-| 85 | Kubernetes ConfigMaps + Secrets (CSI + Key Vault) | 🟢 Free | ⏳ |
-| 86 | Horizontal Pod Autoscaler (scale each service independently!) | 🟢 Free | ⏳ |
-| 87 | AKS Ingress Controller (NGINX — one entry point for all!) | 🟢 Free | ⏳ |
-| 88 | Azure Front Door (global entry point for AKS!) | 🔴 Delete! | ⏳ |
-| 89 | Helm Charts (package each microservice deployment) | 🟢 Free | ⏳ |
-| 90 | CI/CD per microservice → auto deploy to AKS | 🟢 Free | ⏳ |
-| 91 | Delete AKS cluster after learning | 🔴 Delete! | ⏳ |
+Key decisions:
+→ Customer.API: ListenAnyIP in Docker (DOTNET_RUNNING_IN_CONTAINER) vs ListenLocalhost in Aspire (no Windows Firewall popup)
+→ Ordering → Customer gRPC: ServiceUrls__CustomerApiGrpc=http://customer-api:5022 (Docker DNS)
+→ CORS: Cors__AllowedOrigins__2=http://localhost:3000 added per service (frontend on port 3000 in Docker)
+→ SA_PASSWORD + Gmail secrets in .env file (gitignored) — compose references via ${VAR}
+→ sqlserver healthcheck with sqlcmd SELECT 1 — APIs wait via depends_on condition: service_healthy
+→ Frontend browser calls localhost:5010/5011/5012/5013 (host port mappings) — constants.ts unchanged
+
+Files created:
+→ EShopMicroservices/Catalog.API/Dockerfile
+→ EShopMicroservices/Customer.API/Dockerfile
+→ EShopMicroservices/Ordering.API/Dockerfile
+→ EShopMicroservices/Identity.API/Dockerfile
+→ eshop-frontend/Dockerfile
+→ eshop-frontend/nginx.conf
+→ docker-compose.yml (repo root — replaces old monolith compose)
+→ Deleted: Dockerfile (old monolith root)
+
+| # | What | Status |
+|---|------|--------|
+| 15.1.1 | LEARN multi-stage Dockerfile — SDK → aspnet, layer caching, .dockerignore | ✅ |
+| 15.1.2 | BUILD Dockerfile — Catalog.API | ✅ |
+| 15.1.3 | BUILD Dockerfile — Customer.API | ✅ |
+| 15.1.4 | BUILD Dockerfile — Ordering.API | ✅ |
+| 15.1.5 | BUILD Dockerfile — Identity.API (includes private.pem + public.pem) | ✅ |
+| 15.1.6 | LEARN Nginx for SPAs — try_files, runtime env injection | ✅ |
+| 15.1.7 | BUILD Dockerfile — React frontend (Vite build → Nginx serves dist/) | ✅ |
+| 15.1.8 | DELETE old monolith Dockerfile + docker-compose.yml from repo root | ✅ |
+| 15.1.9 | BUILD new docker-compose.yml — 4 APIs + SQL Server + volumes + networks | ✅ |
+| 15.1.10 | TEST docker-compose up — deferred (no Docker Desktop on office laptop) → verified via ACR build in Stage 5 | ⏭️ |
+
+---
+
+#### Stage 2 — Clean Azure Slate ✅ COMPLETE
+> Deleted all old monolith resources. Created single fresh resource group for everything.
+
+```
+✅ LEARNED: One resource group for all environments (dev/staging/prod via K8s namespaces — cost efficient for learning)
+✅ LEARNED: Resource Group delete cascade — one delete removes all child resources
+✅ LEARNED: Terraform (Phase 17) will codify everything — terraform destroy/apply for zero cost when not studying
+✅ DECISION: rg-eshop-microservices — one RG for entire learning journey
+✅ DECISION: Multi-env (Stage 18) via K8s namespaces in ONE cluster — not separate clusters (saves ~₹7,500/mo)
+```
+
+| # | What | Status |
+|---|------|--------|
+| 15.2.1 | LIST + DELETE old monolith resource groups (rg-eshop-prod, rg-eshop-shared) | ✅ |
+| 15.2.2 | CREATE rg-eshop-microservices — single resource group for all resources | ✅ |
+
+---
+
+#### Stage 3 — Azure Data Layer ✅ COMPLETE
+> All 4 SQL databases + Cosmos DB + Storage Account (blob + queues) created fresh.
+
+```
+✅ LEARNED: Azure SQL — one server, multiple databases (cost efficient, shared compute)
+✅ LEARNED: Database per service — each microservice owns its data, no cross-DB queries
+✅ LEARNED: Cosmos DB — partitions, containers, partition key = most queried field (/productId)
+✅ LEARNED: Storage Account = blob + queues in ONE resource (replaced Service Bus — ~₹0.03/mo)
+✅ DECISION: Service Bus replaced with Azure Storage Queue (nearly free vs ₹83/2 days)
+✅ DECISION: Storage account name must be globally unique across all Azure — steshop2026
+
+🔴 COSTLY LESSONS (Jun 23-24, ₹313 mistake):
+✅ LEARNED: Default DB size = 32 GB × ₹9/GB/month = ₹288/month per DB! 🔴
+            ALWAYS set --max-size 1GB after creation for learning projects
+            Command: az sql db update --name <db> --max-size 1GB
+✅ LEARNED: General Purpose tier MINIMUM = 1 GB (not 100 MB)
+            Free Limit tier CANNOT be resized (locked at default 32 GB, but free)
+✅ LEARNED: Delete + Recreate cycle costs ~₹75 per round (vCore burst + 60min idle window)
+            NEVER delete/recreate to "save cost" — it INCREASES cost
+✅ LEARNED: vCore = variable cost (₹0 when paused, expensive when active)
+            Storage = fixed cost (charged even when paused, based on max-size)
+✅ LEARNED: Azure billing has 8-24 hour LAG
+            Today's cost display does NOT include last few hours of activity
+            Don't trust same-day cost — wait until next morning for accurate number
+✅ LEARNED: "Auto-pause" still bills for 60-min idle window before pausing
+            Each DB resume = 60min minimum compute charge even with no queries
+✅ LEARNED: CustomerDb not recreated → saved ₹10-15/month (recreate in Stage 8 only)
+
+OPTIMAL CONFIG (after lessons learned):
+  CatalogDb    Free Limit       32 GB    AutoPause 60min   ₹0/month
+  OrderingDb   Serverless GP    1 GB     AutoPause 60min   ₹9/month storage
+  IdentityDb   Serverless GP    1 GB     AutoPause 60min   ₹9/month storage
+  CustomerDb   DELETED (recreate in Stage 8 only)
+  ─────────────────────────────────────────────────────────────────
+  Expected:    ~₹25/month total (vs ₹860/month with defaults)
+```
+
+Key resources created:
+→ sql-eshop-dev          — Azure SQL Server (Serverless Gen5, auto-pause 60min)
+→ CatalogDb              — products, categories
+→ CustomerDb             — customers, addresses
+→ OrderingDb             — orders, order items
+→ IdentityDb             — users, roles, JWT refresh tokens
+→ cosmos-eshop-dev       — Cosmos DB NoSQL (free tier) — EShopDb/reviews (/productId partition)
+→ steshop2026            — Storage Account (Standard_LRS)
+→ product-images         — Blob container (product images)
+→ order-placed-catalog   — Storage Queue (catalog stock reduction events)
+→ order-placed-customer  — Storage Queue (customer notification events)
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.3.1 | CREATE Azure SQL Server — sql-eshop-dev (Central India) | 🟢 Free | ✅ |
+| 15.3.2 | CREATE CatalogDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.3 | CREATE CustomerDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.4 | CREATE OrderingDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.5 | CREATE IdentityDb on sql-eshop-dev | 🟢 Free | ✅ |
+| 15.3.6 | ADD firewall rule — AllowAzureServices (0.0.0.0 → 0.0.0.0) | 🟢 Free | ✅ |
+| 15.3.7 | CREATE Cosmos DB (free tier) — EShopDb → reviews container (/productId) | 🟢 Free | ✅ |
+| 15.3.8 | CREATE Storage Account — steshop2026 → product-images blob + 2 queues | 🟢 Free | ✅ |
+
+---
+
+#### Stage 4 — Secrets + Central Config ✅ COMPLETE
+> No passwords in code, YAML, or environment variables — ever.
+> Key Vault holds secrets. App Configuration holds settings + KV references.
+> All 4 microservices read config from ONE place.
+
+```
+✅ LEARNED: Key Vault uses RBAC — must assign "Key Vault Secrets Officer" role to your user
+✅ LEARNED: App Config stores KV references (pointers), never raw secret values
+✅ LEARNED: DefaultAzureCredential — az login locally, Managed Identity in AKS (zero code change)
+✅ LEARNED: Configuration sources must be added in Program.cs before builder.Build() — not in AddInfrastructure
+✅ LEARNED: AddAzureAppConfiguration auto-resolves KV references — API only needs App Config URL
+✅ DECISION: Messaging:Provider = "StorageQueue" in App Config (switch to ServiceBus = change 1 value)
+✅ DECISION: AppConfig:Endpoint not set locally → User Secrets used (no dev workflow change)
+```
+
+Key resources created:
+→ kv-eshop-dev            — Key Vault (RBAC mode)
+→ appconfig-eshop-dev     — App Configuration (free tier)
+
+Secrets stored in Key Vault (8 total):
+→ ConnectionStrings--CatalogDb, CustomerDb, OrderingDb, IdentityDb
+→ ConnectionStrings--Storage (steshop2026), CosmosDb
+→ EmailSettings--AppPassword, EmailSettings--FromEmail
+
+KV references in App Config (+ 1 plain value):
+→ ConnectionStrings:CatalogDb/CustomerDb/OrderingDb/IdentityDb/Storage/CosmosDb
+→ EmailSettings:AppPassword, EmailSettings:FromEmail
+→ Messaging:Provider = "StorageQueue"
+
+Code changes (all 4 Program.cs files):
+→ Added Azure.Identity + Microsoft.Extensions.Configuration.AzureAppConfiguration NuGet
+→ Added conditional AddAzureAppConfiguration block — only active when AppConfig:Endpoint is set
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.4.1 | CREATE Key Vault — kv-eshop-dev | 🟢 Free | ✅ |
+| 15.4.2 | STORE 8 secrets in KV (connection strings + email credentials) | 🟢 Free | ✅ |
+| 15.4.3 | CREATE App Configuration — appconfig-eshop-dev | 🟢 Free | ✅ |
+| 15.4.4 | ADD 8 KV references + Messaging:Provider in App Config | 🟢 Free | ✅ |
+| 15.4.5 | CODE — wire all 4 microservices to read from App Config (conditional) | 🟢 Free | ✅ |
+| 15.4.6 | BUILD — dotnet build passes with zero errors | 🟢 Free | ✅ |
+
+---
+
+#### Stage 5 — Azure Container Registry (ACR) ✅ COMPLETE
+> Private Docker registry — images pushed here, AKS pulls from here.
+
+```
+✅ LEARNED: ACR names globally unique — acreshopdev taken, used acreshop2026
+✅ LEARNED: az acr build — builds Docker image in Azure cloud (no local Docker needed!)
+✅ LEARNED: Build context must match Dockerfile COPY paths — use EShopMicroservices/ not repo root
+✅ LEARNED: .dockerignore in build context — exclude bin/obj to avoid Windows path errors
+✅ LEARNED: NuGet.Config — clear fallback folders for Linux Docker builds
+✅ LEARNED: AcrPull role — assigned to AKS Managed Identity in Stage 8 (not now)
+✅ LEARNED: TypeScript checking vs Docker build — TWO separate concerns:
+            CI/CD Step 1 → npx tsc --noEmit   = validates types, no output, fast fail
+            CI/CD Step 2 → az acr build        = Dockerfile runs npx vite build (no tsc)
+            WHY: Docker job = bundle code only (fast, focused)
+                 CI job    = validate code quality (types, tests, security scan)
+            RULE: tsc errors caught in CI BEFORE Docker build even starts → no wasted time
+✅ DECISION: Delete ACR when not studying (₹14/day), recreate with same name next session
+✅ DECISION: Microsoft.ContainerRegistry provider must be registered once per subscription
+```
+
+Key resources:
+→ acreshop2026         — ACR Basic tier (acreshop2026.azurecr.io)
+→ catalog-api:1.0.0   — pushed ✅
+→ customer-api:1.0.0  — pushed ✅
+→ ordering-api:1.0.0  — pushed ✅
+→ identity-api:1.0.0  — pushed ✅
+→ frontend:1.0.0      — pushed ✅
+
+Files added/modified:
+→ EShopMicroservices/.dockerignore       — excludes bin/obj from Docker build context
+→ EShopMicroservices/NuGet.Config        — clears Windows fallback package folders
+→ eshop-frontend/.dockerignore           — excludes node_modules/dist (Windows symlinks break Linux)
+→ eshop-frontend/Dockerfile              — use npx vite build instead of npm run build (skip tsc)
+
+Issues resolved during Stage 5:
+→ MissingSubscriptionRegistration        — az provider register --namespace Microsoft.ContainerRegistry
+→ AlreadyInUse (acreshopdev taken)       — renamed to acreshop2026
+→ Windows path in project.assets.json    — fixed with .dockerignore (exclude bin/obj)
+→ node_modules Windows symlinks          — fixed with eshop-frontend/.dockerignore
+→ TypeScript errors blocking build       — fixed with npx vite build (tsc moved to CI step)
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.5.1 | CREATE ACR — acreshop2026 (Basic tier) | 🟡 ~₹420/mo | ✅ |
+| 15.5.2 | BUILD + PUSH all 5 images (az acr build — no Docker Desktop needed) | 🟢 Free | ✅ |
+| 15.5.3 | ASSIGN AcrPull role — deferred to Stage 8 when AKS is created | 🟢 Free | ⏳ Stage 8 |
+
+---
+
+#### Stage 6 — CI/CD Pipelines + Security Scanning + Versioning
+> Every PR builds and scans images. Every merge deploys automatically.
+> Trivy scans for CVEs before any image reaches ACR.
+> Git tags control semantic versions shown in UI and DLLs.
+
+```
+LEARN: GitHub Actions OIDC — federated identity to Azure, no stored secrets needed
+LEARN: Build matrix — build all 5 images in parallel in one workflow
+LEARN: PR-vs-Push workflow split — PRs scan only, pushes deploy
+LEARN: Trivy — open-source CVE scanner for Docker images and NuGet packages
+LEARN: CodeQL — GitHub native SAST (Static Application Security Testing)
+LEARN: Code coverage gates — fail build if coverage drops below threshold
+LEARN: Build caching — cache NuGet + node_modules → 8min → 3min builds
+LEARN: Dependabot — auto-PRs for dependency updates (NuGet + npm + Docker)
+LEARN: Branch protection — block direct push to main, require CI checks
+LEARN: Status badges — README shows live build status (recruiter-friendly)
+LEARN: TypeScript separation — tsc --noEmit in CI (validate), vite build in Dockerfile (bundle)
+LEARN: Azure Static Web Apps CI/CD — deployment token, auto-deploy on push
+```
+
+```
+VERSIONING STRATEGY (decided in Stage 5):
+─────────────────────────────────────────────────────────────────────
+Layer 1 — Docker Images (ACR):
+  Every commit → catalog-api:sha-a3f9c12    (automatic, always)
+  Every commit → catalog-api:latest          (automatic, always)
+  git tag v1.0.0 → catalog-api:1.0.0        (only on release)
+  AKS always uses SHA tag in production — never :latest
+
+Layer 2 — Semantic Versioning (Git Tags):
+  v1.0.0 → Stage 8 complete (first AKS deployment)
+  v1.1.0 → Stage 9 complete (Entra ID added)
+  v1.2.0 → Stage 10 complete (B2C added)
+  Rule: git tag = time machine → checkout any version, reproduce any bug
+
+Layer 3 — .NET DLLs (Directory.Build.props):
+  FileVersion:          1.0.0
+  InformationalVersion: 1.0.0-sha-a3f9c12
+  All 4 services inherit from one central file
+
+Layer 4 — Frontend UI:
+  VITE_APP_VERSION build arg → React footer shows version
+  git push only  → footer shows sha-a3f9c12
+  git tag v1.0.0 → footer shows v1.0.0  ✅
+
+CI/CD version logic:
+  if tag push  → VERSION = v1.0.0     (human-friendly, UI shows this)
+  if PR/commit → VERSION = sha-abc123  (technical, traceable)
+
+Real companies (Netflix, Amazon, Spotify) use this exact approach.
+Conventional Commits auto-bump versions:
+  fix: ...        → patch (1.0.0 → 1.0.1)
+  feat: ...       → minor (1.0.1 → 1.1.0)
+  BREAKING CHANGE → major (1.1.0 → 2.0.0)
+─────────────────────────────────────────────────────────────────────
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.6.1 | CREATE Service Principal with OIDC federation (no stored client secrets) | 🟢 Free | ⏳ |
+| 15.6.2 | CONFIGURE GitHub repository secrets (AZURE_CLIENT_ID, TENANT_ID, SUBSCRIPTION_ID) | 🟢 Free | ⏳ |
+| 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check + scan, NO push) | 🟢 Free | ⏳ |
+| 15.6.4 | BUILD build-and-push.yml — runs on main push (build + scan + push to ACR) | 🟢 Free | ⏳ |
+| 15.6.5 | ADD build matrix — parallelize 5 image builds (catalog, customer, ordering, identity, frontend) | 🟢 Free | ⏳ |
+| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
+| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
+| 15.6.8 | ADD code coverage step — dotnet test --collect "Code Coverage" + fail if < 70% | 🟢 Free | ⏳ |
+| 15.6.9 | ADD build caching — cache NuGet packages + node_modules between runs | 🟢 Free | ⏳ |
+| 15.6.10 | IMPLEMENT versioning — SHA tag always, semantic tag on git tag push | 🟢 Free | ⏳ |
+| 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ⏳ |
+| 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from git tag | 🟢 Free | ⏳ |
+| 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Docker base + Actions updates | 🟢 Free | ⏳ |
+| 15.6.14 | CONFIGURE GitHub branch protection — main requires PR + passing checks | 🟢 Free | ⏳ |
+| 15.6.15 | ADD status badges to README — build, coverage, security scan | 🟢 Free | ⏳ |
+| 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
+| 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | ⏳ |
+
+---
+
+#### Stage 7 — Kubernetes Concepts (Pure Learning — FREE, No Cluster Yet)
+> Understand every K8s concept deeply BEFORE creating the AKS cluster.
+> Saves money and avoids trial-and-error mistakes on a paid cluster.
+
+```
+LEARN: Pod — smallest unit, one container, ephemeral (dies and restarts automatically)
+LEARN: Node — VM that runs pods (B2s in our case)
+LEARN: Cluster — group of nodes + control plane (AKS manages control plane FREE)
+LEARN: Deployment — desired state ("keep 2 Catalog.API pods running always")
+LEARN: ReplicaSet — enforces the desired pod count automatically
+LEARN: Service — stable DNS name + IP for pods (ClusterIP = internal, LoadBalancer = external IP)
+LEARN: ConfigMap — non-secret config stored in K8s (env vars, URLs)
+LEARN: Secret — base64 encoded only (NOT encrypted!) — why CSI Key Vault Driver is needed
+LEARN: Ingress — one public IP, path-based routing (/api/catalog → Catalog pod)
+LEARN: Namespace — logical isolation (eshop namespace separates our pods from system pods)
+LEARN: Init Container — runs once before main container starts (EF migrations use this!)
+LEARN: Resource Requests + Limits — CPU/memory per pod, REQUIRED for HPA to work
+LEARN: Helm — package manager for K8s (why 50 raw YAML files is unmanageable)
+```
+
+| # | What | Status |
+|---|------|--------|
+| 15.7.1 | LEARN Pod, Node, Cluster, Control Plane — draw the architecture | ⏳ |
+| 15.7.2 | LEARN Deployment + ReplicaSet + Service (ClusterIP vs LoadBalancer) | ⏳ |
+| 15.7.3 | LEARN ConfigMap + Secret + why raw K8s Secrets are NOT secure alone | ⏳ |
+| 15.7.4 | LEARN Ingress — path routing, host routing, TLS termination | ⏳ |
+| 15.7.5 | LEARN Namespace, Init Container, Resource Requests + Limits | ⏳ |
+| 15.7.6 | LEARN Helm — Chart.yaml, values.yaml, templates/, helm install/upgrade | ⏳ |
+| 15.7.7 | WRITE all K8s YAML manually first — understand raw manifests before Helm | ⏳ |
+
+---
+
+#### Stage 8 — AKS Deployment
+> Cluster up. Deploy all 4 microservices. NGINX routes traffic. React frontend live.
+> Stop AKS node when not studying → cost drops to ~₹0.
+
+```
+LEARN: AKS architecture — managed control plane (free) + worker nodes (paid)
+LEARN: CSI Key Vault Driver — pods mount KV secrets as files (safer than env vars)
+LEARN: Init Containers for EF migrations — run once before pods start (multi-pod safe)
+LEARN: Resource Requests + Limits — required for HPA to function correctly
+LEARN: NGINX Ingress Controller — one public IP, routes by path prefix
+LEARN: HPA — scale by CPU/memory (KEDA handles event-driven scaling in Stage 12)
+LEARN: Azure Static Web Apps — free React hosting with CI/CD
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.8.1 | CREATE AKS cluster — aks-eshop-dev (1 node x B2s) | 🟡 ~₹2,500/mo | ⏳ |
+| 15.8.2 | ASSIGN AcrPull role — AKS Managed Identity → acreshopdev | 🟢 Free | ⏳ |
+| 15.8.3 | INSTALL CSI Key Vault Driver — pods read KV secrets as mounted files | 🟢 Free | ⏳ |
+| 15.8.4 | CREATE K8s namespace — eshop | 🟢 Free | ⏳ |
+| 15.8.5 | WRITE Deployment + Service YAML — Catalog.API (resource limits + init container for EF migration) | 🟢 Free | ⏳ |
+| 15.8.6 | DEPLOY Catalog.API → kubectl apply → verify pods running | 🟢 Free | ⏳ |
+| 15.8.7 | DEPLOY Customer.API, Ordering.API, Identity.API same pattern | 🟢 Free | ⏳ |
+| 15.8.8 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
+| 15.8.9 | WRITE Ingress YAML — /api/catalog, /api/customers, /api/orders, /api/auth routing | 🟢 Free | ⏳ |
+| 15.8.10 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
+| 15.8.11 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
+| 15.8.12 | UPDATE frontend .env — API_URL = AKS Ingress public IP | 🟢 Free | ⏳ |
+| 15.8.13 | TEST end-to-end — login → 2FA → browse → order → all working in AKS | ⏳ |
+
+---
+
+#### Stage 9 — Entra ID (Azure AD) — Enterprise Login for Admins
+> App is live in AKS. Redirect URIs are real. Now add "Login with Microsoft" for admin users.
+> Entra ID = Azure Active Directory rebranded. Used by 95% of Fortune 500 companies.
+> Admin staff logs in with their Microsoft/organizational account — no separate password needed.
+
+```
+LEARN: Entra ID vs Auth0 — Microsoft's own identity platform, built into Azure ecosystem
+LEARN: App Registration — how you tell Azure about your app (client ID, redirect URI, scopes)
+LEARN: Authorization Code Flow + PKCE — same flow we used with Auth0, now with Microsoft
+LEARN: id_token claims — oid (object ID), preferred_username, name, roles from Entra
+LEARN: Tenant types — Single-tenant (one org only) vs Multi-tenant (any Microsoft account)
+LEARN: Microsoft Graph API — fetch user profile, group memberships from Entra
+LEARN: Admin Consent — why enterprise apps need IT admin to grant permissions
+LEARN: Entra vs B2C — Entra = employees/internal, B2C = customers/external (key distinction!)
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.9.1 | CREATE App Registration in Entra ID — eShop-Admin app | 🟢 Free | ⏳ |
+| 15.9.2 | SET Redirect URI — https://app.eshop.dev/auth/microsoft/callback (SWA URL) | 🟢 Free | ⏳ |
+| 15.9.3 | CONFIGURE Identity.API — add Entra ID as second login provider | 🟢 Free | ⏳ |
+| 15.9.4 | ADD "Login with Microsoft" button on LoginPage.tsx (Admin only) | 🟢 Free | ⏳ |
+| 15.9.5 | IMPLEMENT callback — exchange Entra code → validate id_token → issue our RS256 JWT | 🟢 Free | ⏳ |
+| 15.9.6 | ENFORCE role — Entra login maps to Admin role in our eShop JWT | 🟢 Free | ⏳ |
+| 15.9.7 | TEST — admin logs in with Microsoft account → gets Admin JWT → Dashboard accessible | ⏳ |
+| 15.9.8 | LEARN Microsoft Graph — fetch admin's display name + email from Entra | 🟢 Free | ⏳ |
+
+---
+
+#### Stage 10 — Azure AD B2C — Consumer Identity for Customers
+> B2C = Business-to-Consumer. Azure's dedicated platform for customer-facing identity.
+> Can replace our custom email/password + 2FA + Social login with a fully managed Azure service.
+> Used by: ASOS, Heineken, Maersk — large consumer apps at millions of users scale.
+
+```
+LEARN: B2C vs Entra ID — B2C = external customers, Entra = internal employees (never mix!)
+LEARN: B2C Tenant — separate Azure tenant just for B2C (not your main Azure subscription tenant)
+LEARN: User Flows — pre-built policies: SignUpSignIn, PasswordReset, ProfileEdit
+LEARN: Custom Policies — XML-based, full control over every step of the auth journey
+LEARN: B2C Token — JWT issued by B2C with custom claims (we map it to our RS256 JWT)
+LEARN: B2C + Social providers — B2C natively handles Google, GitHub, Facebook without Auth0
+LEARN: B2C pricing — first 50,000 MAU (Monthly Active Users) FREE
+LEARN: B2C vs Auth0 — B2C is Azure-native (no 3rd party), Auth0 is simpler setup but paid at scale
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.10.1 | CREATE Azure AD B2C Tenant — eshopb2c.onmicrosoft.com | 🟢 Free | ⏳ |
+| 15.10.2 | REGISTER eShop app in B2C tenant (client ID + redirect URI) | 🟢 Free | ⏳ |
+| 15.10.3 | CREATE SignUpSignIn User Flow — email + password + email OTP verification | 🟢 Free | ⏳ |
+| 15.10.4 | ADD Google as social provider in B2C (replaces our Auth0 Google login) | 🟢 Free | ⏳ |
+| 15.10.5 | CONFIGURE Identity.API — validate B2C JWT, map claims to our ApplicationUser | 🟢 Free | ⏳ |
+| 15.10.6 | UPDATE LoginPage.tsx — "Continue with Microsoft B2C" customer flow | 🟢 Free | ⏳ |
+| 15.10.7 | CREATE PasswordReset User Flow — self-service password reset via B2C | 🟢 Free | ⏳ |
+| 15.10.8 | TEST — customer signs up via B2C → gets our RS256 JWT → browses + orders | ⏳ |
+| 15.10.9 | COMPARE flows — Auth0 (Phase 14) vs Azure AD B2C — pros/cons documented | 🟢 Free | ⏳ |
+
+---
+
+#### Stage 11 — Istio Service Mesh (PROMISED in Phase 12.7!)
+> Phase 12.7 explicitly deferred: "Internal service auth: NONE intentionally — Istio mTLS in Phase 15"
+> This delivers that promise. Pod-to-pod traffic is now encrypted and identity-verified.
+
+```
+LEARN: Service mesh — sidecar proxy pattern, why it works at the network level
+LEARN: Istio architecture — istiod (control plane), Envoy proxy sidecar (data plane)
+LEARN: mTLS — every pod gets a certificate, pods cryptographically prove identity
+LEARN: PeerAuthentication — enforce STRICT mTLS across all pods in namespace
+LEARN: AuthorizationPolicy — only Ordering.API can call Customer.API (zero-trust)
+LEARN: Traffic management — retries, circuit breaker, timeouts (resilience built-in)
+LEARN: Kiali dashboard — live visual service graph, see actual pod-to-pod traffic
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.11.1 | INSTALL Istio on AKS (istioctl install) | 🟢 Free | ⏳ |
+| 15.11.2 | LABEL eshop namespace — istio-injection=enabled (sidecars auto-injected) | 🟢 Free | ⏳ |
+| 15.11.3 | APPLY PeerAuthentication — STRICT mTLS in eshop namespace | 🟢 Free | ⏳ |
+| 15.11.4 | APPLY AuthorizationPolicy — only Ordering.API allowed to call Customer.API | 🟢 Free | ⏳ |
+| 15.11.5 | TEST mTLS — verify pod-to-pod calls are encrypted (kubectl exec curl test) | 🟢 Free | ⏳ |
+| 15.11.6 | INSTALL Kiali → view live service graph (Ordering → Customer → Identity) | 🟢 Free | ⏳ |
+| 15.11.7 | ADD circuit breaker — if Catalog.API fails 5x → stop calling temporarily | 🟢 Free | ⏳ |
+
+---
+
+#### Stage 12 — Azure Workload Identity + KEDA
+> Workload Identity: pod-level Azure identity (replaces deprecated Pod Managed Identity).
+> KEDA: scale pods by Service Bus queue depth — not CPU. Modern event-driven scaling.
+
+```
+LEARN: Workload Identity — why VM-level Managed Identity is not granular enough for pods
+LEARN: Federated credentials — K8s ServiceAccount bound to Azure Managed Identity
+LEARN: KEDA — Kubernetes Event-Driven Autoscaling, works with Service Bus / HTTP / Cron
+LEARN: ScaledObject — KEDA CRD that watches a trigger and adjusts pod count
+LEARN: KEDA vs HPA — CPU-based (HPA) vs event-based (KEDA) — both work together
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.12.1 | ENABLE Workload Identity on AKS cluster | 🟢 Free | ⏳ |
+| 15.12.2 | CREATE Managed Identity per service — mi-catalog, mi-ordering, etc. | 🟢 Free | ⏳ |
+| 15.12.3 | BIND K8s ServiceAccount → Azure Managed Identity (federated credential) | 🟢 Free | ⏳ |
+| 15.12.4 | ASSIGN KV Secrets User role — each identity reads only its own secrets | 🟢 Free | ⏳ |
+| 15.12.5 | INSTALL KEDA on AKS | 🟢 Free | ⏳ |
+| 15.12.6 | CREATE ScaledObject — Catalog.API scales by order-placed queue depth | 🟢 Free | ⏳ |
+| 15.12.7 | TEST KEDA — push 50 messages to Service Bus → watch pods scale up | ⏳ |
+
+---
+
+#### Stage 13 — Observability (App Insights + Log Analytics)
+> Distributed tracing across all 4 pods. Centralized logs. Visual service map.
+
+```
+LEARN: Distributed tracing — one request spans 4 services, trace ID follows it end-to-end
+LEARN: Application Insights — traces, metrics, exceptions, live metrics stream
+LEARN: Log Analytics Workspace — raw pod logs (stdout/stderr) queryable in one place via KQL
+LEARN: Container Insights — AKS-native monitoring (node CPU, pod restarts, OOM kills)
+LEARN: OpenTelemetry — already wired via Aspire ServiceDefaults, configure for production
+LEARN: KQL basics — Kusto Query Language for searching logs
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.13.1 | CREATE Application Insights — appi-eshop-dev | 🟢 Free | ⏳ |
+| 15.13.2 | CREATE Log Analytics Workspace — law-eshop-dev | 🟢 Free | ⏳ |
+| 15.13.3 | CONNECT App Insights → Log Analytics (unified backend) | 🟢 Free | ⏳ |
+| 15.13.4 | ENABLE Container Insights on AKS (node + pod metrics) | 🟢 Free | ⏳ |
+| 15.13.5 | CONFIGURE OpenTelemetry in all 4 services → sends traces to App Insights | 🟢 Free | ⏳ |
+| 15.13.6 | TEST — place an order → view full distributed trace across all 4 services in App Insights | ⏳ |
+| 15.13.7 | WRITE KQL query — find all failed requests in last 1 hour across all services | 🟢 Free | ⏳ |
+| 15.13.8 | CREATE Azure Monitor Alert — alert if any service has >5 errors/min | 🟢 Free | ⏳ |
+
+---
+
+#### Stage 14 — Helm Charts
+> Replace raw YAML with reusable, versioned, parameterized packages.
+
+```
+LEARN: Helm structure — Chart.yaml (metadata), values.yaml (parameters), templates/ (YAML + Go templating)
+LEARN: Templating — {{ .Values.image.tag }}, {{ .Release.Name }}, range, if/else
+LEARN: helm upgrade --install — idempotent (safe to run on first deploy AND updates)
+LEARN: Values override — helm upgrade --set image.tag=1.2.0 (CI/CD uses this per deploy)
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.14.1 | CREATE Helm chart for Catalog.API (convert existing YAML to templates) | 🟢 Free | ⏳ |
+| 15.14.2 | CREATE Helm charts for Customer.API, Ordering.API, Identity.API | 🟢 Free | ⏳ |
+| 15.14.3 | UPDATE CI/CD pipelines — replace kubectl apply with helm upgrade --install | 🟢 Free | ⏳ |
+| 15.14.4 | TEST — helm upgrade with new image tag → zero-downtime rolling update | ⏳ |
+
+---
+
+#### Stage 15 — DNS + SSL + Azure Front Door
+> HTTPS everywhere. Custom domain. Global CDN + WAF.
+
+```
+LEARN: cert-manager — K8s operator that auto-provisions + renews Let's Encrypt SSL certs
+LEARN: ClusterIssuer — cert-manager config pointing to Let's Encrypt ACME endpoint
+LEARN: Azure DNS Zone — manage DNS records for a domain in Azure
+LEARN: Azure Front Door — global CDN, WAF, DDoS protection, geo-routing in front of AKS
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.15.1 | INSTALL cert-manager on AKS | 🟢 Free | ⏳ |
+| 15.15.2 | CREATE ClusterIssuer — Let's Encrypt production | 🟢 Free | ⏳ |
+| 15.15.3 | UPDATE Ingress YAML — TLS block → cert-manager auto-provisions cert | 🟢 Free | ⏳ |
+| 15.15.4 | CREATE Azure DNS Zone + A record → AKS Ingress IP | 🟡 ~₹40/mo | ⏳ |
+| 15.15.5 | CREATE Azure Front Door — global entry point for AKS + Static Web Apps | 🔴 Delete after learning | ⏳ |
+| 15.15.6 | TEST HTTPS — https://api.eshop.dev/api/catalog → 200 OK, padlock shows | ⏳ |
+| 15.15.7 | DELETE Front Door after learning (expensive to keep running) | 🔴 Delete | ⏳ |
+
+---
+
+#### Stage 16 — Azure Load Testing
+> Stress test the running system. Prove HPA and KEDA work under real load.
+> See pods scale in real time in Azure portal.
+
+```
+LEARN: Azure Load Testing — JMeter-based, runs from Azure, no local setup needed
+LEARN: Load test scenarios — ramp up, sustained load, spike test
+LEARN: What to measure — P95 latency, error rate, throughput (requests/sec)
+LEARN: Reading AKS metrics under load — pod count, CPU, memory in Container Insights
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.16.1 | CREATE Azure Load Testing resource | 🟢 Free (50 VUs/mo free) | ⏳ |
+| 15.16.2 | WRITE load test — 100 concurrent users GET /api/catalog for 5 minutes | 🟢 Free | ⏳ |
+| 15.16.3 | RUN test — watch HPA scale Catalog.API pods 1→3 in real time | ⏳ |
+| 15.16.4 | PUSH 100 messages to Service Bus — watch KEDA scale consumers | ⏳ |
+
+---
+
+#### Stage 17 — GitOps with ArgoCD
+> The 2026 industry standard for Kubernetes deployments.
+> Git is the single source of truth — AKS state always matches Git.
+
+```
+LEARN: GitOps — push-based CI/CD vs pull-based GitOps (why GitOps wins at scale)
+LEARN: ArgoCD architecture — runs inside AKS, watches Git repo, pulls + applies changes
+LEARN: Sync policies — auto-sync + self-heal (drift detected → auto-corrected)
+LEARN: Rollback — git revert → ArgoCD detects → rolls back AKS automatically
+LEARN: App of Apps pattern — one ArgoCD Application manages all microservice apps
+LEARN: Who uses GitOps — Netflix, Spotify, Airbnb — every serious K8s shop in 2026
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.17.1 | CREATE k8s/ folder in repo — move all YAML + Helm charts here | 🟢 Free | ⏳ |
+| 15.17.2 | INSTALL ArgoCD on AKS | 🟢 Free | ⏳ |
+| 15.17.3 | CREATE ArgoCD Application — watches k8s/ folder in GitHub repo | 🟢 Free | ⏳ |
+| 15.17.4 | UPDATE CI/CD — pipelines push image tag to Git, ArgoCD deploys to AKS | 🟢 Free | ⏳ |
+| 15.17.5 | TEST drift detection — manually delete a pod → ArgoCD detects + recreates | ⏳ |
+| 15.17.6 | TEST rollback — git revert bad commit → ArgoCD auto-rolls back AKS | ⏳ |
+
+---
+
+#### Stage 18 — Multi-Environment (DEV → STAGING → PROD)
+> Full promote flow with approval gates. Real team workflow.
+
+```
+LEARN: GitHub Environments — protection rules, required reviewers, wait timers
+LEARN: Approval gates — manual approve before PROD deploy
+LEARN: App Config labels — dev / staging / prod — same key, different value per env
+LEARN: Promote flow — same Docker image promoted across envs (NO rebuild between envs!)
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.18.1 | CREATE GitHub Environments — dev, staging, prod | 🟢 Free | ⏳ |
+| 15.18.2 | ADD approval gate — prod environment requires manual approval | 🟢 Free | ⏳ |
+| 15.18.3 | ADD App Config labels per environment — dev / staging / prod values | 🟢 Free | ⏳ |
+| 15.18.4 | UPDATE pipelines — PR → DEV auto, merge → STAGING auto, PROD needs approval | 🟢 Free | ⏳ |
+| 15.18.5 | TEST full flow — push → auto deploys DEV → approve → deploys PROD | ⏳ |
+
+---
+
+```
+Phase 15 — Cost Summary:
+  Stages 1–7   → ₹0          (local + Azure free tier only)
+  Stage 5 ACR  → ~₹400/mo    (Basic ACR)
+  Stage 8 AKS  → ~₹2,500/mo  (1 node B2s — STOP NODE when not studying → ₹0)
+  Stage 9 Entra ID  → ₹0     (Free — App Registration only)
+  Stage 10 B2C → ₹0          (Free — first 50,000 MAU/mo free)
+  Stage 15 DNS → ~₹40/mo
+  Stage 15 Front Door → delete after learning
+  Total while studying  → ~₹3,000/mo
+  Total when AKS stopped → ~₹440/mo (ACR + DNS only)
+
+Phase 15 — What you will be able to say when done:
+  Containerized 4 microservices with production-grade multi-stage Dockerfiles
+  Deployed to AKS with NGINX Ingress, Helm charts, HPA + KEDA autoscaling
+  Admin staff log in with Microsoft (Entra ID) — no separate password, enterprise-grade
+  Customers use Azure AD B2C — fully managed identity, Google social login, self-service reset
+  Pods communicate via mTLS — Istio enforces zero-trust service identity (PROMISED in Phase 12.7!)
+  No secrets in code, YAML, or env vars — Key Vault + Workload Identity
+  CI/CD scans images for CVEs with Trivy before any image reaches production
+  Pods scale by Service Bus queue depth, not just CPU (KEDA)
+  K8s state driven by Git — ArgoCD detects drift and self-heals (GitOps)
+  Full distributed traces visible across all 4 services in App Insights
+  Load tested — system handles 500 concurrent users, pods autoscale visibly
+  → Senior cloud engineer profile
+```
 
 ---
 

@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Catalog.API.Middleware;
 using Catalog.Core.Behaviors;
 using Catalog.Infrastructure.Data;
@@ -7,6 +8,20 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Azure App Configuration (Azure environments only) ────────────────────────
+// Locally → User Secrets are used (this block is skipped)
+// AKS     → AppConfig__Endpoint env var is set → reads from App Config + Key Vault
+var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
+if (!string.IsNullOrEmpty(appConfigEndpoint))
+{
+    builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+               .ConfigureKeyVault(kv => kv.SetCredential(new DefaultAzureCredential()));
+    });
+}
+
 builder.AddServiceDefaults();
 
 // ── CORS — origins come from appsettings.json, never hardcoded ──

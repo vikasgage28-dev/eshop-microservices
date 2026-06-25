@@ -1,9 +1,10 @@
+using Azure.Identity;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Identity.API.Middleware;
 using Identity.Core.Behaviors;
 using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Extensions;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,18 @@ using Microsoft.OpenApi.Models;
 using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Azure App Configuration (Azure environments only) ────────────────────────
+var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
+if (!string.IsNullOrEmpty(appConfigEndpoint))
+{
+    builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+               .ConfigureKeyVault(kv => kv.SetCredential(new DefaultAzureCredential()));
+    });
+}
+
 builder.AddServiceDefaults();
 
 // ── CORS — origins come from appsettings.json, never hardcoded ──────────────
