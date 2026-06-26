@@ -43,10 +43,10 @@ jobs:
 
       - name: Test with coverage
         run: |
-          dotnet test EShopMicroservices/Catalog.Tests/Catalog.Tests.csproj --configuration Release --no-build --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
-          dotnet test EShopMicroservices/Customer.Tests/Customer.Tests.csproj --configuration Release --no-build --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
-          dotnet test EShopMicroservices/Identity.Tests/Identity.Tests.csproj --configuration Release --no-build --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
-          dotnet test EShopMicroservices/Ordering.Tests/Ordering.Tests.csproj --configuration Release --no-build --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
+          dotnet test EShopMicroservices/Catalog.Tests/Catalog.Tests.csproj --configuration Release --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
+          dotnet test EShopMicroservices/Customer.Tests/Customer.Tests.csproj --configuration Release --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
+          dotnet test EShopMicroservices/Identity.Tests/Identity.Tests.csproj --configuration Release --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
+          dotnet test EShopMicroservices/Ordering.Tests/Ordering.Tests.csproj --configuration Release --verbosity normal --collect "XPlat Code Coverage" --results-directory ./coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
