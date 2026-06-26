@@ -1887,23 +1887,30 @@ Conventional Commits auto-bump versions:
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.6.1 | CREATE Service Principal with OIDC federation (no stored client secrets) | 🟢 Free | ⏳ |
-| 15.6.2 | CONFIGURE GitHub repository secrets (AZURE_CLIENT_ID, TENANT_ID, SUBSCRIPTION_ID) | 🟢 Free | ⏳ |
-| 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check + scan, NO push) | 🟢 Free | ⏳ |
-| 15.6.4 | BUILD build-and-push.yml — runs on main push (build + scan + push to ACR) | 🟢 Free | ⏳ |
-| 15.6.5 | ADD build matrix — parallelize 5 image builds (catalog, customer, ordering, identity, frontend) | 🟢 Free | ⏳ |
+| 15.6.1 | CREATE Service Principal with OIDC federation (no stored client secrets) | 🟢 Free | ✅ |
+| 15.6.2 | CONFIGURE GitHub repository secrets (AZURE_CLIENT_ID, TENANT_ID, SUBSCRIPTION_ID) | 🟢 Free | ✅ |
+| 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check, NO push) | 🟢 Free | ✅ |
+| 15.6.4 | BUILD build-and-push.yml — runs on main push (build + push to ACR via matrix) | 🟢 Free | ✅ |
+| 15.6.5 | ADD build matrix — parallelize 4 API image builds (catalog, customer, ordering, identity) | 🟢 Free | ✅ |
 | 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
 | 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
 | 15.6.8 | ADD code coverage step — dotnet test --collect "Code Coverage" + fail if < 70% | 🟢 Free | ⏳ |
 | 15.6.9 | ADD build caching — cache NuGet packages + node_modules between runs | 🟢 Free | ⏳ |
-| 15.6.10 | IMPLEMENT versioning — SHA tag always, semantic tag on git tag push | 🟢 Free | ⏳ |
-| 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ⏳ |
-| 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from git tag | 🟢 Free | ⏳ |
-| 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Docker base + Actions updates | 🟢 Free | ⏳ |
+| 15.6.10 | IMPLEMENT versioning — SHA tag in build-and-push.yml + dev fallback | 🟢 Free | ✅ |
+| 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ✅ |
+| 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from build-time injection | 🟢 Free | ✅ |
+| 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Actions updates | 🟢 Free | ✅ |
 | 15.6.14 | CONFIGURE GitHub branch protection — main requires PR + passing checks | 🟢 Free | ⏳ |
 | 15.6.15 | ADD status badges to README — build, coverage, security scan | 🟢 Free | ⏳ |
 | 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
-| 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | ⏳ |
+| 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | 🟢 Free | ⏳ |
+| 15.6.18 | FIX MessagePack vulnerability — pinned to 2.5.302 in AppHost (was 2.5.192) | 🟢 Free | ✅ |
+
+> **COST NOTE — Azure SQL deleted to stop vCore charges (Jun 2026).**
+> Serverless DBs start ONLINE on creation and bill vCore until 60-min idle pause; any
+> Portal/connection access re-wakes them. All 3 DBs (Catalog/Identity/Ordering) deleted and
+> server `publicNetworkAccess` set to Disabled. Recreate ONLY at Stage 8 deployment with
+> cost-safe flags: `--min-capacity 0.5 --auto-pause-delay 60 --max-size 1GB --compute-model Serverless`.
 
 ---
 

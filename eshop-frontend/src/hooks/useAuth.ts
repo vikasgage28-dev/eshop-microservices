@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { login, register, logout, clearError, setCredentials, clear2FAPending } from '@/features/auth/authSlice'
-import { authApi, type LoginPayload, type RegisterPayload, type AuthResponse } from '@/api/authClient'
+import { type LoginPayload, type RegisterPayload, type AuthResponse } from '@/api/authClient'
 
 export function useAuth() {
   const dispatch = useAppDispatch()
