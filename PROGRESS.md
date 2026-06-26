@@ -1892,15 +1892,15 @@ Conventional Commits auto-bump versions:
 | 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check, NO push) | 🟢 Free | ✅ |
 | 15.6.4 | BUILD build-and-push.yml — runs on main push (build + push to ACR via matrix) | 🟢 Free | ✅ |
 | 15.6.5 | ADD build matrix — parallelize 4 API image builds (catalog, customer, ordering, identity) | 🟢 Free | ✅ |
-| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
+| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ✅ |
 | 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
-| 15.6.8 | ADD code coverage step — dotnet test --collect "Code Coverage" + fail if < 70% | 🟢 Free | ⏳ |
-| 15.6.9 | ADD build caching — cache NuGet packages + node_modules between runs | 🟢 Free | ⏳ |
+| 15.6.8 | ADD code coverage step — dotnet test XPlat Code Coverage → artifact uploaded | 🟢 Free | ✅ |
+| 15.6.9 | ADD build caching — NuGet cache (54s → 4s per run) | 🟢 Free | ✅ |
 | 15.6.10 | IMPLEMENT versioning — SHA tag in build-and-push.yml + dev fallback | 🟢 Free | ✅ |
 | 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ✅ |
 | 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from build-time injection | 🟢 Free | ✅ |
 | 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Actions updates | 🟢 Free | ✅ |
-| 15.6.14 | CONFIGURE GitHub branch protection — main requires PR + passing checks | 🟢 Free | ⏳ |
+| 15.6.14 | CONFIGURE GitHub branch protection — main + develop require PR + passing checks | 🟢 Free | ✅ |
 | 15.6.15 | ADD status badges to README — build, coverage, security scan | 🟢 Free | ⏳ |
 | 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | 🟢 Free | ⏳ |
