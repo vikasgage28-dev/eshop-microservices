@@ -1892,15 +1892,15 @@ Conventional Commits auto-bump versions:
 | 15.6.3 | BUILD pr-validation.yml — runs on PRs (build + tsc check, NO push) | 🟢 Free | ✅ |
 | 15.6.4 | BUILD build-and-push.yml — runs on main push (build + push to ACR via matrix) | 🟢 Free | ✅ |
 | 15.6.5 | ADD build matrix — parallelize 4 API image builds (catalog, customer, ordering, identity) | 🟢 Free | ✅ |
-| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ⏳ |
-| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
-| 15.6.8 | ADD code coverage step — dotnet test --collect "Code Coverage" + fail if < 70% | 🟢 Free | ⏳ |
-| 15.6.9 | ADD build caching — cache NuGet packages + node_modules between runs | 🟢 Free | ⏳ |
+| 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ✅ |
+| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ✅ |
+| 15.6.8 | ADD code coverage step — dotnet test XPlat Code Coverage → artifact uploaded | 🟢 Free | ✅ |
+| 15.6.9 | ADD build caching — NuGet cache (54s → 4s per run) | 🟢 Free | ✅ |
 | 15.6.10 | IMPLEMENT versioning — SHA tag in build-and-push.yml + dev fallback | 🟢 Free | ✅ |
 | 15.6.11 | ADD Directory.Build.props — .NET DLL versioning for all 4 services | 🟢 Free | ✅ |
 | 15.6.12 | ADD VITE_APP_VERSION — frontend footer shows version from build-time injection | 🟢 Free | ✅ |
 | 15.6.13 | ADD dependabot.yml — auto-PRs for NuGet + npm + Actions updates | 🟢 Free | ✅ |
-| 15.6.14 | CONFIGURE GitHub branch protection — main requires PR + passing checks | 🟢 Free | ⏳ |
+| 15.6.14 | CONFIGURE GitHub branch protection — main + develop require PR + passing checks | 🟢 Free | ✅ |
 | 15.6.15 | ADD status badges to README — build, coverage, security scan | 🟢 Free | ⏳ |
 | 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | 🟢 Free | ⏳ |
@@ -1978,7 +1978,49 @@ LEARN: Azure Static Web Apps — free React hosting with CI/CD
 
 ---
 
-#### Stage 9 — Entra ID (Azure AD) — Enterprise Login for Admins
+#### Stage 9 — Azure Container Apps (ACA) — Same App, Simpler Platform
+> AKS is now understood deeply. Now see how ACA abstracts all that complexity away.
+> Your company uses ACA — this stage makes you immediately productive on day one at work.
+> Same 4 microservices, same ACR images — deployed in a fraction of the YAML.
+
+```
+LEARN: ACA vs AKS — what ACA manages for you vs what AKS makes you manage manually
+LEARN: ACA Environment — the equivalent of a K8s Namespace + cluster combined
+LEARN: Container App — the equivalent of a K8s Deployment + Service + Ingress in one resource
+LEARN: Revisions — immutable snapshots (like K8s ReplicaSets) — enable blue/green deploys
+LEARN: Traffic splitting — 90% → revision-1, 10% → revision-2 (canary deploys built-in)
+LEARN: Scale rules — KEDA built-in — scale by HTTP requests, queue depth, CPU, cron
+LEARN: Scale to zero — 0 requests = 0 running containers = ₹0 idle cost
+LEARN: Dapr integration — built-in service invocation, pub/sub, state (no Istio needed)
+LEARN: Managed identity in ACA — pod-level Azure identity without Workload Identity complexity
+LEARN: ACA Secrets — equivalent of K8s Secrets, referenced in env vars
+LEARN: ACA Ingress — internal (ClusterIP equivalent) vs external (LoadBalancer equivalent)
+LEARN: ACA vs AKS cost model — per vCPU-second vs per node-hour
+LEARN: Service-to-service DNS — Container App name IS the internal hostname (http://customer-api) — no Service YAML needed
+LEARN: Health probes — liveness (restart if dead), readiness (wait if not ready), startup (grace period for slow starts)
+LEARN: Log streaming — az containerapp logs show --follow + portal Log stream + Log Analytics KQL queries
+LEARN: Workload Profiles vs Consumption — Consumption=serverless/scale-to-zero, Workload=dedicated/always-on (companies use both)
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.9.1 | CREATE ACA Environment — eshop-env (equivalent of K8s cluster) | 🟢 Free tier | ⏳ |
+| 15.9.2 | DEPLOY Catalog.API — Container App using ACR image | 🟢 Free tier | ⏳ |
+| 15.9.3 | DEPLOY Customer.API — Container App, internal ingress only | 🟢 Free tier | ⏳ |
+| 15.9.4 | DEPLOY Ordering.API — Container App, internal ingress only | 🟢 Free tier | ⏳ |
+| 15.9.5 | DEPLOY Identity.API — Container App, external ingress for login | 🟢 Free tier | ⏳ |
+| 15.9.6 | CONFIGURE ACA Secrets — connection strings, JWT keys as ACA secrets | 🟢 Free | ⏳ |
+| 15.9.7 | CONFIGURE scale-to-zero — HTTP trigger, min replicas = 0 | 🟢 Free | ⏳ |
+| 15.9.8 | VERIFY service-to-service DNS — Ordering.API calls http://customer-api internally (no IP, no config) | 🟢 Free | ⏳ |
+| 15.9.9 | ADD health probes — liveness + readiness on all 4 Container Apps | 🟢 Free | ⏳ |
+| 15.9.10 | DEBUG with log streaming — az containerapp logs show + portal live tail | 🟢 Free | ⏳ |
+| 15.9.11 | TEST end-to-end — same app working in ACA with no kubectl required | ⏳ |
+| 15.9.12 | COMPARE — side-by-side: AKS YAML count vs ACA config lines | 🟢 Free | ⏳ |
+| 15.9.13 | ADD GitHub Actions deploy step — push to ACR → ACA auto-pulls new revision | 🟢 Free | ⏳ |
+
+---
+
+#### Stage 10 — Entra ID (Azure AD) — Enterprise Login for Admins
 > App is live in AKS. Redirect URIs are real. Now add "Login with Microsoft" for admin users.
 > Entra ID = Azure Active Directory rebranded. Used by 95% of Fortune 500 companies.
 > Admin staff logs in with their Microsoft/organizational account — no separate password needed.
@@ -1996,18 +2038,18 @@ LEARN: Entra vs B2C — Entra = employees/internal, B2C = customers/external (ke
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.9.1 | CREATE App Registration in Entra ID — eShop-Admin app | 🟢 Free | ⏳ |
-| 15.9.2 | SET Redirect URI — https://app.eshop.dev/auth/microsoft/callback (SWA URL) | 🟢 Free | ⏳ |
-| 15.9.3 | CONFIGURE Identity.API — add Entra ID as second login provider | 🟢 Free | ⏳ |
-| 15.9.4 | ADD "Login with Microsoft" button on LoginPage.tsx (Admin only) | 🟢 Free | ⏳ |
-| 15.9.5 | IMPLEMENT callback — exchange Entra code → validate id_token → issue our RS256 JWT | 🟢 Free | ⏳ |
-| 15.9.6 | ENFORCE role — Entra login maps to Admin role in our eShop JWT | 🟢 Free | ⏳ |
-| 15.9.7 | TEST — admin logs in with Microsoft account → gets Admin JWT → Dashboard accessible | ⏳ |
-| 15.9.8 | LEARN Microsoft Graph — fetch admin's display name + email from Entra | 🟢 Free | ⏳ |
+| 15.10.1 | CREATE App Registration in Entra ID — eShop-Admin app | 🟢 Free | ⏳ |
+| 15.10.2 | SET Redirect URI — https://app.eshop.dev/auth/microsoft/callback (SWA URL) | 🟢 Free | ⏳ |
+| 15.10.3 | CONFIGURE Identity.API — add Entra ID as second login provider | 🟢 Free | ⏳ |
+| 15.10.4 | ADD "Login with Microsoft" button on LoginPage.tsx (Admin only) | 🟢 Free | ⏳ |
+| 15.10.5 | IMPLEMENT callback — exchange Entra code → validate id_token → issue our RS256 JWT | 🟢 Free | ⏳ |
+| 15.10.6 | ENFORCE role — Entra login maps to Admin role in our eShop JWT | 🟢 Free | ⏳ |
+| 15.10.7 | TEST — admin logs in with Microsoft account → gets Admin JWT → Dashboard accessible | ⏳ |
+| 15.10.8 | LEARN Microsoft Graph — fetch admin's display name + email from Entra | 🟢 Free | ⏳ |
 
 ---
 
-#### Stage 10 — Azure AD B2C — Consumer Identity for Customers
+#### Stage 11 — Azure AD B2C — Consumer Identity for Customers
 > B2C = Business-to-Consumer. Azure's dedicated platform for customer-facing identity.
 > Can replace our custom email/password + 2FA + Social login with a fully managed Azure service.
 > Used by: ASOS, Heineken, Maersk — large consumer apps at millions of users scale.
@@ -2025,19 +2067,19 @@ LEARN: B2C vs Auth0 — B2C is Azure-native (no 3rd party), Auth0 is simpler set
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.10.1 | CREATE Azure AD B2C Tenant — eshopb2c.onmicrosoft.com | 🟢 Free | ⏳ |
-| 15.10.2 | REGISTER eShop app in B2C tenant (client ID + redirect URI) | 🟢 Free | ⏳ |
-| 15.10.3 | CREATE SignUpSignIn User Flow — email + password + email OTP verification | 🟢 Free | ⏳ |
-| 15.10.4 | ADD Google as social provider in B2C (replaces our Auth0 Google login) | 🟢 Free | ⏳ |
-| 15.10.5 | CONFIGURE Identity.API — validate B2C JWT, map claims to our ApplicationUser | 🟢 Free | ⏳ |
-| 15.10.6 | UPDATE LoginPage.tsx — "Continue with Microsoft B2C" customer flow | 🟢 Free | ⏳ |
-| 15.10.7 | CREATE PasswordReset User Flow — self-service password reset via B2C | 🟢 Free | ⏳ |
-| 15.10.8 | TEST — customer signs up via B2C → gets our RS256 JWT → browses + orders | ⏳ |
-| 15.10.9 | COMPARE flows — Auth0 (Phase 14) vs Azure AD B2C — pros/cons documented | 🟢 Free | ⏳ |
+| 15.11.1 | CREATE Azure AD B2C Tenant — eshopb2c.onmicrosoft.com | 🟢 Free | ⏳ |
+| 15.11.2 | REGISTER eShop app in B2C tenant (client ID + redirect URI) | 🟢 Free | ⏳ |
+| 15.11.3 | CREATE SignUpSignIn User Flow — email + password + email OTP verification | 🟢 Free | ⏳ |
+| 15.11.4 | ADD Google as social provider in B2C (replaces our Auth0 Google login) | 🟢 Free | ⏳ |
+| 15.11.5 | CONFIGURE Identity.API — validate B2C JWT, map claims to our ApplicationUser | 🟢 Free | ⏳ |
+| 15.11.6 | UPDATE LoginPage.tsx — "Continue with Microsoft B2C" customer flow | 🟢 Free | ⏳ |
+| 15.11.7 | CREATE PasswordReset User Flow — self-service password reset via B2C | 🟢 Free | ⏳ |
+| 15.11.8 | TEST — customer signs up via B2C → gets our RS256 JWT → browses + orders | ⏳ |
+| 15.11.9 | COMPARE flows — Auth0 (Phase 14) vs Azure AD B2C — pros/cons documented | 🟢 Free | ⏳ |
 
 ---
 
-#### Stage 11 — Istio Service Mesh (PROMISED in Phase 12.7!)
+#### Stage 12 — Istio Service Mesh (PROMISED in Phase 12.7!)
 > Phase 12.7 explicitly deferred: "Internal service auth: NONE intentionally — Istio mTLS in Phase 15"
 > This delivers that promise. Pod-to-pod traffic is now encrypted and identity-verified.
 
@@ -2053,17 +2095,17 @@ LEARN: Kiali dashboard — live visual service graph, see actual pod-to-pod traf
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.11.1 | INSTALL Istio on AKS (istioctl install) | 🟢 Free | ⏳ |
-| 15.11.2 | LABEL eshop namespace — istio-injection=enabled (sidecars auto-injected) | 🟢 Free | ⏳ |
-| 15.11.3 | APPLY PeerAuthentication — STRICT mTLS in eshop namespace | 🟢 Free | ⏳ |
-| 15.11.4 | APPLY AuthorizationPolicy — only Ordering.API allowed to call Customer.API | 🟢 Free | ⏳ |
-| 15.11.5 | TEST mTLS — verify pod-to-pod calls are encrypted (kubectl exec curl test) | 🟢 Free | ⏳ |
-| 15.11.6 | INSTALL Kiali → view live service graph (Ordering → Customer → Identity) | 🟢 Free | ⏳ |
-| 15.11.7 | ADD circuit breaker — if Catalog.API fails 5x → stop calling temporarily | 🟢 Free | ⏳ |
+| 15.12.1 | INSTALL Istio on AKS (istioctl install) | 🟢 Free | ⏳ |
+| 15.12.2 | LABEL eshop namespace — istio-injection=enabled (sidecars auto-injected) | 🟢 Free | ⏳ |
+| 15.12.3 | APPLY PeerAuthentication — STRICT mTLS in eshop namespace | 🟢 Free | ⏳ |
+| 15.12.4 | APPLY AuthorizationPolicy — only Ordering.API allowed to call Customer.API | 🟢 Free | ⏳ |
+| 15.12.5 | TEST mTLS — verify pod-to-pod calls are encrypted (kubectl exec curl test) | 🟢 Free | ⏳ |
+| 15.12.6 | INSTALL Kiali → view live service graph (Ordering → Customer → Identity) | 🟢 Free | ⏳ |
+| 15.12.7 | ADD circuit breaker — if Catalog.API fails 5x → stop calling temporarily | 🟢 Free | ⏳ |
 
 ---
 
-#### Stage 12 — Azure Workload Identity + KEDA
+#### Stage 13 — Azure Workload Identity + KEDA
 > Workload Identity: pod-level Azure identity (replaces deprecated Pod Managed Identity).
 > KEDA: scale pods by Service Bus queue depth — not CPU. Modern event-driven scaling.
 
@@ -2077,17 +2119,17 @@ LEARN: KEDA vs HPA — CPU-based (HPA) vs event-based (KEDA) — both work toget
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.12.1 | ENABLE Workload Identity on AKS cluster | 🟢 Free | ⏳ |
-| 15.12.2 | CREATE Managed Identity per service — mi-catalog, mi-ordering, etc. | 🟢 Free | ⏳ |
-| 15.12.3 | BIND K8s ServiceAccount → Azure Managed Identity (federated credential) | 🟢 Free | ⏳ |
-| 15.12.4 | ASSIGN KV Secrets User role — each identity reads only its own secrets | 🟢 Free | ⏳ |
-| 15.12.5 | INSTALL KEDA on AKS | 🟢 Free | ⏳ |
-| 15.12.6 | CREATE ScaledObject — Catalog.API scales by order-placed queue depth | 🟢 Free | ⏳ |
-| 15.12.7 | TEST KEDA — push 50 messages to Service Bus → watch pods scale up | ⏳ |
+| 15.13.1 | ENABLE Workload Identity on AKS cluster | 🟢 Free | ⏳ |
+| 15.13.2 | CREATE Managed Identity per service — mi-catalog, mi-ordering, etc. | 🟢 Free | ⏳ |
+| 15.13.3 | BIND K8s ServiceAccount → Azure Managed Identity (federated credential) | 🟢 Free | ⏳ |
+| 15.13.4 | ASSIGN KV Secrets User role — each identity reads only its own secrets | 🟢 Free | ⏳ |
+| 15.13.5 | INSTALL KEDA on AKS | 🟢 Free | ⏳ |
+| 15.13.6 | CREATE ScaledObject — Catalog.API scales by order-placed queue depth | 🟢 Free | ⏳ |
+| 15.13.7 | TEST KEDA — push 50 messages to Service Bus → watch pods scale up | ⏳ |
 
 ---
 
-#### Stage 13 — Observability (App Insights + Log Analytics)
+#### Stage 14 — Observability (App Insights + Log Analytics)
 > Distributed tracing across all 4 pods. Centralized logs. Visual service map.
 
 ```
@@ -2101,18 +2143,18 @@ LEARN: KQL basics — Kusto Query Language for searching logs
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.13.1 | CREATE Application Insights — appi-eshop-dev | 🟢 Free | ⏳ |
-| 15.13.2 | CREATE Log Analytics Workspace — law-eshop-dev | 🟢 Free | ⏳ |
-| 15.13.3 | CONNECT App Insights → Log Analytics (unified backend) | 🟢 Free | ⏳ |
-| 15.13.4 | ENABLE Container Insights on AKS (node + pod metrics) | 🟢 Free | ⏳ |
-| 15.13.5 | CONFIGURE OpenTelemetry in all 4 services → sends traces to App Insights | 🟢 Free | ⏳ |
-| 15.13.6 | TEST — place an order → view full distributed trace across all 4 services in App Insights | ⏳ |
-| 15.13.7 | WRITE KQL query — find all failed requests in last 1 hour across all services | 🟢 Free | ⏳ |
-| 15.13.8 | CREATE Azure Monitor Alert — alert if any service has >5 errors/min | 🟢 Free | ⏳ |
+| 15.14.1 | CREATE Application Insights — appi-eshop-dev | 🟢 Free | ⏳ |
+| 15.14.2 | CREATE Log Analytics Workspace — law-eshop-dev | 🟢 Free | ⏳ |
+| 15.14.3 | CONNECT App Insights → Log Analytics (unified backend) | 🟢 Free | ⏳ |
+| 15.14.4 | ENABLE Container Insights on AKS (node + pod metrics) | 🟢 Free | ⏳ |
+| 15.14.5 | CONFIGURE OpenTelemetry in all 4 services → sends traces to App Insights | 🟢 Free | ⏳ |
+| 15.14.6 | TEST — place an order → view full distributed trace across all 4 services in App Insights | ⏳ |
+| 15.14.7 | WRITE KQL query — find all failed requests in last 1 hour across all services | 🟢 Free | ⏳ |
+| 15.14.8 | CREATE Azure Monitor Alert — alert if any service has >5 errors/min | 🟢 Free | ⏳ |
 
 ---
 
-#### Stage 14 — Helm Charts
+#### Stage 15 — Helm Charts
 > Replace raw YAML with reusable, versioned, parameterized packages.
 
 ```
@@ -2124,14 +2166,14 @@ LEARN: Values override — helm upgrade --set image.tag=1.2.0 (CI/CD uses this p
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.14.1 | CREATE Helm chart for Catalog.API (convert existing YAML to templates) | 🟢 Free | ⏳ |
-| 15.14.2 | CREATE Helm charts for Customer.API, Ordering.API, Identity.API | 🟢 Free | ⏳ |
-| 15.14.3 | UPDATE CI/CD pipelines — replace kubectl apply with helm upgrade --install | 🟢 Free | ⏳ |
-| 15.14.4 | TEST — helm upgrade with new image tag → zero-downtime rolling update | ⏳ |
+| 15.15.1 | CREATE Helm chart for Catalog.API (convert existing YAML to templates) | 🟢 Free | ⏳ |
+| 15.15.2 | CREATE Helm charts for Customer.API, Ordering.API, Identity.API | 🟢 Free | ⏳ |
+| 15.15.3 | UPDATE CI/CD pipelines — replace kubectl apply with helm upgrade --install | 🟢 Free | ⏳ |
+| 15.15.4 | TEST — helm upgrade with new image tag → zero-downtime rolling update | ⏳ |
 
 ---
 
-#### Stage 15 — DNS + SSL + Azure Front Door
+#### Stage 16 — DNS + SSL + Azure Front Door
 > HTTPS everywhere. Custom domain. Global CDN + WAF.
 
 ```
@@ -2143,17 +2185,17 @@ LEARN: Azure Front Door — global CDN, WAF, DDoS protection, geo-routing in fro
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.15.1 | INSTALL cert-manager on AKS | 🟢 Free | ⏳ |
-| 15.15.2 | CREATE ClusterIssuer — Let's Encrypt production | 🟢 Free | ⏳ |
-| 15.15.3 | UPDATE Ingress YAML — TLS block → cert-manager auto-provisions cert | 🟢 Free | ⏳ |
-| 15.15.4 | CREATE Azure DNS Zone + A record → AKS Ingress IP | 🟡 ~₹40/mo | ⏳ |
-| 15.15.5 | CREATE Azure Front Door — global entry point for AKS + Static Web Apps | 🔴 Delete after learning | ⏳ |
-| 15.15.6 | TEST HTTPS — https://api.eshop.dev/api/catalog → 200 OK, padlock shows | ⏳ |
-| 15.15.7 | DELETE Front Door after learning (expensive to keep running) | 🔴 Delete | ⏳ |
+| 15.16.1 | INSTALL cert-manager on AKS | 🟢 Free | ⏳ |
+| 15.16.2 | CREATE ClusterIssuer — Let's Encrypt production | 🟢 Free | ⏳ |
+| 15.16.3 | UPDATE Ingress YAML — TLS block → cert-manager auto-provisions cert | 🟢 Free | ⏳ |
+| 15.16.4 | CREATE Azure DNS Zone + A record → AKS Ingress IP | 🟡 ~₹40/mo | ⏳ |
+| 15.16.5 | CREATE Azure Front Door — global entry point for AKS + Static Web Apps | 🔴 Delete after learning | ⏳ |
+| 15.16.6 | TEST HTTPS — https://api.eshop.dev/api/catalog → 200 OK, padlock shows | ⏳ |
+| 15.16.7 | DELETE Front Door after learning (expensive to keep running) | 🔴 Delete | ⏳ |
 
 ---
 
-#### Stage 16 — Azure Load Testing
+#### Stage 17 — Azure Load Testing
 > Stress test the running system. Prove HPA and KEDA work under real load.
 > See pods scale in real time in Azure portal.
 
@@ -2166,14 +2208,14 @@ LEARN: Reading AKS metrics under load — pod count, CPU, memory in Container In
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.16.1 | CREATE Azure Load Testing resource | 🟢 Free (50 VUs/mo free) | ⏳ |
-| 15.16.2 | WRITE load test — 100 concurrent users GET /api/catalog for 5 minutes | 🟢 Free | ⏳ |
-| 15.16.3 | RUN test — watch HPA scale Catalog.API pods 1→3 in real time | ⏳ |
-| 15.16.4 | PUSH 100 messages to Service Bus — watch KEDA scale consumers | ⏳ |
+| 15.17.1 | CREATE Azure Load Testing resource | 🟢 Free (50 VUs/mo free) | ⏳ |
+| 15.17.2 | WRITE load test — 100 concurrent users GET /api/catalog for 5 minutes | 🟢 Free | ⏳ |
+| 15.17.3 | RUN test — watch HPA scale Catalog.API pods 1→3 in real time | ⏳ |
+| 15.17.4 | PUSH 100 messages to Service Bus — watch KEDA scale consumers | ⏳ |
 
 ---
 
-#### Stage 17 — GitOps with ArgoCD
+#### Stage 18 — GitOps with ArgoCD
 > The 2026 industry standard for Kubernetes deployments.
 > Git is the single source of truth — AKS state always matches Git.
 
@@ -2188,16 +2230,16 @@ LEARN: Who uses GitOps — Netflix, Spotify, Airbnb — every serious K8s shop i
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.17.1 | CREATE k8s/ folder in repo — move all YAML + Helm charts here | 🟢 Free | ⏳ |
-| 15.17.2 | INSTALL ArgoCD on AKS | 🟢 Free | ⏳ |
-| 15.17.3 | CREATE ArgoCD Application — watches k8s/ folder in GitHub repo | 🟢 Free | ⏳ |
-| 15.17.4 | UPDATE CI/CD — pipelines push image tag to Git, ArgoCD deploys to AKS | 🟢 Free | ⏳ |
-| 15.17.5 | TEST drift detection — manually delete a pod → ArgoCD detects + recreates | ⏳ |
-| 15.17.6 | TEST rollback — git revert bad commit → ArgoCD auto-rolls back AKS | ⏳ |
+| 15.18.1 | CREATE k8s/ folder in repo — move all YAML + Helm charts here | 🟢 Free | ⏳ |
+| 15.18.2 | INSTALL ArgoCD on AKS | 🟢 Free | ⏳ |
+| 15.18.3 | CREATE ArgoCD Application — watches k8s/ folder in GitHub repo | 🟢 Free | ⏳ |
+| 15.18.4 | UPDATE CI/CD — pipelines push image tag to Git, ArgoCD deploys to AKS | 🟢 Free | ⏳ |
+| 15.18.5 | TEST drift detection — manually delete a pod → ArgoCD detects + recreates | ⏳ |
+| 15.18.6 | TEST rollback — git revert bad commit → ArgoCD auto-rolls back AKS | ⏳ |
 
 ---
 
-#### Stage 18 — Multi-Environment (DEV → STAGING → PROD)
+#### Stage 19 — Multi-Environment (DEV → STAGING → PROD)
 > Full promote flow with approval gates. Real team workflow.
 
 ```
@@ -2209,10 +2251,10 @@ LEARN: Promote flow — same Docker image promoted across envs (NO rebuild betwe
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.18.1 | CREATE GitHub Environments — dev, staging, prod | 🟢 Free | ⏳ |
-| 15.18.2 | ADD approval gate — prod environment requires manual approval | 🟢 Free | ⏳ |
-| 15.18.3 | ADD App Config labels per environment — dev / staging / prod values | 🟢 Free | ⏳ |
-| 15.18.4 | UPDATE pipelines — PR → DEV auto, merge → STAGING auto, PROD needs approval | 🟢 Free | ⏳ |
+| 15.19.1 | CREATE GitHub Environments — dev, staging, prod | 🟢 Free | ⏳ |
+| 15.19.2 | ADD approval gate — prod environment requires manual approval | 🟢 Free | ⏳ |
+| 15.19.3 | ADD App Config labels per environment — dev / staging / prod values | 🟢 Free | ⏳ |
+| 15.19.4 | UPDATE pipelines — PR → DEV auto, merge → STAGING auto, PROD needs approval | 🟢 Free | ⏳ |
 | 15.18.5 | TEST full flow — push → auto deploys DEV → approve → deploys PROD | ⏳ |
 
 ---

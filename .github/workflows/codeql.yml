@@ -1,0 +1,54 @@
+name: CodeQL Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [csharp, javascript-typescript]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build .NET for analysis
+        if: matrix.language == 'csharp'
+        run: |
+          dotnet restore EShopMicroservices/Catalog.API/Catalog.API.csproj
+          dotnet build EShopMicroservices/Catalog.API/Catalog.API.csproj --no-restore
+          dotnet restore EShopMicroservices/Customer.API/Customer.API.csproj
+          dotnet build EShopMicroservices/Customer.API/Customer.API.csproj --no-restore
+          dotnet restore EShopMicroservices/Identity.API/Identity.API.csproj
+          dotnet build EShopMicroservices/Identity.API/Identity.API.csproj --no-restore
+          dotnet restore EShopMicroservices/Ordering.API/Ordering.API.csproj
+          dotnet build EShopMicroservices/Ordering.API/Ordering.API.csproj --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
