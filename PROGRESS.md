@@ -1893,7 +1893,7 @@ Conventional Commits auto-bump versions:
 | 15.6.4 | BUILD build-and-push.yml — runs on main push (build + push to ACR via matrix) | 🟢 Free | ✅ |
 | 15.6.5 | ADD build matrix — parallelize 4 API image builds (catalog, customer, ordering, identity) | 🟢 Free | ✅ |
 | 15.6.6 | ADD Trivy scan step — fail pipeline if CRITICAL CVE found | 🟢 Free | ✅ |
-| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ⏳ |
+| 15.6.7 | ADD CodeQL workflow — GitHub native SAST (C# + TypeScript) | 🟢 Free | ✅ |
 | 15.6.8 | ADD code coverage step — dotnet test XPlat Code Coverage → artifact uploaded | 🟢 Free | ✅ |
 | 15.6.9 | ADD build caching — NuGet cache (54s → 4s per run) | 🟢 Free | ✅ |
 | 15.6.10 | IMPLEMENT versioning — SHA tag in build-and-push.yml + dev fallback | 🟢 Free | ✅ |
