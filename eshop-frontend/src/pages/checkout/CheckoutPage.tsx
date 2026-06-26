@@ -125,7 +125,7 @@ export default function CheckoutPage() {
   }
 
   // ── Error: no customer profile ─────────────────────────────────────────────
-  const noProfile = !loadingCustomer && !isAdmin && (customerError || !customer)
+  const noProfile = !loadingCustomer && !isAdmin && !!(customerError || !customer)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl">
@@ -231,7 +231,7 @@ export default function CheckoutPage() {
                 <div key={key} className="flex gap-2 items-center">
                   <label className="text-xs text-gray-500 w-24 flex-shrink-0">{label}</label>
                   <input
-                    value={(newAddr as Record<string, string>)[key]}
+                    value={(newAddr as unknown as Record<string, string>)[key]}
                     onChange={(e) => setNewAddr((f) => ({ ...f, [key]: e.target.value }))}
                     placeholder={placeholder}
                     className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

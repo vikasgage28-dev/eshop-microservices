@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  # .NET NuGet packages
+  - package-ecosystem: nuget
+    directory: /EShopMicroservices
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - dotnet
+
+  # Frontend npm packages
+  - package-ecosystem: npm
+    directory: /eshop-frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - frontend
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
