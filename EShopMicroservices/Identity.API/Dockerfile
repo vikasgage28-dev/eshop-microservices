@@ -34,11 +34,10 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN groupadd -r appgroup && useradd -r -g appgroup -m appuser
 COPY --from=build --chown=appuser:appgroup /app/publish .
 
-# Copy RS256 PEM keys — LOCAL DEV ONLY
-# In AKS (Stage 8) these come from Azure Key Vault mounted as files
-# NEVER bake real production keys into an image
-COPY --chown=appuser:appgroup Identity.API/private.pem ./private.pem
-COPY --chown=appuser:appgroup Identity.API/public.pem  ./public.pem
+# NOTE: RS256 PEM keys are NOT baked into the image.
+# In AKS (Stage 8) they are mounted at runtime via Kubernetes Secret:
+#   /app/private.pem  → from secret: identity-pem-keys
+#   /app/public.pem   → from secret: identity-pem-keys
 
 USER appuser
 
