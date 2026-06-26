@@ -4,6 +4,7 @@ updates:
   # .NET NuGet packages
   - package-ecosystem: nuget
     directory: /EShopMicroservices
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -16,6 +17,7 @@ updates:
   # Frontend npm packages
   - package-ecosystem: npm
     directory: /eshop-frontend
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -28,6 +30,7 @@ updates:
   # GitHub Actions versions
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
