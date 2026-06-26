@@ -137,7 +137,7 @@ export default function ProfilePage() {
       <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e8e8e8] dark:border-[#3a3a3a] px-4">
         <InfoRow icon={<User size={15} />}       label="Full name" value={fullName ?? '—'} />
         <InfoRow icon={<Mail size={15} />}        label="Email"     value={email ?? '—'} />
-        <InfoRow icon={<Hash size={15} />}        label="User ID"   value={userId?.slice(0, 16) + '…' ?? '—'} />
+        <InfoRow icon={<Hash size={15} />}        label="User ID"   value={userId ? userId.slice(0, 16) + '…' : '—'} />
       </div>
 
       {/* Stats */}
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                 <div key={key} className="flex gap-2 items-center">
                   <label className="text-xs text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{label}</label>
                   <input
-                    value={(addrForm as Record<string, string>)[key]}
+                    value={(addrForm as unknown as Record<string, string>)[key]}
                     onChange={(e) => setAddrForm((f) => ({ ...f, [key]: e.target.value }))}
                     placeholder={placeholder}
                     className="flex-1 px-2 py-1 border border-gray-200 dark:border-[#444] rounded text-xs bg-white dark:bg-[#333] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"

@@ -1,4 +1,4 @@
-import { Bell, ShoppingCart, LogOut, User, Moon, Sun } from 'lucide-react'
+import { Bell, ShoppingCart, LogOut, Moon, Sun } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useCart } from '@/hooks/useCart'

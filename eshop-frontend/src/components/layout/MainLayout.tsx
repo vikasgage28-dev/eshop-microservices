@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
+import Footer from './Footer'
 
 export default function MainLayout() {
   return (
@@ -11,6 +12,7 @@ export default function MainLayout() {
         <main className="flex-1 overflow-y-auto p-5">
           <Outlet />
         </main>
+        <Footer />
       </div>
     </div>
   )

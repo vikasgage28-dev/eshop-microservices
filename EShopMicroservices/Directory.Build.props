@@ -1,0 +1,26 @@
+<Project>
+
+  <PropertyGroup Label="Versioning">
+    <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">0.0.0.0</AssemblyVersion>
+    <FileVersion Condition="'$(FileVersion)' == ''">0.0.0.0</FileVersion>
+    <InformationalVersion Condition="'$(InformationalVersion)' == ''">0.0.0-dev</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Label="ProductInfo">
+    <Product>eShop Microservices</Product>
+    <Company>eShop Learning</Company>
+    <Copyright>Copyright © 2026</Copyright>
+    <RepositoryUrl>https://github.com/vikasgage28-dev/eshop-microservices</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Label="BuildBehavior">
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>
