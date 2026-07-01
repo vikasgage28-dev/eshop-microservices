@@ -1895,6 +1895,53 @@ LEARN: Azure Static Web Apps — free React hosting with CI/CD
 
 ---
 
+#### Stage 8b — APIM (Optional Enterprise Layer in Front of AKS)
+> AKS is running. NGINX Ingress is the internal gateway.
+> APIM sits OUTSIDE AKS as an optional enterprise layer.
+> Adds rate limiting, analytics, developer portal, API monetization.
+> Zero changes to K8s when added — APIM just points to NGINX public IP.
+
+```
+LEARN: APIM tiers — Consumption (FREE base) vs Developer vs Basic vs Standard vs Premium
+LEARN: APIM sits outside AKS — NGINX becomes internal only (more secure!)
+LEARN: Request flow — Internet → APIM → NGINX Ingress → Pod
+LEARN: APIM policies — rate limiting, API key validation, caching, transformation
+LEARN: Developer portal — external developers browse + test your APIs
+LEARN: APIM vs NGINX — APIM = enterprise governance, NGINX = K8s routing
+LEARN: Adding APIM later = zero K8s changes — plug and play!
+```
+
+```
+APIM Pricing:
+  Consumption  → ₹0 base + ₹350 per million calls (first 1M FREE) ← use this!
+  Developer    → ~₹6,000/mo  (test enterprise features, NOT production)
+  Basic        → ~₹12,000/mo (production small)
+  Standard     → ~₹60,000/mo (medium companies)
+  Premium      → ~₹2,40,000/mo (large enterprise, multi-region)
+```
+
+```
+Flow WITHOUT APIM (Stage 8):
+  Internet → NGINX Ingress (public IP) → Pods
+
+Flow WITH APIM (Stage 8b):
+  Internet → APIM (public facing)
+               → rate limiting + API key + analytics
+             → NGINX Ingress (internal IP only — more secure!)
+               → Pods
+```
+
+| # | What | Cost | Status |
+|---|------|------|--------|
+| 15.8b.1 | CREATE APIM — Consumption tier (free base) | 🟢 Free | ⏳ |
+| 15.8b.2 | IMPORT APIs from NGINX Ingress public IP | 🟢 Free | ⏳ |
+| 15.8b.3 | ADD rate limiting policy — 100 calls/min per user | 🟢 Free | ⏳ |
+| 15.8b.4 | MAKE NGINX internal only — remove public IP from NGINX | 🟢 Free | ⏳ |
+| 15.8b.5 | TEST — Internet → APIM → NGINX → Pod end to end | 🟢 Free | ⏳ |
+| 15.8b.6 | EXPLORE developer portal — browse + test APIs | 🟢 Free | ⏳ |
+
+---
+
 #### Stage 9 — Azure Container Apps (ACA) — Same App, Simpler Platform
 > AKS is now understood deeply. Now see how ACA abstracts all that complexity away.
 > Your company uses ACA — this stage makes you immediately productive on day one at work.
