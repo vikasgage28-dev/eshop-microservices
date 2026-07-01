@@ -134,6 +134,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | 🔄 **NEXT** |
 | 8 | AKS deployment — all 4 services in K8s | 🟡 ~₹2,500/mo | ⏳ |
+| 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
 | 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
 | 11 | Azure AD B2C — consumer identity | 🟢 | ⏳ |
