@@ -3,6 +3,9 @@ name: Build and Push
 on:
   push:
     branches: [main]
+    paths:
+      - 'EShopMicroservices/**'
+      - '.github/workflows/build-and-push.yml'
 
 permissions:
   id-token: write
@@ -21,17 +24,36 @@ jobs:
         include:
           - service: catalog-api
             dockerfile: EShopMicroservices/Catalog.API/Dockerfile
+            paths: 'EShopMicroservices/Catalog.**'
           - service: customer-api
             dockerfile: EShopMicroservices/Customer.API/Dockerfile
+            paths: 'EShopMicroservices/Customer.**'
           - service: identity-api
             dockerfile: EShopMicroservices/Identity.API/Dockerfile
+            paths: 'EShopMicroservices/Identity.**'
           - service: ordering-api
             dockerfile: EShopMicroservices/Ordering.API/Dockerfile
+            paths: 'EShopMicroservices/Ordering.**'
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # needed to detect changed files
+
+      - name: Detect changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -qE '${{ matrix.paths }}'; then
+            echo "rebuild=true" >> $GITHUB_OUTPUT
+          else
+            echo "rebuild=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Azure Login (OIDC)
+        if: steps.changes.outputs.rebuild == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -39,9 +61,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to ACR
+        if: steps.changes.outputs.rebuild == 'true'
         run: az acr login --name ${{ vars.ACR_NAME }}
 
       - name: Build and Push
+        if: steps.changes.outputs.rebuild == 'true'
         run: |
           IMAGE=${{ env.ACR_LOGIN_SERVER }}/eshop/${{ matrix.service }}
           docker build \

@@ -1822,6 +1822,7 @@ Conventional Commits auto-bump versions:
 | 15.6.16 | BUILD deploy-frontend.yml — React build → Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.6.17 | TEST (when ACR recreated) — open PR → pipeline runs → merge → images appear in ACR | 🟢 Free | ⏳ |
 | 15.6.18 | FIX MessagePack vulnerability — pinned to 2.5.302 in AppHost (was 2.5.192) | 🟢 Free | ✅ |
+| 15.6.19 | ADD path-based filtering to build-and-push.yml — only changed services rebuild on push | 🟢 Free | ✅ |
 
 > **COST NOTE — Azure SQL deleted to stop vCore charges (Jun 2026).**
 > Serverless DBs start ONLINE on creation and bill vCore until 60-min idle pause; any
@@ -1849,6 +1850,10 @@ LEARN: Namespace — logical isolation (eshop namespace separates our pods from 
 LEARN: Init Container — runs once before main container starts (EF migrations use this!)
 LEARN: Resource Requests + Limits — CPU/memory per pod, REQUIRED for HPA to work
 LEARN: Helm — package manager for K8s (why 50 raw YAML files is unmanageable)
+LEARN: Independent service deployment — each service has its own image SHA + version lifecycle
+LEARN: UI version = frontend's own SHA only — independent of all backend service versions
+LEARN: path-based CI/CD — workflow-level paths filter + per-service paths in matrix + git diff detect
+LEARN: fetch-depth: 2 — needed so git diff HEAD^ HEAD can compare last 2 commits in GitHub Actions
 ```
 
 | # | What | Status |

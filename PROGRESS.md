@@ -131,9 +131,9 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 3 | Data layer — SQL x4 + Cosmos + Storage (blob + queues) | 🟢 | ✅ |
 | 4 | Secrets + central config — Key Vault + App Config | 🟢 | ✅ |
 | 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
-| 6 | CI/CD pipelines + Trivy + CodeQL + versioning | 🟢 | ✅ |
-| 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | 🔄 **NEXT** |
-| 8 | AKS deployment — all 4 services in K8s | 🟡 ~₹2,500/mo | ⏳ |
+| 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
+| 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
+| 8 | AKS deployment — all 4 services in K8s | 🟡 ~₹2,500/mo | 🔄 **NEXT** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
 | 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
@@ -152,28 +152,33 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ---
 
-### 🔄 IMMEDIATE NEXT — Stage 7: Kubernetes Concepts (FREE, no cluster)
-> Understand every K8s concept deeply BEFORE creating the paid AKS cluster.
-
-Concepts: Pod · Node · Cluster/Control Plane · Deployment · ReplicaSet ·
-Service (ClusterIP vs LoadBalancer) · ConfigMap · Secret (base64 ≠ encrypted) ·
-Ingress · Namespace · Init Container · Resource Requests/Limits · Helm.
+### ✅ Stage 7: Kubernetes Concepts — COMPLETE
 
 | # | What | Status |
 |---|------|--------|
-| 15.7.1 | Pod, Node, Cluster, Control Plane — draw the architecture | ⏳ |
-| 15.7.2 | Deployment + ReplicaSet + Service (ClusterIP vs LoadBalancer) | ⏳ |
-| 15.7.3 | ConfigMap + Secret + why raw K8s Secrets aren't secure alone | ⏳ |
-| 15.7.4 | Ingress — path routing, host routing, TLS termination | ⏳ |
-| 15.7.5 | Namespace, Init Container, Resource Requests + Limits | ⏳ |
-| 15.7.6 | Helm — Chart.yaml, values.yaml, templates/, install/upgrade | ⏳ |
-| 15.7.7 | Write all K8s YAML manually first (before Helm) | ⏳ |
+| 15.7.1 | Pod, Node, Cluster, Control Plane | ✅ |
+| 15.7.2 | Deployment + ReplicaSet + Service (ClusterIP vs LoadBalancer) | ✅ |
+| 15.7.3 | ConfigMap + Secret + why raw K8s Secrets aren't secure alone | ✅ |
+| 15.7.4 | Ingress — path routing, NGINX, TLS termination, APIM option | ✅ |
+| 15.7.5 | Namespace, Init Container, Resource Requests + Limits | ✅ |
+| 15.7.6 | Helm — Chart.yaml, values.yaml, templates/, install/upgrade | ✅ |
+| 15.7.7 | Write all K8s YAML manually first (before Helm) | 🔄 **NEXT** |
+
+---
+
+### 🔄 IMMEDIATE NEXT — Stage 7.7 → then Stage 8: AKS Deployment
+
+**15.7.7** — Write raw K8s YAML for all 4 services (Deployment + Service + Ingress)
+→ understand every line before automating with Helm
+
+**Stage 8** — AKS cluster provisioning + first live deployment
 
 ---
 
 ## 🎯 Where We Stopped / Next Action
-- Phase 15 Stages 1-6 ✅ complete (Docker → Azure data → secrets → ACR → CI/CD).
-- **Next:** Stage 7 — Kubernetes concepts deep-dive (say **"Stage 7"** to begin).
+- Phase 15 Stages 1-7 ✅ complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts).
+- CI/CD enhanced with path-based filtering — only changed services rebuild on push ✅
+- **Next:** 15.7.7 — Write raw K8s YAML manually for all 4 services → then Stage 8 AKS.
 - Azure SQL DBs deleted to stop vCore charges; recreate at Stage 8 with cost-safe flags:
   `--min-capacity 0.5 --auto-pause-delay 60 --max-size 1GB --compute-model Serverless`.
 
