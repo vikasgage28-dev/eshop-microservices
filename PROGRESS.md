@@ -162,23 +162,21 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 15.7.4 | Ingress — path routing, NGINX, TLS termination, APIM option | ✅ |
 | 15.7.5 | Namespace, Init Container, Resource Requests + Limits | ✅ |
 | 15.7.6 | Helm — Chart.yaml, values.yaml, templates/, install/upgrade | ✅ |
-| 15.7.7 | Write all K8s YAML manually first (before Helm) | 🔄 **NEXT** |
+| 15.7.7 | Write all K8s YAML manually first (before Helm) | ✅ |
 
 ---
 
-### 🔄 IMMEDIATE NEXT — Stage 7.7 → then Stage 8: AKS Deployment
+### 🔄 IMMEDIATE NEXT — Stage 8: AKS Deployment
 
-**15.7.7** — Write raw K8s YAML for all 4 services (Deployment + Service + Ingress)
-→ understand every line before automating with Helm
-
-**Stage 8** — AKS cluster provisioning + first live deployment
+**Stage 8** — AKS cluster provisioning + deploy all 4 services live!
 
 ---
 
 ## 🎯 Where We Stopped / Next Action
-- Phase 15 Stages 1-7 ✅ complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts).
+- Phase 15 Stages 1-7 ✅ fully complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts + raw YAML).
 - CI/CD enhanced with path-based filtering — only changed services rebuild on push ✅
-- **Next:** 15.7.7 — Write raw K8s YAML manually for all 4 services → then Stage 8 AKS.
+- 15 raw K8s YAML files written in `k8s/` folder (namespace + 4×configmap/service/deployment + ingress) ✅
+- **Next:** Stage 8 — Create AKS cluster + `kubectl apply` our YAML files + first live deployment!
 - Azure SQL DBs deleted to stop vCore charges; recreate at Stage 8 with cost-safe flags:
   `--min-capacity 0.5 --auto-pause-delay 60 --max-size 1GB --compute-model Serverless`.
 
