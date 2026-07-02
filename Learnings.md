@@ -1908,6 +1908,28 @@ KEY LEARNINGS:
 > Stop AKS node when not studying → cost drops to ~₹0.
 
 ```
+PRE-STAGE 8 SMOKE TEST FIXES:
+  → Cosmos DB emulator → real Azure Cosmos DB (cosmos-eshop-dev)
+    Fixed via: dotnet user-secrets set "ConnectionStrings:CosmosDb" "<connection-string>"
+  → Write a Review form added to ProductDetailPage.tsx (was missing from frontend)
+    catalogApi.ts → createReview mutation + useCreateReviewMutation export
+    ProductDetailPage → star rating + comment textarea + submit button
+
+COST ANALYSIS (decided before creating cluster):
+  Control Plane     → FREE (AKS Free tier)
+  B2s node          → ₹4/hr → ₹240/mo studying 2hrs/day
+  OS Disk (Std HDD) → ₹80/mo (use Standard HDD not Premium SSD!)
+  Load Balancer     → ₹0 (use kubectl port-forward during learning!)
+  Public IP         → ₹0 (no LB = no IP)
+  ACR Basic         → ₹420/mo (keep during Phase 15, delete after)
+  TOTAL             → ~₹740/mo while studying ✅
+
+  Strategy: az aks start before studying → az aks stop after studying
+  LB only when specifically testing Ingress → delete immediately after
+  ACR = keep always (delete/recreate = 30min rebuild pain not worth ₹14/day)
+```
+
+```
 LEARN: AKS architecture — managed control plane (free) + worker nodes (paid)
 LEARN: CSI Key Vault Driver — pods mount KV secrets as files (safer than env vars)
 LEARN: Init Containers for EF migrations — run once before pods start (multi-pod safe)
@@ -1915,23 +1937,25 @@ LEARN: Resource Requests + Limits — required for HPA to function correctly
 LEARN: NGINX Ingress Controller — one public IP, routes by path prefix
 LEARN: HPA — scale by CPU/memory (KEDA handles event-driven scaling in Stage 12)
 LEARN: Azure Static Web Apps — free React hosting with CI/CD
+LEARN: kubectl port-forward — test pods locally without creating expensive LoadBalancer
+LEARN: az aks start/stop — deallocates node VMs (saves compute, disk+LB still charged if exist)
 ```
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.8.1 | CREATE AKS cluster — aks-eshop-dev (1 node x B2s) | 🟡 ~₹2,500/mo | ⏳ |
-| 15.8.2 | ASSIGN AcrPull role — AKS Managed Identity → acreshopdev | 🟢 Free | ⏳ |
+| 15.8.1 | CREATE AKS cluster — aks-eshop (1 node × B2s, Standard HDD) | 🟡 ~₹740/mo | ⏳ |
+| 15.8.2 | ASSIGN AcrPull role — AKS Managed Identity → acreshop2026 | 🟢 Free | ⏳ |
 | 15.8.3 | INSTALL CSI Key Vault Driver — pods read KV secrets as mounted files | 🟢 Free | ⏳ |
-| 15.8.4 | CREATE K8s namespace — eshop | 🟢 Free | ⏳ |
-| 15.8.5 | WRITE Deployment + Service YAML — Catalog.API (resource limits + init container for EF migration) | 🟢 Free | ⏳ |
-| 15.8.6 | DEPLOY Catalog.API → kubectl apply → verify pods running | 🟢 Free | ⏳ |
-| 15.8.7 | DEPLOY Customer.API, Ordering.API, Identity.API same pattern | 🟢 Free | ⏳ |
-| 15.8.8 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
-| 15.8.9 | WRITE Ingress YAML — /api/catalog, /api/customers, /api/orders, /api/auth routing | 🟢 Free | ⏳ |
-| 15.8.10 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
-| 15.8.11 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
-| 15.8.12 | UPDATE frontend .env — API_URL = AKS Ingress public IP | 🟢 Free | ⏳ |
-| 15.8.13 | TEST end-to-end — login → 2FA → browse → order → all working in AKS | ⏳ |
+| 15.8.4 | APPLY namespace + all YAML — kubectl apply -f k8s/ | 🟢 Free | ✅ YAML written in 15.7.7 |
+| 15.8.5 | VERIFY pods running — kubectl get pods -n eshop | 🟢 Free | ⏳ |
+| 15.8.6 | TEST services — kubectl port-forward each service | 🟢 Free | ⏳ |
+| 15.8.7 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
+| 15.8.8 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ⏳ |
+| 15.8.9 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
+| 15.8.10 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
+| 15.8.11 | UPDATE frontend .env — API_URL = AKS Ingress public IP | 🟢 Free | ⏳ |
+| 15.8.12 | TEST end-to-end — login → browse → review → order → all working in AKS | ⏳ |
+| 15.8.13 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ⏳ |
 
 ---
 

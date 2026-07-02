@@ -176,6 +176,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 - Phase 15 Stages 1-7 ✅ fully complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts + raw YAML).
 - CI/CD enhanced with path-based filtering — only changed services rebuild on push ✅
 - 15 raw K8s YAML files written in `k8s/` folder (namespace + 4×configmap/service/deployment + ingress) ✅
+- Pre-Stage 8 smoke test ✅ — Cosmos DB fixed (emulator → real Azure), Write a Review form added to frontend.
 - **Next:** Stage 8 — Create AKS cluster + `kubectl apply` our YAML files + first live deployment!
 - Azure SQL DBs deleted to stop vCore charges; recreate at Stage 8 with cost-safe flags:
   `--min-capacity 0.5 --auto-pause-delay 60 --max-size 1GB --compute-model Serverless`.
