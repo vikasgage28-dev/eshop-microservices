@@ -1864,7 +1864,42 @@ LEARN: fetch-depth: 2 — needed so git diff HEAD^ HEAD can compare last 2 commi
 | 15.7.4 | LEARN Ingress — path routing, host routing, TLS termination | ⏳ |
 | 15.7.5 | LEARN Namespace, Init Container, Resource Requests + Limits | ⏳ |
 | 15.7.6 | LEARN Helm — Chart.yaml, values.yaml, templates/, helm install/upgrade | ⏳ |
-| 15.7.7 | WRITE all K8s YAML manually first — understand raw manifests before Helm | ⏳ |
+| 15.7.7 | WRITE all K8s YAML manually first — understand raw manifests before Helm | ✅ |
+
+```
+15.7.7 OUTPUT — k8s/ folder (15 files total):
+  k8s/
+    ├── namespace.yaml                   → eshop namespace (isolates our pods from system)
+    ├── ingress.yaml                     → NGINX path routing for all 4 services
+    ├── catalog-api/
+    │     ├── configmap.yaml             → ASPNETCORE_ENVIRONMENT, URLS, Messaging provider
+    │     ├── service.yaml               → ClusterIP, port 80 → targetPort 8080
+    │     └── deployment.yaml            → replicas:2, initContainer (EF migrations), probes, limits
+    ├── customer-api/
+    │     ├── configmap.yaml
+    │     ├── service.yaml
+    │     └── deployment.yaml            → replicas:2, initContainer, probes, limits
+    ├── ordering-api/
+    │     ├── configmap.yaml
+    │     ├── service.yaml
+    │     └── deployment.yaml            → replicas:2, initContainer, probes, limits
+    └── identity-api/
+          ├── configmap.yaml
+          ├── service.yaml
+          └── deployment.yaml            → replicas:2, initContainer (has own DB!), probes, limits
+
+KEY LEARNINGS:
+  → All containers expose port 8080 (EXPOSE 8080 in Dockerfile)
+  → Service port 80 → targetPort 8080 (ClusterIP internal only)
+  → initContainer runs EF migrations BEFORE main container starts
+  → ALL 4 services need initContainer (each has own SQL DB)
+  → livenessProbe  = K8s restarts pod if /health fails
+  → readinessProbe = K8s stops traffic until /health passes
+  → configMapRef injects ALL configmap keys as env vars
+  → ingress.yaml routes: /api/catalog → /api/customers → /api/orders → /api/auth
+  → ConfigMap = minimal bootstrap only (ASPNETCORE vars)
+    real app config pulled from Azure App Configuration at runtime
+```
 
 ---
 
