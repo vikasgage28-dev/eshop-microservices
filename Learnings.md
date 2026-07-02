@@ -1858,12 +1858,12 @@ LEARN: fetch-depth: 2 — needed so git diff HEAD^ HEAD can compare last 2 commi
 
 | # | What | Status |
 |---|------|--------|
-| 15.7.1 | LEARN Pod, Node, Cluster, Control Plane — draw the architecture | ⏳ |
-| 15.7.2 | LEARN Deployment + ReplicaSet + Service (ClusterIP vs LoadBalancer) | ⏳ |
-| 15.7.3 | LEARN ConfigMap + Secret + why raw K8s Secrets are NOT secure alone | ⏳ |
-| 15.7.4 | LEARN Ingress — path routing, host routing, TLS termination | ⏳ |
-| 15.7.5 | LEARN Namespace, Init Container, Resource Requests + Limits | ⏳ |
-| 15.7.6 | LEARN Helm — Chart.yaml, values.yaml, templates/, helm install/upgrade | ⏳ |
+| 15.7.1 | LEARN Pod, Node, Cluster, Control Plane — draw the architecture | ✅ |
+| 15.7.2 | LEARN Deployment + ReplicaSet + Service (ClusterIP vs LoadBalancer) | ✅ |
+| 15.7.3 | LEARN ConfigMap + Secret + why raw K8s Secrets are NOT secure alone | ✅ |
+| 15.7.4 | LEARN Ingress — path routing, host routing, TLS termination | ✅ |
+| 15.7.5 | LEARN Namespace, Init Container, Resource Requests + Limits | ✅ |
+| 15.7.6 | LEARN Helm — Chart.yaml, values.yaml, templates/, helm install/upgrade | ✅ |
 | 15.7.7 | WRITE all K8s YAML manually first — understand raw manifests before Helm | ✅ |
 
 ```
