@@ -133,7 +133,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services in K8s | 🟡 ~₹2,500/mo | 🔄 **NEXT** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **NEXT** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
 | 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
@@ -147,7 +147,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 18 | GitOps — ArgoCD | 🟢 | ⏳ |
 | 19 | Multi-environment DEV → STAGING → PROD | 🟢 | ⏳ |
 
-> Cost while studying ~₹3,000/mo; ~₹440/mo when AKS node stopped.
+> Cost while studying ~₹748/mo (no Azure SQL — SQL runs inside AKS pod!); ~₹500/mo when AKS node stopped (ACR + OS disk only).
 > Full per-stage deep-dive notes + completed Stage 1-6 LEARNED logs → `Learnings.md`.
 
 ---
@@ -168,7 +168,48 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ### 🔄 IMMEDIATE NEXT — Stage 8: AKS Deployment
 
-**Stage 8** — AKS cluster provisioning + deploy all 4 services live!
+**Stage 8** — AKS cluster provisioning + SQL Server pod + deploy all 4 services live!
+
+**Key architectural decision:** SQL Server runs as a pod inside AKS (not Azure SQL).
+- Azure SQL bills per second from creation → unavoidable cost even with auto-pause
+- SQL Server pod = stops with AKS node = ₹0 when not studying ✅
+- Data persisted on Azure Disk via PVC (survives pod restarts and node stops) ✅
+- Teaches bonus K8s concepts: PVC, StatefulSet pattern, pod-to-pod DNS ✅
+
+**New files needed in `k8s/sql-server/`:** `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`
+
+**Stage 8 Full Sequence:**
+```
+Phase 1 — AKS Setup
+  15.8.1 → Create AKS cluster (1 node B2s, Standard HDD)
+  15.8.2 → Get credentials + connect kubectl
+  15.8.3 → Create eshop namespace
+
+Phase 2 — SQL Server in AKS (NEW!)
+  15.8.4 → Create PVC (Azure Disk — 32GB HDD)
+  15.8.5 → Create SQL Server Secret (SA password)
+  15.8.6 → Create SQL Server Deployment + Service
+  15.8.7 → Verify SQL Server pod running
+
+Phase 3 — Configuration Update
+  15.8.8 → Update Key Vault connection strings
+           (Server=sql-server,1433 instead of Azure SQL URL)
+
+Phase 4 — Deploy Microservices
+  15.8.9  → kubectl apply all YAML files
+  15.8.10 → Verify all pods running
+  15.8.11 → Test via kubectl port-forward (free!)
+
+Phase 5 — Ingress
+  15.8.12 → Install NGINX Ingress Controller
+  15.8.13 → Apply ingress.yaml + test public IP
+
+Phase 6 — Final
+  15.8.14 → Add HPA
+  15.8.15 → Deploy React frontend (Azure SWA)
+  15.8.16 → End-to-end test
+  15.8.17 → Stop cluster (az aks stop)
+```
 
 ---
 
@@ -177,9 +218,9 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 - CI/CD enhanced with path-based filtering — only changed services rebuild on push ✅
 - 15 raw K8s YAML files written in `k8s/` folder (namespace + 4×configmap/service/deployment + ingress) ✅
 - Pre-Stage 8 smoke test ✅ — Cosmos DB fixed (emulator → real Azure), Write a Review form added to frontend.
-- **Next:** Stage 8 — Create AKS cluster + `kubectl apply` our YAML files + first live deployment!
-- Azure SQL DBs deleted to stop vCore charges; recreate at Stage 8 with cost-safe flags:
-  `--min-capacity 0.5 --auto-pause-delay 60 --max-size 1GB --compute-model Serverless`.
+- **Next:** Stage 8 — Create AKS cluster → deploy SQL Server pod (with PVC) → apply all YAML → first live deployment!
+- **SQL Strategy changed:** Azure SQL abandoned (bills per second even with auto-pause). SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
+- **Connection strings** in Key Vault will be updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS)
 
 ---
 
