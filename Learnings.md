@@ -1944,6 +1944,52 @@ CONNECTION STRING CHANGE:
   New (SQL pod):    Server=sql-server,1433;Database=CatalogDb;User Id=sa;Password=...
   sql-server = K8s ClusterIP Service name = internal DNS auto-resolved inside cluster
   Key Vault stores new value → App Config references it → pods read at startup (same flow!)
+
+PROBLEM SOLVED — SQL pod volume permission denied:
+  → SQL Server container runs as non-root user (UID 10001, "mssql")
+  → Azure Disk PVC mounted as root-owned by default → SQL couldn't write to /var/opt/mssql
+  → Fix: added `securityContext.fsGroup: 10001` at the POD level in deployment.yaml
+    This tells Kubernetes to chown the mounted volume to group 10001 on attach,
+    so the mssql user (already in that group inside the image) can read/write it.
+
+WORKLOAD IDENTITY SETUP (passwordless Azure auth for pods — no secrets/keys!):
+  Concept: OIDC federation — AKS cluster issues its own OIDC tokens for pods.
+  Azure AD trusts that OIDC issuer for a specific Managed Identity + K8s ServiceAccount pair.
+  A pod using that ServiceAccount can request an Azure AD token with ZERO stored credentials.
+
+  Steps performed:
+  1. `az aks update --enable-oidc-issuer --enable-workload-identity` on aks-eshop
+  2. `az identity create` → id-eshop-workload (a User-Assigned Managed Identity)
+  3. `az role assignment create` ×2 → granted this identity:
+       - Key Vault Secrets User (read secrets)
+       - App Configuration Data Reader (read config)
+  4. `az identity federated-credential create` → linked:
+       id-eshop-workload  ⟷  system:serviceaccount:eshop:eshop-sa
+     (this is the actual trust relationship — "this K8s SA token = this Azure identity")
+  5. `kubectl create serviceaccount eshop-sa -n eshop`
+     + annotate: azure.workload.identity/client-id=<id-eshop-workload clientId>
+     + label:    azure.workload.identity/use: "true"
+  6. Every deployment.yaml → serviceAccountName: eshop-sa + pod label
+     azure.workload.identity/use: "true" (a mutating webhook injects the
+     token-projection volume + env vars automatically at pod creation)
+  7. App code just calls DefaultAzureCredential() — it silently discovers and
+     uses the projected Workload Identity token, no code changes needed.
+
+  Why this matters: no ClientSecret, no ConnectionString-with-key anywhere —
+  the only "identity" is Kubernetes' own ServiceAccount token, federated to Azure.
+
+PROBLEM — ErrImagePull (all 4 microservice pods, current blocker):
+  → kubectl apply succeeded for all deployments/services/configmaps
+  → But pods stuck in ErrImagePull / ImagePullBackOff
+  → Root cause: `az acr repository list --name acreshop2026` → EMPTY.
+    Dockerfiles were written long ago but images were never built + pushed.
+  → Fix (not yet done): commit k8s/ changes on develop → push → PR to main →
+    merge → build-and-push.yml (GitHub Actions) builds all 4 images and
+    pushes to ACR tagged :latest.
+  → Separate thing to verify once images exist: AKS's own Kubelet identity
+    needs the AcrPull RBAC role on acreshop2026 to be allowed to pull at all
+    (this is different from Workload Identity — that's for app secrets,
+    this is for the node/kubelet pulling container images).
 ```
 
 ```
@@ -1951,6 +1997,11 @@ LEARN: AKS architecture — managed control plane (free) + worker nodes (paid)
 LEARN: PVC (Persistent Volume Claim) — how pods get durable storage in K8s
 LEARN: StatefulSet pattern — databases need stable identity + persistent storage
 LEARN: Pod-to-pod DNS — K8s Service name resolves inside cluster (e.g., sql-server)
+LEARN: fsGroup securityContext — fixes non-root container volume permission errors
+LEARN: AKS Workload Identity — OIDC federation between K8s ServiceAccount + Azure AD identity
+LEARN: Federated credential — the actual trust link (SA ↔ Managed Identity), no secrets stored
+LEARN: DefaultAzureCredential — same app code works locally (VS) and in AKS (Workload Identity)
+LEARN: AcrPull role — separate from Workload Identity; lets AKS nodes pull container images
 LEARN: CSI Key Vault Driver — pods mount KV secrets as files (safer than env vars)
 LEARN: Init Containers for EF migrations — run once before pods start (multi-pod safe)
 LEARN: Resource Requests + Limits — required for HPA to function correctly
@@ -1963,25 +2014,33 @@ LEARN: az aks start/stop — deallocates node VMs (saves compute, disk still cha
 
 | # | What | Cost | Status |
 |---|------|------|--------|
-| 15.8.1 | CREATE AKS cluster — aks-eshop (1 node × B2s, Standard HDD) | 🟡 ~₹748/mo | ⏳ |
-| 15.8.2 | GET credentials — az aks get-credentials + verify kubectl connection | 🟢 Free | ⏳ |
-| 15.8.3 | CREATE namespace — kubectl apply -f k8s/namespace.yaml | 🟢 Free | ⏳ |
-| 15.8.4 | CREATE SQL PVC — k8s/sql-server/pvc.yaml (Azure Disk 32GB HDD) | 🟡 ~₹8/mo | ⏳ |
-| 15.8.5 | CREATE SQL Secret — k8s/sql-server/secret.yaml (SA password) | 🟢 Free | ⏳ |
-| 15.8.6 | CREATE SQL Deployment + Service — k8s/sql-server/deployment+service.yaml | 🟢 Free | ⏳ |
-| 15.8.7 | VERIFY SQL pod running — kubectl get pods -n eshop | 🟢 Free | ⏳ |
-| 15.8.8 | UPDATE Key Vault — connection strings → Server=sql-server,1433 | 🟢 Free | ⏳ |
-| 15.8.9 | ASSIGN AcrPull role — AKS Managed Identity → acreshop2026 | 🟢 Free | ⏳ |
-| 15.8.10 | INSTALL CSI Key Vault Driver — pods read KV secrets as mounted files | 🟢 Free | ⏳ |
-| 15.8.11 | APPLY all microservice YAML — kubectl apply -f k8s/ | 🟢 Free | ✅ YAML written in 15.7.7 |
-| 15.8.12 | VERIFY all pods running — kubectl get pods -n eshop | 🟢 Free | ⏳ |
+| 15.8.1 | CREATE AKS cluster — aks-eshop (1 node × B2s, Standard HDD) | 🟡 ~₹748/mo | ✅ |
+| 15.8.2 | GET credentials — az aks get-credentials + verify kubectl connection | 🟢 Free | ✅ |
+| 15.8.3 | CREATE namespace — kubectl apply -f k8s/namespace.yaml | 🟢 Free | ✅ |
+| 15.8.4 | CREATE SQL StorageClass + PVC — k8s/sql-server/ (Azure Disk 32GB HDD) | 🟡 ~₹8/mo | ✅ Bound |
+| 15.8.5 | CREATE SQL Secret — k8s/sql-server/secret.yaml (SA password) | 🟢 Free | ✅ |
+| 15.8.6 | CREATE SQL Deployment + Service — k8s/sql-server/deployment+service.yaml | 🟢 Free | ✅ Fixed with fsGroup: 10001 |
+| 15.8.7 | VERIFY SQL pod running — kubectl get pods -n eshop + sqlcmd login | 🟢 Free | ✅ |
+| 15.8.8 | UPDATE Key Vault — connection strings → Server=sql-server,1433 (×4 DBs) | 🟢 Free | ✅ |
+| 15.8.8a | ENABLE OIDC issuer + Workload Identity on aks-eshop | 🟢 Free | ✅ |
+| 15.8.8b | CREATE Managed Identity — id-eshop-workload | 🟢 Free | ✅ |
+| 15.8.8c | GRANT RBAC — Key Vault Secrets User + App Config Data Reader | 🟢 Free | ✅ |
+| 15.8.8d | CREATE federated credential — eshop-sa ↔ id-eshop-workload | 🟢 Free | ✅ |
+| 15.8.8e | CREATE + annotate + label K8s ServiceAccount — eshop-sa | 🟢 Free | ✅ |
+| 15.8.8f | WIRE eshop-sa + workload identity label into all 4 deployment.yaml | 🟢 Free | ✅ |
+| 15.8.8g | ADD AppConfig__Endpoint to all 4 configmap.yaml | 🟢 Free | ✅ |
+| 15.8.8h | CREATE identity-pem-keys Secret + mount into identity-api (RS256 JWT) | 🟢 Free | ✅ |
+| 15.8.9 | ASSIGN AcrPull role — AKS Kubelet Identity → acreshop2026 | 🟢 Free | ⏳ NOT YET CONFIRMED |
+| 15.8.10 | INSTALL CSI Key Vault Driver — pods read KV secrets as mounted files | 🟢 Free | ⏳ (superseded by Workload Identity + App Config approach) |
+| 15.8.11 | APPLY all microservice YAML — kubectl apply -f k8s/ | 🟢 Free | ✅ Applied — all objects created |
+| 15.8.12 | VERIFY all pods running — kubectl get pods -n eshop | 🟢 Free | ❌ BLOCKED — `ErrImagePull` on all 4 pods. ACR (`acreshop2026`) has zero images pushed (confirmed via `az acr repository list`). Fix: commit k8s/ changes → PR develop→main → merge → `build-and-push.yml` builds+pushes images. |
 | 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ⏳ |
 | 15.8.14 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
 | 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ⏳ |
 | 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
 | 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |
-| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ⏳ |
+| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped mid-troubleshooting to save cost |
 
 ---
 

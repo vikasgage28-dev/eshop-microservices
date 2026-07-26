@@ -133,7 +133,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **NEXT** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (blocked)** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
 | 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
@@ -166,7 +166,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ---
 
-### 🔄 IMMEDIATE NEXT — Stage 8: AKS Deployment
+### 🔄 Stage 8: AKS Deployment — IN PROGRESS (blocked on ACR images)
 
 **Stage 8** — AKS cluster provisioning + SQL Server pod + deploy all 4 services live!
 
@@ -176,51 +176,69 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 - Data persisted on Azure Disk via PVC (survives pod restarts and node stops) ✅
 - Teaches bonus K8s concepts: PVC, StatefulSet pattern, pod-to-pod DNS ✅
 
-**New files needed in `k8s/sql-server/`:** `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml`
+**Files created in `k8s/sql-server/`:** `storageclass.yaml`, `pvc.yaml`, `secret.yaml`, `deployment.yaml`, `service.yaml` ✅ (all applied to cluster, untracked in git — pending commit)
 
 **Stage 8 Full Sequence:**
 ```
-Phase 1 — AKS Setup
-  15.8.1 → Create AKS cluster (1 node B2s, Standard HDD)
-  15.8.2 → Get credentials + connect kubectl
-  15.8.3 → Create eshop namespace
+Phase 1 — AKS Setup                                                         ✅ DONE
+  15.8.1 → Create AKS cluster (1 node B2s, Standard HDD)                    ✅
+  15.8.2 → Get credentials + connect kubectl                                ✅
+  15.8.3 → Create eshop namespace                                          ✅
 
-Phase 2 — SQL Server in AKS (NEW!)
-  15.8.4 → Create PVC (Azure Disk — 32GB HDD)
-  15.8.5 → Create SQL Server Secret (SA password)
-  15.8.6 → Create SQL Server Deployment + Service
-  15.8.7 → Verify SQL Server pod running
+Phase 2 — SQL Server in AKS                                                 ✅ DONE
+  15.8.4 → Create StorageClass + PVC (Azure Disk — 32GB HDD) → Bound        ✅
+  15.8.5 → Create SQL Server Secret (SA password)                          ✅
+  15.8.6 → Create SQL Server Deployment + Service                          ✅
+           (fixed volume permission bug with fsGroup: 10001)
+  15.8.7 → Verify SQL Server pod running + sqlcmd login confirmed          ✅
 
-Phase 3 — Configuration Update
-  15.8.8 → Update Key Vault connection strings
-           (Server=sql-server,1433 instead of Azure SQL URL)
+Phase 3 — Configuration Update                                              ✅ DONE
+  15.8.8 → Update Key Vault connection strings (x4 DBs)
+           → Server=sql-server,1433 instead of Azure SQL URL               ✅
+
+Phase 3b — AKS Workload Identity (passwordless Azure auth for pods)         ✅ DONE
+  15.8.8a → Enable OIDC issuer + Workload Identity on cluster              ✅
+  15.8.8b → Create Managed Identity (id-eshop-workload)                    ✅
+  15.8.8c → Grant RBAC: Key Vault Secrets User + App Config Data Reader    ✅
+  15.8.8d → Federated credential (eshop-sa ↔ id-eshop-workload)            ✅
+  15.8.8e → Create + annotate + label K8s ServiceAccount (eshop-sa)        ✅
+  15.8.8f → Wire eshop-sa + label into all 4 deployment.yaml               ✅
+  15.8.8g → Add AppConfig__Endpoint to all 4 configmap.yaml                ✅
+  15.8.8h → Create identity-pem-keys Secret + mount into identity-api      ✅
 
 Phase 4 — Deploy Microservices
-  15.8.9  → kubectl apply all YAML files
-  15.8.10 → Verify all pods running
-  15.8.11 → Test via kubectl port-forward (free!)
+  15.8.9  → kubectl apply all YAML files                                   ✅ Applied (all objects created)
+  15.8.10 → Verify all pods running                                        ❌ BLOCKED — ErrImagePull
+            Root cause: ACR (acreshop2026) has ZERO images pushed.
+            Dockerfiles exist but were never built+pushed for these apps.
+            Fix planned: commit k8s/ changes → PR develop→main → merge
+            → build-and-push.yml pipeline builds+pushes all 4 images.
+            Also need to verify: AKS kubelet identity has AcrPull role
+            on acreshop2026 (originally planned step, never confirmed).
+  15.8.11 → Test via kubectl port-forward (free!)                          ⏳
 
 Phase 5 — Ingress
-  15.8.12 → Install NGINX Ingress Controller
-  15.8.13 → Apply ingress.yaml + test public IP
+  15.8.12 → Install NGINX Ingress Controller                               ⏳
+  15.8.13 → Apply ingress.yaml + test public IP                            ⏳
 
 Phase 6 — Final
-  15.8.14 → Add HPA
-  15.8.15 → Deploy React frontend (Azure SWA)
-  15.8.16 → End-to-end test
-  15.8.17 → Stop cluster (az aks stop)
+  15.8.14 → Add HPA                                                        ⏳
+  15.8.15 → Deploy React frontend (Azure SWA)                              ⏳
+  15.8.16 → End-to-end test                                                ⏳
+  15.8.17 → Stop cluster (az aks stop)                                     ✅ (stopped mid-troubleshooting to save cost)
 ```
 
 ---
 
 ## 🎯 Where We Stopped / Next Action
 - Phase 15 Stages 1-7 ✅ fully complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts + raw YAML).
-- CI/CD enhanced with path-based filtering — only changed services rebuild on push ✅
-- 15 raw K8s YAML files written in `k8s/` folder (namespace + 4×configmap/service/deployment + ingress) ✅
-- Pre-Stage 8 smoke test ✅ — Cosmos DB fixed (emulator → real Azure), Write a Review form added to frontend.
-- **Next:** Stage 8 — Create AKS cluster → deploy SQL Server pod (with PVC) → apply all YAML → first live deployment!
-- **SQL Strategy changed:** Azure SQL abandoned (bills per second even with auto-pause). SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
-- **Connection strings** in Key Vault will be updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS)
+- Stage 8 Phases 1-3b ✅ complete: AKS cluster, SQL-in-pod (with PVC), Key Vault updated, full Workload Identity chain wired into all 4 deployments, PEM keys mounted into identity-api.
+- `kubectl apply -f k8s/...` succeeded for all 4 microservices, but **every pod is stuck in `ErrImagePull`** — confirmed via `az acr repository list --name acreshop2026` that the registry is completely empty. Images were never built/pushed for these services.
+- **AKS cluster is currently STOPPED** (`az aks stop`) to save cost while we resolve this — confirmed via `powerState.code = Stopped`.
+- **Pending git changes (uncommitted, on `develop`):** 8 modified files (`k8s/*/deployment.yaml` ×4 — serviceAccountName + workload identity label; `identity-api/deployment.yaml` also has PEM volume mounts; `k8s/*/configmap.yaml` ×4 — AppConfig endpoint) + untracked `k8s/sql-server/` folder (5 new files).
+- **Next action:** `git add`/`commit` the k8s changes on `develop` → push → PR `develop → main` → merge → `build-and-push.yml` builds & pushes all 4 images to ACR (tagged `:latest`) → verify AKS kubelet identity has `AcrPull` role on `acreshop2026` (run `az aks update --attach-acr acreshop2026` if missing) → `az aks start` → re-check `kubectl get pods -n eshop`.
+- **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
+- **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
 
 ---
 
