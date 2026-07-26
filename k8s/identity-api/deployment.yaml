@@ -12,7 +12,9 @@ spec:
     metadata:
       labels:
         app: identity-api
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: eshop-sa
       initContainers:
         - name: run-migrations
           image: acreshop2026.azurecr.io/eshop/identity-api:latest
@@ -29,6 +31,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: identity-api-config
+          volumeMounts:
+            - name: pem-keys
+              mountPath: /app/private.pem
+              subPath: private.pem
+            - name: pem-keys
+              mountPath: /app/public.pem
+              subPath: public.pem
           resources:
             requests:
               memory: "128Mi"
@@ -48,3 +57,7 @@ spec:
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
+      volumes:
+        - name: pem-keys
+          secret:
+            secretName: identity-pem-keys
