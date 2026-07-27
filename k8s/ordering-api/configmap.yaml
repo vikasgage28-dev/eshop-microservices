@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ordering-api-config
+  namespace: eshop
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  AppConfig__Endpoint: "https://appconfig-eshop-dev.azconfig.io"
+  Messaging__Provider: "AzureStorageQueue"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"

@@ -36,6 +36,10 @@ export const catalogApi = createApi({
       query: (productId) => `/reviews?productId=${productId}`,
       providesTags: ['Review'],
     }),
+    createReview: builder.mutation<Review, { productId: string; userId: string; userEmail: string; rating: number; comment: string; verifiedPurchase: boolean }>({
+      query: (body) => ({ url: '/reviews', method: 'POST', body }),
+      invalidatesTags: ['Review'],
+    }),
   }),
 })
 
@@ -47,4 +51,5 @@ export const {
   useDeleteProductMutation,
   useGetCategoriesQuery,
   useGetReviewsByProductQuery,
+  useCreateReviewMutation,
 } = catalogApi

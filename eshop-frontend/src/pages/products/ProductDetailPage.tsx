@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Star } from 'lucide-react'
-import { useGetProductByIdQuery, useGetReviewsByProductQuery } from '@/api/catalogApi'
+import { ArrowLeft, ShoppingCart, Star, Loader2 } from 'lucide-react'
+import { useGetProductByIdQuery, useGetReviewsByProductQuery, useCreateReviewMutation } from '@/api/catalogApi'
 import { useCart } from '@/hooks/useCart'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 
@@ -14,6 +15,28 @@ export default function ProductDetailPage() {
 
   const { data: product, isLoading } = useGetProductByIdQuery(id!)
   const { data: reviews } = useGetReviewsByProductQuery(id!)
+  const [createReview, { isLoading: isSubmitting }] = useCreateReviewMutation()
+  const { userId, email, isAuthenticated } = useAuth()
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [hovered, setHovered] = useState(0)
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleSubmitReview = async () => {
+    if (!userId || !email || !comment.trim()) return
+    await createReview({
+      productId: id!,
+      userId,
+      userEmail: email,
+      rating,
+      comment: comment.trim(),
+      verifiedPurchase: false,
+    })
+    setComment('')
+    setRating(5)
+    setSubmitted(true)
+    setTimeout(() => setSubmitted(false), 3000)
+  }
 
   if (isLoading) {
     return (
@@ -132,6 +155,55 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Add Review Form */}
+      <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e8e8e8] dark:border-[#3a3a3a]">
+        <div className="px-4 py-3 border-b border-[#e8e8e8] dark:border-[#3a3a3a]">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Write a Review</h2>
+        </div>
+        <div className="px-4 py-4 space-y-3">
+          {!isAuthenticated ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Please log in to write a review.</p>
+          ) : submitted ? (
+            <p className="text-sm text-green-600 dark:text-green-400 font-medium">✅ Review submitted! Thank you.</p>
+          ) : (
+            <>
+              {/* Star Rating */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Rating:</span>
+                {[1,2,3,4,5].map((s) => (
+                  <Star
+                    key={s}
+                    size={20}
+                    className={`cursor-pointer transition-colors ${s <= (hovered || rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                    onMouseEnter={() => setHovered(s)}
+                    onMouseLeave={() => setHovered(0)}
+                    onClick={() => setRating(s)}
+                  />
+                ))}
+                <span className="text-xs text-gray-400 ml-1">{rating}/5</span>
+              </div>
+
+              {/* Comment */}
+              <textarea
+                rows={3}
+                placeholder="Share your experience with this product..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="w-full text-sm rounded-md border border-[#e8e8e8] dark:border-[#3a3a3a] bg-transparent px-3 py-2 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              />
+
+              <Button
+                onClick={handleSubmitReview}
+                disabled={isSubmitting || !comment.trim()}
+                size="sm"
+              >
+                {isSubmitting ? <><Loader2 size={14} className="animate-spin mr-1.5" />Submitting...</> : 'Submit Review'}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
