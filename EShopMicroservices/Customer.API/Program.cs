@@ -89,11 +89,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var app = builder.Build();
 app.MapDefaultEndpoints();
 
-// ── Database migration + Seed (Development only!) ───────────────────────────
-if (app.Environment.IsDevelopment())
+// ── Database migration + Seed (runs in ALL environments) ─────────────────────
+// Seeder is idempotent, so it's safe to run on every startup, including
+// Production. This avoids needing a separate SDK-based init container
+// just to run "dotnet ef database update".
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-
     var db = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
     await db.Database.MigrateAsync();
 

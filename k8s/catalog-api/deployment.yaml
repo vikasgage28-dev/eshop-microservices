@@ -4,7 +4,7 @@ metadata:
   name: catalog-api
   namespace: eshop
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: catalog-api
@@ -15,14 +15,6 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: eshop-sa
-      initContainers:
-        - name: run-migrations
-          image: acreshop2026.azurecr.io/eshop/catalog-api:latest
-          command: ["dotnet", "ef", "database", "update"]
-          env:
-            - name: ASPNETCORE_ENVIRONMENT
-              value: "Production"
-
       containers:
         - name: catalog-api
           image: acreshop2026.azurecr.io/eshop/catalog-api:latest
