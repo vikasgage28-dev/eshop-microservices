@@ -30,15 +30,6 @@
   <Folder Name="/identity/tests/">
     <Project Path="Identity.Tests/Identity.Tests.csproj" Id="6a8b262b-8fae-4923-9a06-ccd167e3fdbe" />
   </Folder>
-  <Folder Name="/legacy/">
-    <Project Path="../EShop.API/EShop.API.csproj" />
-    <Project Path="../EShop.Core/EShop.Core.csproj" />
-    <Project Path="../EShop.Functions/EShop.Functions.csproj" />
-    <Project Path="../EShop.Gateway/EShop.Gateway.csproj" />
-    <Project Path="../EShop.Infrastructure/EShop.Infrastructure.csproj" />
-    <Project Path="../EShop.Shared/EShop.Shared.csproj" />
-    <Project Path="../EShop.Tests/EShop.Tests.csproj" />
-  </Folder>
   <Folder Name="/ordering/" />
   <Folder Name="/ordering/src/">
     <Project Path="Ordering.API/Ordering.API.csproj" Id="d549bf03-986d-4e0d-a59c-a92ffcbf4c98" />

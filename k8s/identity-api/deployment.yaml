@@ -4,7 +4,7 @@ metadata:
   name: identity-api
   namespace: eshop
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: identity-api
@@ -15,14 +15,6 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: eshop-sa
-      initContainers:
-        - name: run-migrations
-          image: acreshop2026.azurecr.io/eshop/identity-api:latest
-          command: ["dotnet", "ef", "database", "update"]
-          env:
-            - name: ASPNETCORE_ENVIRONMENT
-              value: "Production"
-
       containers:
         - name: identity-api
           image: acreshop2026.azurecr.io/eshop/identity-api:latest
