@@ -133,7 +133,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (blocked)** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (images fixed, core verified)** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
 | 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
@@ -166,7 +166,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ---
 
-### 🔄 Stage 8: AKS Deployment — IN PROGRESS (blocked on ACR images)
+### 🔄 Stage 8: AKS Deployment — IN PROGRESS (all 4 services live + verified; Ingress/HPA/frontend remaining)
 
 **Stage 8** — AKS cluster provisioning + SQL Server pod + deploy all 4 services live!
 
@@ -206,16 +206,38 @@ Phase 3b — AKS Workload Identity (passwordless Azure auth for pods)         �
   15.8.8g → Add AppConfig__Endpoint to all 4 configmap.yaml                ✅
   15.8.8h → Create identity-pem-keys Secret + mount into identity-api      ✅
 
-Phase 4 — Deploy Microservices
+Phase 4 — Deploy Microservices                                             ✅ DONE
   15.8.9  → kubectl apply all YAML files                                   ✅ Applied (all objects created)
-  15.8.10 → Verify all pods running                                        ❌ BLOCKED — ErrImagePull
-            Root cause: ACR (acreshop2026) has ZERO images pushed.
-            Dockerfiles exist but were never built+pushed for these apps.
-            Fix planned: commit k8s/ changes → PR develop→main → merge
-            → build-and-push.yml pipeline builds+pushes all 4 images.
-            Also need to verify: AKS kubelet identity has AcrPull role
-            on acreshop2026 (originally planned step, never confirmed).
-  15.8.11 → Test via kubectl port-forward (free!)                          ⏳
+  15.8.10 → Verify all pods running                                        ✅ All 4 pods Running, 0 restarts
+            Original blocker: ACR had zero images (never built+pushed) →
+            fixed by committing k8s/ changes + merging develop→main.
+            Second blocker found after images existed: customer-api,
+            identity-api, ordering-api stuck in CrashLoopBackOff — probes
+            hit GET /health → 404 because those 3 services were still
+            running STALE images (only catalog-api got rebuilt).
+            Root cause: CI path-filter regex only matched each service's
+            OWN folder, never accounted for shared ServiceDefaults/Contracts
+            projects that ALL 4 services reference. So when the /health
+            production fix landed in ServiceDefaults, only catalog-api
+            (which also had its own folder touched) got rebuilt.
+            Fix: updated `.github/workflows/build-and-push.yml` — each
+            service's `paths` filter now also matches
+            EShopMicroservices.ServiceDefaults/** (and EShop.Contracts/**
+            where relevant). Committed on develop → merged develop→main →
+            all 4 matrix jobs rebuilt → verified all images tagged with
+            latest commit (61a89d3) → `kubectl rollout restart` → all pods
+            Running, 0 restarts.
+            AKS kubelet AcrPull role → confirmed working (images pulled
+            successfully, no ImagePullBackOff).
+  15.8.11 → Test via kubectl port-forward (free!)                          ✅ Verified
+            SQL Server: port-forward svc/sql-server 14330:1433 → connected
+            via SSMS (127.0.0.1,14330 + Trust Server Certificate) — kubectl
+            exec + sqlcmd also confirmed as reliable fallback.
+            Identity API: port-forward svc/identity-api 8082:80 → logs show
+            clean startup (EF migrations applied, seeder ran, RSA/PEM keys
+            loaded without error) → POST /api/auth/login with seeded
+            admin@eshop.com/Admin@12345 → returned valid RS256 JWT +
+            refresh token + Admin role → end-to-end auth chain confirmed.
 
 Phase 5 — Ingress
   15.8.12 → Install NGINX Ingress Controller                               ⏳
@@ -225,20 +247,23 @@ Phase 6 — Final
   15.8.14 → Add HPA                                                        ⏳
   15.8.15 → Deploy React frontend (Azure SWA)                              ⏳
   15.8.16 → End-to-end test                                                ⏳
-  15.8.17 → Stop cluster (az aks stop)                                     ✅ (stopped mid-troubleshooting to save cost)
+  15.8.17 → Stop cluster (az aks stop)                                     ✅ Stopped again after verifying login end-to-end (this session)
 ```
 
 ---
 
 ## 🎯 Where We Stopped / Next Action
 - Phase 15 Stages 1-7 ✅ fully complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts + raw YAML).
-- Stage 8 Phases 1-3b ✅ complete: AKS cluster, SQL-in-pod (with PVC), Key Vault updated, full Workload Identity chain wired into all 4 deployments, PEM keys mounted into identity-api.
-- `kubectl apply -f k8s/...` succeeded for all 4 microservices, but **every pod is stuck in `ErrImagePull`** — confirmed via `az acr repository list --name acreshop2026` that the registry is completely empty. Images were never built/pushed for these services.
-- **AKS cluster is currently STOPPED** (`az aks stop`) to save cost while we resolve this — confirmed via `powerState.code = Stopped`.
-- **Pending git changes (uncommitted, on `develop`):** 8 modified files (`k8s/*/deployment.yaml` ×4 — serviceAccountName + workload identity label; `identity-api/deployment.yaml` also has PEM volume mounts; `k8s/*/configmap.yaml` ×4 — AppConfig endpoint) + untracked `k8s/sql-server/` folder (5 new files).
-- **Next action:** `git add`/`commit` the k8s changes on `develop` → push → PR `develop → main` → merge → `build-and-push.yml` builds & pushes all 4 images to ACR (tagged `:latest`) → verify AKS kubelet identity has `AcrPull` role on `acreshop2026` (run `az aks update --attach-acr acreshop2026` if missing) → `az aks start` → re-check `kubectl get pods -n eshop`.
+- Stage 8 Phases 1-4 ✅ complete: AKS cluster, SQL-in-pod (with PVC), Key Vault updated, full Workload Identity chain wired into all 4 deployments, PEM keys mounted into identity-api, all 4 microservices deployed and verified Running with 0 restarts.
+- **CI/CD bug found + fixed:** `build-and-push.yml` path filters only matched each service's own folder, so shared `ServiceDefaults`/`Contracts` changes silently skipped rebuilding `customer-api`, `identity-api`, `ordering-api`. This meant a production fix (health checks mapped outside `IsDevelopment()`) never reached those 3 images → `/health` probe returned 404 → `CrashLoopBackOff`. Fixed by adding shared-project paths to each service's matrix filter; merged `develop → main`; all 4 images rebuilt and pushed to ACR tagged with commit `61a89d3`.
+- **All 4 pods confirmed Running, 0 restarts** after `kubectl rollout restart` pulled the fresh images.
+- **SQL Server connectivity solved:** `kubectl port-forward svc/sql-server 14330:1433` → SSMS via `127.0.0.1,14330` with "Trust Server Certificate" enabled (`localhost` didn't work reliably over the tunnel, `127.0.0.1` did). `kubectl exec` + `sqlcmd` remains the reliable fallback if the TDS handshake over port-forward misbehaves.
+- **Identity API fully verified end-to-end:** logs show clean startup, EF migrations applied, seeder ran, RSA/PEM keys loaded without error. `POST /api/auth/login` with seeded `admin@eshop.com` / `Admin@12345` returned a valid RS256-signed JWT + refresh token + `Admin` role — confirms `private.pem`/`public.pem` volume mounts and `JwtTokenService` are working correctly in AKS.
+- **Seeded credentials (from `IdentityDataSeeder.cs`):** Admin → `admin@eshop.com` / `Admin@12345`; Customer → `alice@eshop.com` / `Customer@12345`.
+- **AKS cluster STOPPED again** (`az aks stop`) after verification, to save cost during the break. Resume with `az aks start --name aks-eshop --resource-group rg-eshop-microservices`.
 - **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
 - **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
+- **Next action:** Resume cluster → confirm `GET /api/auth/me` with bearer token (validate-side JWT proof, minor/pending) → move to Phase 5 (NGINX Ingress) → Phase 6 (HPA, React frontend deploy, end-to-end test).
 
 ---
 
