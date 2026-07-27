@@ -22,18 +22,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # NOTE: "paths" also includes shared dependencies (ServiceDefaults, EShop.Contracts)
+          # so that changes to shared projects trigger a rebuild of every service that
+          # references them, not just the service whose own folder changed.
           - service: catalog-api
             dockerfile: EShopMicroservices/Catalog.API/Dockerfile
-            paths: 'EShopMicroservices/Catalog.**'
+            paths: 'EShopMicroservices/(Catalog\.|EShopMicroservices\.ServiceDefaults|EShop\.Contracts)'
           - service: customer-api
             dockerfile: EShopMicroservices/Customer.API/Dockerfile
-            paths: 'EShopMicroservices/Customer.**'
+            paths: 'EShopMicroservices/(Customer\.|EShopMicroservices\.ServiceDefaults|EShop\.Contracts)'
           - service: identity-api
             dockerfile: EShopMicroservices/Identity.API/Dockerfile
-            paths: 'EShopMicroservices/Identity.**'
+            paths: 'EShopMicroservices/(Identity\.|EShopMicroservices\.ServiceDefaults)'
           - service: ordering-api
             dockerfile: EShopMicroservices/Ordering.API/Dockerfile
-            paths: 'EShopMicroservices/Ordering.**'
+            paths: 'EShopMicroservices/(Ordering\.|EShopMicroservices\.ServiceDefaults|EShop\.Contracts)'
 
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +49,7 @@ jobs:
           CHANGED=$(git diff --name-only HEAD^ HEAD)
           echo "Changed files:"
           echo "$CHANGED"
-          if echo "$CHANGED" | grep -qE '${{ matrix.paths }}'; then
+          if echo "$CHANGED" | grep -qE '${{ matrix.paths }}|^\.github/workflows/build-and-push\.yml$'; then
             echo "rebuild=true" >> $GITHUB_OUTPUT
           else
             echo "rebuild=false" >> $GITHUB_OUTPUT
