@@ -5,6 +5,8 @@ metadata:
   namespace: eshop
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: ordering-api

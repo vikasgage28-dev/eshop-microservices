@@ -5,6 +5,8 @@ metadata:
   namespace: eshop
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: customer-api
@@ -19,7 +21,10 @@ spec:
         - name: customer-api
           image: acreshop2026.azurecr.io/eshop/customer-api:latest
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 5011
+            - name: grpc
+              containerPort: 5022
           envFrom:
             - configMapRef:
                 name: customer-api-config
@@ -33,12 +38,12 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 5011
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 5011
             initialDelaySeconds: 15
             periodSeconds: 10
