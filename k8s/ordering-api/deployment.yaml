@@ -25,6 +25,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: ordering-api-config
+          volumeMounts:
+            - name: pem-keys
+              mountPath: /app/public.pem
+              subPath: public.pem
           resources:
             requests:
               memory: "128Mi"
@@ -44,3 +48,7 @@ spec:
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
+      volumes:
+        - name: pem-keys
+          secret:
+            secretName: identity-pem-keys

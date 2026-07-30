@@ -78,6 +78,11 @@ Deferred (do later — not blocking):
 Philosophy:
 → API Gateway owns auth validation — services trust the gateway (correct microservice pattern)
 → Individual services do NOT add [Authorize] — gateway handles it (like Netflix, Uber)
+   ⚠️ REVERSED in Phase 15 Stage 8 Phase 5 — see "Auth decision reversal" note below.
+      The pattern only holds when services are NOT directly reachable. Once NGINX
+      Ingress exposed them on a public IP with no JWT-validating gateway in front,
+      /api/customers and /api/orders were world-readable. Customer.API and
+      Ordering.API now validate RS256 JWTs themselves and carry [Authorize].
 → Each auth mode implemented in Identity.API + React frontend — end-to-end working demo
 → No Azure needed until items 20-22 — months of learning first!
 
@@ -195,6 +200,7 @@ Verification: paste token at jwt.io → header shows "alg": "RS256" (was "HS256"
 
 Key architecture decisions:
 → Services stay open (no [Authorize]) — API Gateway validates once at perimeter
+   ⚠️ REVERSED — Phase 15 Stage 8 Phase 5. See "Auth decision reversal" below.
 → public.pem can be shared with API Gateway / other services safely
 → generate-keys.ps1 (in .gitignore) — regenerate keys anytime with: pwsh -File generate-keys.ps1
 
@@ -491,6 +497,7 @@ Key Architecture Decisions — Phase 12.7:
 → Internal service auth: NONE intentionally — API Gateway (JWT) + Istio mTLS in Phase 14
 
 Why unauthenticated ordering is intentional (NOT a bug):
+⚠️ NO LONGER TRUE — reversed in Phase 15 Stage 8 Phase 5. See "Auth decision reversal" below.
 → Current state: services are exposed directly — learning phase, no gateway yet
 → External JWT layer = API Gateway validates once, services trust gateway
 → Internal mTLS = Istio proves service identity cryptographically (Phase 14/AKS)
@@ -2094,6 +2101,57 @@ LEARN: PowerShell aliases `curl` to Invoke-WebRequest (different flag syntax) �
        Invoke-RestMethod or curl.exe explicitly when testing REST APIs from PowerShell
 LEARN: RS256 JWT end-to-end proof = confirm PEM mount + clean logs + successful login
        returning a correctly-signed token with expected claims/roles
+LEARN: Azure LB health probes must get a 2xx — an HTTP probe on "/" against NGINX Ingress
+       returns 404 (no rule for "/"), so Azure silently removes the node from rotation and
+       the public IP refuses TCP entirely. Use a TCP probe for Ingress controllers:
+       service.beta.kubernetes.io/port_80_health-probe_protocol=tcp
+LEARN: A failing LB probe presents as "unable to connect", NOT as an HTTP error — always
+       check Test-NetConnection before debugging Ingress rules
+LEARN: spec.ingressClassName replaces the deprecated kubernetes.io/ingress.class annotation
+LEARN: Ingress path prefixes must match the controllers' real routes — Ingress does not
+       rewrite by default, so /api/catalog never reaches a controller mapped to /api/products
+LEARN: Secret subPath mount — mounts ONE file into a directory without wiping the rest of it
+LEARN: "Gateway owns auth" only holds if services are unreachable from outside. Publishing
+       them through an Ingress that does no token validation = zero auth. See the auth
+       decision reversal note below.
+```
+
+```
+AUTH DECISION REVERSAL — Stage 8 Phase 5 (supersedes the Phase 12.6/12.7/14 note that
+"services stay open, the gateway owns auth")
+
+What we originally documented:
+→ API Gateway validates the JWT once at the perimeter; Catalog/Customer/Ordering carry no
+  [Authorize]; internal service identity would later come from Istio mTLS (Stage 12).
+→ Reasoning cited Netflix/Uber — real and correct, but conditional.
+
+Why it broke:
+→ Stage 8 Phase 5 put NGINX Ingress in front of the services on a public IP.
+→ NGINX Ingress is a ROUTER, not an authenticating gateway — it validates nothing by default.
+→ There is no APIM in front yet (that is optional Stage 8b), and no NetworkPolicy restricting
+  pod ingress.
+→ Result: GET http://<public-ip>/api/customers and /api/orders both returned 200 with no
+  token — customer PII and order history readable by anyone on the internet.
+
+The missing precondition:
+→ The gateway-owns-auth pattern assumes services are NOT directly addressable (private
+  subnet / mesh-only / mTLS-enforced). Without that, it degrades to no auth at all.
+
+What we changed:
+→ Customer.API + Ordering.API now do their own RS256 validation, mirroring Identity.API:
+  AddAuthentication(JwtBearerDefaults).AddJwtBearer(...) reading public.pem →
+  RsaSecurityKey; Issuer/Audience/PublicKeyPath added to appsettings.json as JwtSettings.
+→ app.UseAuthentication() + app.UseAuthorization() added (order matters — both before
+  MapControllers, authentication first).
+→ [Authorize] on CustomersController and OrdersController.
+→ public.pem mounted from the existing identity-pem-keys Secret via subPath in
+  k8s/customer-api/deployment.yaml and k8s/ordering-api/deployment.yaml.
+→ Only Identity.API holds private.pem — it alone signs. Everyone else verifies. That is
+  precisely why RS256 was chosen in Item 3.
+
+Standing principle going forward:
+→ Defense in depth: even once APIM (8b) or Istio mTLS (Stage 12) lands, keep per-service
+  validation. Gateway auth and service auth are complementary, not alternatives.
 ```
 
 | # | What | Cost | Status |
@@ -2119,8 +2177,9 @@ LEARN: RS256 JWT end-to-end proof = confirm PEM mount + clean logs + successful 
 | 15.8.11 | APPLY all microservice YAML — kubectl apply -f k8s/ | 🟢 Free | ✅ Applied — all objects created |
 | 15.8.12 | VERIFY all pods running — kubectl get pods -n eshop | 🟢 Free | ✅ All 4 pods Running, 0 restarts. Fixed two issues: (1) ACR had zero images → fixed by merging k8s/ changes develop→main; (2) 3/4 services stayed on stale images (CrashLoopBackOff, /health 404) because CI path filters didn't cover shared ServiceDefaults/Contracts → fixed `build-and-push.yml` filters, rebuilt all 4 images. |
 | 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ✅ SQL Server via SSMS (127.0.0.1,14330) + identity-api login verified end-to-end (RS256 JWT issued for admin@eshop.com) |
-| 15.8.14 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
-| 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ⏳ |
+| 15.8.14 | INSTALL NGINX Ingress Controller (Helm) | 🟢 Free | ✅ winget Helm install broken → manual binary + Machine-scope PATH |
+| 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ✅ Live on 4.187.191.129, all 6 paths verified publicly. Three fixes: catalog route prefixes corrected, spec.ingressClassName: nginx, and Azure LB health probe HTTP→TCP (the actual blocker — Incident 4) |
+| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Code done, deploy pending — closes the public-read gap found during 15.8.15 testing |
 | 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
 | 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |

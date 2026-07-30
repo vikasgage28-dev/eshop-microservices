@@ -1,11 +1,14 @@
 using Azure.Identity;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Ordering.API.Middleware;
 using Ordering.Core.Behaviors;
 using Ordering.Infrastructure.Data;
 using Ordering.Infrastructure.Extensions;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +35,32 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()));
+
+// ── JWT Authentication — RS256 (verify with public key only) ────────────────
+var jwtSettings   = builder.Configuration.GetSection("JwtSettings");
+var publicKeyPath = jwtSettings["PublicKeyPath"] ?? throw new InvalidOperationException("JwtSettings:PublicKeyPath not configured.");
+var publicKeyPem  = File.ReadAllText(publicKeyPath);
+var rsaPublic     = RSA.Create();
+rsaPublic.ImportFromPem(publicKeyPem);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateLifetime         = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer              = jwtSettings["Issuer"],
+        ValidAudience            = jwtSettings["Audience"],
+        IssuerSigningKey         = new RsaSecurityKey(rsaPublic)
+    };
+});
 
 // ── Services ────────────────────────────────────────────────────────────────
 // JsonStringEnumConverter → Status serializes as "Pending" not 0
@@ -90,9 +119,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ordering API v1"));
 }
 
-// Note: UseAuthorization() removed — no [Authorize] attributes here.
-// Internal service-to-service calls don't use JWT.
-// In AKS (Phase 14), Istio mTLS handles internal auth.
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
