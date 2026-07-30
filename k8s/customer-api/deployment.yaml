@@ -28,6 +28,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: customer-api-config
+          volumeMounts:
+            - name: pem-keys
+              mountPath: /app/public.pem
+              subPath: public.pem
           resources:
             requests:
               memory: "128Mi"
@@ -47,3 +51,7 @@ spec:
               port: 5011
             initialDelaySeconds: 15
             periodSeconds: 10
+      volumes:
+        - name: pem-keys
+          secret:
+            secretName: identity-pem-keys

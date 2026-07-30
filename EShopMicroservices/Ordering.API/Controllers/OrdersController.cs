@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ordering.API.DTOs;
 using Ordering.Core.Entities;
@@ -11,6 +12,7 @@ using Ordering.Core.Features.Orders.Queries.GetOrdersByCustomer;
 namespace Ordering.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class OrdersController : ControllerBase
     {

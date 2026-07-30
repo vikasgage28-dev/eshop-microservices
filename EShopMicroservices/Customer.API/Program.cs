@@ -6,8 +6,11 @@ using Customer.Infrastructure.Data;
 using Customer.Infrastructure.Extensions;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +61,35 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
+// ── JWT Authentication — RS256 (verify with public key only) ────────────────
+// Tokens are issued by Identity.API (signed with private.pem).
+// This service only needs the public key to verify signatures — the private
+// key never leaves Identity.API.
+var jwtSettings   = builder.Configuration.GetSection("JwtSettings");
+var publicKeyPath = jwtSettings["PublicKeyPath"] ?? throw new InvalidOperationException("JwtSettings:PublicKeyPath not configured.");
+var publicKeyPem  = File.ReadAllText(publicKeyPath);
+var rsaPublic     = RSA.Create();
+rsaPublic.ImportFromPem(publicKeyPem);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateLifetime         = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer              = jwtSettings["Issuer"],
+        ValidAudience            = jwtSettings["Audience"],
+        IssuerSigningKey         = new RsaSecurityKey(rsaPublic)
+    };
+});
+
 // ── Services ────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
@@ -105,6 +137,8 @@ using (var scope = app.Services.CreateScope())
 // ── Middleware pipeline ──────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("ReactFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {

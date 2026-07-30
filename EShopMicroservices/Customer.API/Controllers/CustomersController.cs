@@ -9,11 +9,13 @@ using Customer.Core.Features.Customers.Queries.GetAllCustomers;
 using Customer.Core.Features.Customers.Queries.GetCustomerByEmail;
 using Customer.Core.Features.Customers.Queries.GetCustomerById;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class CustomersController : ControllerBase
     {

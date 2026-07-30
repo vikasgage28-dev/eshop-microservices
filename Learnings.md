@@ -78,6 +78,11 @@ Deferred (do later — not blocking):
 Philosophy:
 → API Gateway owns auth validation — services trust the gateway (correct microservice pattern)
 → Individual services do NOT add [Authorize] — gateway handles it (like Netflix, Uber)
+   ⚠️ REVERSED in Phase 15 Stage 8 Phase 5 — see "Auth decision reversal" note below.
+      The pattern only holds when services are NOT directly reachable. Once NGINX
+      Ingress exposed them on a public IP with no JWT-validating gateway in front,
+      /api/customers and /api/orders were world-readable. Customer.API and
+      Ordering.API now validate RS256 JWTs themselves and carry [Authorize].
 → Each auth mode implemented in Identity.API + React frontend — end-to-end working demo
 → No Azure needed until items 20-22 — months of learning first!
 
@@ -195,6 +200,7 @@ Verification: paste token at jwt.io → header shows "alg": "RS256" (was "HS256"
 
 Key architecture decisions:
 → Services stay open (no [Authorize]) — API Gateway validates once at perimeter
+   ⚠️ REVERSED — Phase 15 Stage 8 Phase 5. See "Auth decision reversal" below.
 → public.pem can be shared with API Gateway / other services safely
 → generate-keys.ps1 (in .gitignore) — regenerate keys anytime with: pwsh -File generate-keys.ps1
 
@@ -491,6 +497,7 @@ Key Architecture Decisions — Phase 12.7:
 → Internal service auth: NONE intentionally — API Gateway (JWT) + Istio mTLS in Phase 14
 
 Why unauthenticated ordering is intentional (NOT a bug):
+⚠️ NO LONGER TRUE — reversed in Phase 15 Stage 8 Phase 5. See "Auth decision reversal" below.
 → Current state: services are exposed directly — learning phase, no gateway yet
 → External JWT layer = API Gateway validates once, services trust gateway
 → Internal mTLS = Istio proves service identity cryptographically (Phase 14/AKS)
@@ -1978,18 +1985,93 @@ WORKLOAD IDENTITY SETUP (passwordless Azure auth for pods — no secrets/keys!):
   Why this matters: no ClientSecret, no ConnectionString-with-key anywhere —
   the only "identity" is Kubernetes' own ServiceAccount token, federated to Azure.
 
-PROBLEM — ErrImagePull (all 4 microservice pods, current blocker):
+PROBLEM — ErrImagePull (all 4 microservice pods) — ✅ RESOLVED:
   → kubectl apply succeeded for all deployments/services/configmaps
   → But pods stuck in ErrImagePull / ImagePullBackOff
   → Root cause: `az acr repository list --name acreshop2026` → EMPTY.
     Dockerfiles were written long ago but images were never built + pushed.
-  → Fix (not yet done): commit k8s/ changes on develop → push → PR to main →
-    merge → build-and-push.yml (GitHub Actions) builds all 4 images and
-    pushes to ACR tagged :latest.
-  → Separate thing to verify once images exist: AKS's own Kubelet identity
-    needs the AcrPull RBAC role on acreshop2026 to be allowed to pull at all
-    (this is different from Workload Identity — that's for app secrets,
-    this is for the node/kubelet pulling container images).
+  → Fix: committed k8s/ changes on develop → pushed → PR develop→main →
+    merged → build-and-push.yml (GitHub Actions) built all 4 images and
+    pushed to ACR tagged :latest.
+  → AKS Kubelet identity's AcrPull RBAC role on acreshop2026 confirmed
+    working — images pulled successfully once pushed, no further action
+    needed (role was already attached from an earlier stage).
+
+PROBLEM — CrashLoopBackOff on 3/4 services after images existed — ✅ RESOLVED:
+  → After ACR had images, catalog-api came up fine, but customer-api,
+    identity-api, and ordering-api went into CrashLoopBackOff.
+  → `kubectl describe pod` showed liveness/readiness probes failing:
+    GET /health → 404 Not Found (probe kept restarting the container).
+  → Root cause: a production fix earlier mapped health-check endpoints
+    outside the `IsDevelopment()` block (needed for them to respond in
+    AKS's Production environment). That fix lived in shared
+    `ServiceDefaults` project code, not in any single service's folder.
+  → `build-and-push.yml`'s GitHub Actions path filters were scoped per
+    service, e.g. paths only matched `EShopMicroservices/Catalog.**` for
+    the catalog job. None of the filters included the shared
+    `ServiceDefaults`/`Contracts` projects that ALL 4 services reference.
+  → Net effect: when the health-check fix was committed, only catalog-api
+    (which happened to also have its own folder touched in the same
+    commit) got rebuilt. The other 3 services silently kept running a
+    STALE image that still 404'd on /health — invisible in `git diff`
+    review because the workflow file itself looked "correct" at a glance.
+  → Fix: updated `.github/workflows/build-and-push.yml` so every service's
+    `paths` filter also includes
+    `EShopMicroservices/EShopMicroservices.ServiceDefaults/**` and
+    `EShopMicroservices/EShop.Contracts/**` (regex-OR'd with its own
+    folder). Merged develop→main → all 4 matrix jobs rebuilt → verified
+    all 4 images tagged with the same fresh commit SHA → `kubectl rollout
+    restart` → all pods Running, 0 restarts.
+  → Lesson: any CI path-filter/monorepo build trigger MUST explicitly
+    account for shared/common projects, not just each service's own path —
+    otherwise a shared-code fix can pass code review and CI green, yet
+    never actually reach the services that depend on it.
+
+PROBLEM — SQL Server unreachable from SSMS via kubectl port-forward — ✅ RESOLVED:
+  → `kubectl port-forward svc/sql-server 14330:1433` showed "Forwarding
+    from 127.0.0.1:14330" and `Test-NetConnection localhost -Port 14330`
+    returned TcpTestSucceeded: True — raw TCP tunnel was alive.
+  → SSMS still failed: first with error 1225 (connection refused) — cause
+    was the port-forward terminal having been closed/returned to a normal
+    prompt (it's a blocking foreground process; closing/interrupting it
+    kills the tunnel even though it looked "done").
+  → After restarting the tunnel, SSMS failed differently: error 258 ("wait
+    operation timed out") at the TCP provider level — this is a known
+    `kubectl port-forward` + SQL Server TDS/TLS handshake flakiness; the
+    login/encryption negotiation doesn't always survive the proxy well,
+    even though a raw TCP connect succeeds.
+  → Fix: connect using `127.0.0.1,14330` explicitly (not `localhost` —
+    IPv4 loopback resolved more reliably than the localhost hostname over
+    the tunnel), leave Database Name as `<default>` (a stale
+    autocompleted DB name from an unrelated project caused extra
+    failures), and enable "Trust Server Certificate". With those three
+    changes SSMS connected successfully.
+  → Reliable fallback if port-forward + SSMS ever misbehaves again:
+    `kubectl exec -it <sql-pod> -- /opt/mssql-tools18/bin/sqlcmd -S
+    localhost -U sa -P "<password>" -C` — runs entirely inside the
+    cluster, bypasses the tunnel and TDS-over-proxy issues entirely.
+
+PROBLEM — Identity API RS256 JWT chain — ✅ VERIFIED END-TO-END:
+  → Confirmed `/app/private.pem` + `/app/public.pem` mounted correctly via
+    the `identity-pem-keys` K8s Secret + volume mount in identity-api's
+    deployment.yaml.
+  → `kubectl logs` showed clean startup: EF migrations applied, DB seeder
+    ran (IdentityDataSeeder.cs), no RSA/PEM key-loading errors.
+  → Seeded credentials confirmed from IdentityDataSeeder.cs:
+    admin@eshop.com / Admin@12345 (Admin role),
+    alice@eshop.com / Customer@12345 (Customer role).
+  → Port-forwarded identity-api (`kubectl port-forward svc/identity-api
+    8082:80`) and called `POST /api/auth/login` via PowerShell's
+    `Invoke-RestMethod` (plain `curl -H ...` fails in PowerShell because
+    `curl` is aliased to `Invoke-WebRequest`, which uses different flag
+    syntax — use `Invoke-RestMethod` or `curl.exe` explicitly instead).
+  → Got back a valid RS256-signed JWT + refresh token + correct Admin
+    role claim — proves the private key signs correctly and the full
+    Identity.API → Identity.Infrastructure → SQL pod chain works in AKS.
+  → Remaining/minor: hitting a protected endpoint (e.g. GET /api/auth/me)
+    with the bearer token would additionally prove the PUBLIC key side of
+    validation — not yet done, low priority since the key pair is a single
+    matched PEM file set mounted from the same Secret.
 ```
 
 ```
@@ -2010,6 +2092,66 @@ LEARN: HPA — scale by CPU/memory (KEDA handles event-driven scaling in Stage 1
 LEARN: Azure Static Web Apps — free React hosting with CI/CD
 LEARN: kubectl port-forward — test pods locally without creating expensive LoadBalancer
 LEARN: az aks start/stop — deallocates node VMs (saves compute, disk still charged if exists)
+LEARN: CI path filters in a monorepo must include shared/common projects, not just each
+       service's own folder — otherwise shared-code fixes silently skip rebuilding dependents
+LEARN: kubectl port-forward can tunnel raw TCP fine but still choke on SQL Server's TDS/TLS
+       handshake — prefer 127.0.0.1 over localhost, Trust Server Certificate, and keep
+       `kubectl exec` + sqlcmd as a guaranteed fallback
+LEARN: PowerShell aliases `curl` to Invoke-WebRequest (different flag syntax) — use
+       Invoke-RestMethod or curl.exe explicitly when testing REST APIs from PowerShell
+LEARN: RS256 JWT end-to-end proof = confirm PEM mount + clean logs + successful login
+       returning a correctly-signed token with expected claims/roles
+LEARN: Azure LB health probes must get a 2xx — an HTTP probe on "/" against NGINX Ingress
+       returns 404 (no rule for "/"), so Azure silently removes the node from rotation and
+       the public IP refuses TCP entirely. Use a TCP probe for Ingress controllers:
+       service.beta.kubernetes.io/port_80_health-probe_protocol=tcp
+LEARN: A failing LB probe presents as "unable to connect", NOT as an HTTP error — always
+       check Test-NetConnection before debugging Ingress rules
+LEARN: spec.ingressClassName replaces the deprecated kubernetes.io/ingress.class annotation
+LEARN: Ingress path prefixes must match the controllers' real routes — Ingress does not
+       rewrite by default, so /api/catalog never reaches a controller mapped to /api/products
+LEARN: Secret subPath mount — mounts ONE file into a directory without wiping the rest of it
+LEARN: "Gateway owns auth" only holds if services are unreachable from outside. Publishing
+       them through an Ingress that does no token validation = zero auth. See the auth
+       decision reversal note below.
+```
+
+```
+AUTH DECISION REVERSAL — Stage 8 Phase 5 (supersedes the Phase 12.6/12.7/14 note that
+"services stay open, the gateway owns auth")
+
+What we originally documented:
+→ API Gateway validates the JWT once at the perimeter; Catalog/Customer/Ordering carry no
+  [Authorize]; internal service identity would later come from Istio mTLS (Stage 12).
+→ Reasoning cited Netflix/Uber — real and correct, but conditional.
+
+Why it broke:
+→ Stage 8 Phase 5 put NGINX Ingress in front of the services on a public IP.
+→ NGINX Ingress is a ROUTER, not an authenticating gateway — it validates nothing by default.
+→ There is no APIM in front yet (that is optional Stage 8b), and no NetworkPolicy restricting
+  pod ingress.
+→ Result: GET http://<public-ip>/api/customers and /api/orders both returned 200 with no
+  token — customer PII and order history readable by anyone on the internet.
+
+The missing precondition:
+→ The gateway-owns-auth pattern assumes services are NOT directly addressable (private
+  subnet / mesh-only / mTLS-enforced). Without that, it degrades to no auth at all.
+
+What we changed:
+→ Customer.API + Ordering.API now do their own RS256 validation, mirroring Identity.API:
+  AddAuthentication(JwtBearerDefaults).AddJwtBearer(...) reading public.pem →
+  RsaSecurityKey; Issuer/Audience/PublicKeyPath added to appsettings.json as JwtSettings.
+→ app.UseAuthentication() + app.UseAuthorization() added (order matters — both before
+  MapControllers, authentication first).
+→ [Authorize] on CustomersController and OrdersController.
+→ public.pem mounted from the existing identity-pem-keys Secret via subPath in
+  k8s/customer-api/deployment.yaml and k8s/ordering-api/deployment.yaml.
+→ Only Identity.API holds private.pem — it alone signs. Everyone else verifies. That is
+  precisely why RS256 was chosen in Item 3.
+
+Standing principle going forward:
+→ Defense in depth: even once APIM (8b) or Istio mTLS (Stage 12) lands, keep per-service
+  validation. Gateway auth and service auth are complementary, not alternatives.
 ```
 
 | # | What | Cost | Status |
@@ -2030,17 +2172,18 @@ LEARN: az aks start/stop — deallocates node VMs (saves compute, disk still cha
 | 15.8.8f | WIRE eshop-sa + workload identity label into all 4 deployment.yaml | 🟢 Free | ✅ |
 | 15.8.8g | ADD AppConfig__Endpoint to all 4 configmap.yaml | 🟢 Free | ✅ |
 | 15.8.8h | CREATE identity-pem-keys Secret + mount into identity-api (RS256 JWT) | 🟢 Free | ✅ |
-| 15.8.9 | ASSIGN AcrPull role — AKS Kubelet Identity → acreshop2026 | 🟢 Free | ⏳ NOT YET CONFIRMED |
+| 15.8.9 | ASSIGN AcrPull role — AKS Kubelet Identity → acreshop2026 | 🟢 Free | ✅ Confirmed (images pull successfully) |
 | 15.8.10 | INSTALL CSI Key Vault Driver — pods read KV secrets as mounted files | 🟢 Free | ⏳ (superseded by Workload Identity + App Config approach) |
 | 15.8.11 | APPLY all microservice YAML — kubectl apply -f k8s/ | 🟢 Free | ✅ Applied — all objects created |
-| 15.8.12 | VERIFY all pods running — kubectl get pods -n eshop | 🟢 Free | ❌ BLOCKED — `ErrImagePull` on all 4 pods. ACR (`acreshop2026`) has zero images pushed (confirmed via `az acr repository list`). Fix: commit k8s/ changes → PR develop→main → merge → `build-and-push.yml` builds+pushes images. |
-| 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ⏳ |
-| 15.8.14 | INSTALL NGINX Ingress Controller | 🟢 Free | ⏳ |
-| 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ⏳ |
+| 15.8.12 | VERIFY all pods running — kubectl get pods -n eshop | 🟢 Free | ✅ All 4 pods Running, 0 restarts. Fixed two issues: (1) ACR had zero images → fixed by merging k8s/ changes develop→main; (2) 3/4 services stayed on stale images (CrashLoopBackOff, /health 404) because CI path filters didn't cover shared ServiceDefaults/Contracts → fixed `build-and-push.yml` filters, rebuilt all 4 images. |
+| 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ✅ SQL Server via SSMS (127.0.0.1,14330) + identity-api login verified end-to-end (RS256 JWT issued for admin@eshop.com) |
+| 15.8.14 | INSTALL NGINX Ingress Controller (Helm) | 🟢 Free | ✅ winget Helm install broken → manual binary + Machine-scope PATH |
+| 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ✅ Live on 4.187.191.129, all 6 paths verified publicly. Three fixes: catalog route prefixes corrected, spec.ingressClassName: nginx, and Azure LB health probe HTTP→TCP (the actual blocker — Incident 4) |
+| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Code done, deploy pending — closes the public-read gap found during 15.8.15 testing |
 | 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
 | 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |
-| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped mid-troubleshooting to save cost |
+| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped again after verifying login end-to-end |
 
 ---
 
