@@ -2152,6 +2152,25 @@ What we changed:
 Standing principle going forward:
 → Defense in depth: even once APIM (8b) or Istio mTLS (Stage 12) lands, keep per-service
   validation. Gateway auth and service auth are complementary, not alternatives.
+
+Verified in-cluster (public IP 4.187.191.129):
+→ no token  → /api/customers, /api/orders → 401  (both were 200 before the fix)
+→ valid token from admin@eshop.com → /api/customers → 200
+→ Both together are the real proof. A 401 alone can just mean auth is misconfigured and
+  rejecting everything; you need the 200-with-token to show validation actually succeeds.
+
+LEARN: this is RS256's payoff made concrete — Identity.API signs with private.pem, and
+       Customer/Ordering verify with public.pem alone. No shared secret, and no network
+       callback to Identity on each request. With HS256 every service would need the one
+       secret that also mints tokens, so any compromised service could forge them.
+LEARN: az aks stop deallocates the node mid-flight, so pods can be left as Error /
+       ContainerStatusUnknown on restart. The ReplicaSet schedules healthy replacements
+       (same RS hash, new pod suffix), but K8s does not aggressively GC terminated pods
+       (default threshold 12,500) — clean up with:
+       kubectl delete pods -n eshop --field-selector status.phase=Failed
+LEARN: verify a JWT-at-startup change by reading pod logs first — services that load a PEM
+       during startup fail there before any request arrives, so a bad mount shows as
+       CrashLoopBackOff, not as a 500
 ```
 
 | # | What | Cost | Status |
@@ -2179,7 +2198,7 @@ Standing principle going forward:
 | 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ✅ SQL Server via SSMS (127.0.0.1,14330) + identity-api login verified end-to-end (RS256 JWT issued for admin@eshop.com) |
 | 15.8.14 | INSTALL NGINX Ingress Controller (Helm) | 🟢 Free | ✅ winget Helm install broken → manual binary + Machine-scope PATH |
 | 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ✅ Live on 4.187.191.129, all 6 paths verified publicly. Three fixes: catalog route prefixes corrected, spec.ingressClassName: nginx, and Azure LB health probe HTTP→TCP (the actual blocker — Incident 4) |
-| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Code done, deploy pending — closes the public-read gap found during 15.8.15 testing |
+| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Deployed + verified — 401 without token, 200 with valid bearer token. Closes the public-read gap found during 15.8.15 testing |
 | 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
 | 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |

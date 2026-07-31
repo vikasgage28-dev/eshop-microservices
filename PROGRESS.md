@@ -258,7 +258,7 @@ Phase 5 — Ingress                                                           �
                 service.beta.kubernetes.io/port_80_health-probe_protocol=tcp
                 (and the same for port_443). Full post-mortem = Incident 4
                 in KUBERNETES_AKS_MASTER_LOG.md.
-  15.8.13a → Security gap found + fixed: JWT auth on customer/ordering      ✅ code done, deploy pending
+  15.8.13a → Security gap found + fixed: JWT auth on customer/ordering      ✅ DEPLOYED + VERIFIED
             Public testing revealed /api/customers and /api/orders returned
             200 with NO auth — customer PII and order data world-readable.
             Root cause: the documented "gateway owns auth" pattern assumed a
@@ -270,6 +270,16 @@ Phase 5 — Ingress                                                           �
             CustomersController and OrdersController + public.pem mounted
             from the identity-pem-keys Secret via subPath in both
             deployment.yaml files.
+            VERIFIED in-cluster: both pods start clean (no RSA/PEM errors,
+            EF migrations applied, Kestrel listening) → /api/customers and
+            /api/orders return 401 with no token, and 200 with a valid
+            bearer token from admin@eshop.com. Confirms the full RS256
+            chain across service boundaries: Identity.API signs with
+            private.pem, Customer/Ordering independently verify with
+            public.pem — no shared secret, no callback to Identity.
+            Also cleaned up stale Error/ContainerStatusUnknown pods left
+            behind by the earlier az aks stop (node deallocated mid-flight;
+            ReplicaSets had already scheduled healthy replacements).
 
 Phase 6 — Final
   15.8.14 → Add HPA                                                        ⏳
@@ -290,10 +300,10 @@ Phase 6 — Final
 - **Seeded credentials (from `IdentityDataSeeder.cs`):** Admin → `admin@eshop.com` / `Admin@12345`; Customer → `alice@eshop.com` / `Customer@12345`.
 - **AKS cluster STOPPED again** (`az aks stop`) after verification, to save cost during the break. Resume with `az aks start --name aks-eshop --resource-group rg-eshop-microservices`.
 - **Phase 5 (Ingress) ✅ complete:** NGINX Ingress Controller live on public IP `4.187.191.129`, path-based routing to all 4 services, all 6 paths verified from the public internet. Blocker was the Azure LB HTTP health probe on `/` returning 404 → node dropped from rotation → traffic silently blackholed at TCP level. Fixed with TCP probe annotations on the controller Service (Incident 4 in `KUBERNETES_AKS_MASTER_LOG.md`).
-- **Security gap found + fixed (code committed pending):** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
+- **Security gap found + FIXED + VERIFIED:** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. Deployed and confirmed in-cluster: **401 without a token, 200 with a valid bearer token.** **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
 - **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
 - **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
-- **Next action:** commit + push the JWT auth changes (`develop` → merge to `main`) so `build-and-push.yml` rebuilds `customer-api` + `ordering-api` → `kubectl apply` both deployment.yaml → `kubectl rollout restart` → verify `/api/customers` and `/api/orders` now return **401** without a bearer token and 200 with one. Then persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP), then Phase 6 (HPA, React frontend deploy, end-to-end test).
+- **Next action:** persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP), then Phase 6 — HPA (15.8.14), React frontend to Azure SWA (15.8.15), end-to-end test (15.8.16). `az aks stop` when pausing.
 
 ---
 
