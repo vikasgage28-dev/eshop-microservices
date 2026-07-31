@@ -282,7 +282,26 @@ Phase 5 — Ingress                                                           �
             ReplicaSets had already scheduled healthy replacements).
 
 Phase 6 — Final
-  15.8.14 → Add HPA                                                        ⏳
+  15.8.14 → Add HPA                                                        ✅ VERIFIED (with an important caveat)
+            k8s/catalog-api/hpa.yaml — autoscaling/v2, min 1 / max 3,
+            CPU target 70% (= 70m, since catalog-api requests 100m —
+            HPA scales against the REQUEST, not the limit).
+            metrics-server needed no install: AKS ships it as a managed
+            add-on in kube-system.
+            Load test (busybox pod, 5 parallel wget loops against
+            http://catalog-api/api/products): 2% → 24% → 484% →
+            SuccessfulRescale "New size: 3". Killing the load returned it
+            to 1 after the 300s scale-down stabilization window, stepping
+            3→2→1 at 1 pod/min.
+            ⚠️ CAVEAT — the more valuable finding: only 1 of the 3 pods
+            ever ran. The other two sat Pending with NODE <none>, because
+            the single B2s node (2 vCPU, ~1.6 allocatable) was already
+            full. HPA reported "3 current / 3 desired" — it counts what it
+            asked for, not what the scheduler placed — so it believed it
+            had succeeded while CPU stayed pegged at 484%.
+            HPA scales PODS and assumes capacity exists; Cluster
+            Autoscaler scales NODES. Production needs both. Not enabling
+            CA here — a second node roughly doubles compute spend.
   15.8.15 → Deploy React frontend (Azure SWA)                              ⏳
   15.8.16 → End-to-end test                                                ⏳
   15.8.17 → Stop cluster (az aks stop)                                     ✅ Stopped again after verifying login end-to-end (this session)
@@ -303,7 +322,8 @@ Phase 6 — Final
 - **Security gap found + FIXED + VERIFIED:** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. Deployed and confirmed in-cluster: **401 without a token, 200 with a valid bearer token.** **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
 - **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
 - **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
-- **Next action:** persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP), then Phase 6 — HPA (15.8.14), React frontend to Azure SWA (15.8.15), end-to-end test (15.8.16). `az aks stop` when pausing.
+- **HPA (15.8.14) ✅ verified:** `k8s/catalog-api/hpa.yaml` (autoscaling/v2, 1→3 pods, 70% CPU). Load test drove utilization to **484%** → scaled to 3 → returned to 1 after the 300s stabilization window. **Caveat that matters more than the success:** 2 of the 3 pods stayed `Pending` — the single B2s node had no spare CPU, so scaling changed nothing. HPA scales pods and assumes capacity; **Cluster Autoscaler** scales nodes. Details in `Learnings.md`.
+- **Next action:** (a) remove `replicas: 1` from `k8s/catalog-api/deployment.yaml` — it now conflicts with the HPA (a later `kubectl apply` resets to 1, HPA scales back up, they fight); (b) persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP); then 15.8.15 React frontend to Azure SWA and 15.8.16 end-to-end test. `az aks stop` when pausing.
 
 ---
 
