@@ -1,10 +1,17 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { useAuth0 } from '@auth0/auth0-react'
 import { useAppDispatch } from '@/app/hooks'
 import { setCredentials } from '@/features/auth/authSlice'
 import { authApi } from '@/api/authClient'
 import { Loader2 } from 'lucide-react'
+
+// Auth0 is only available when all three env vars are present (local dev with .env.local).
+const auth0Enabled = !!(
+  import.meta.env.VITE_AUTH0_DOMAIN &&
+  import.meta.env.VITE_AUTH0_CLIENT_ID &&
+  import.meta.env.VITE_AUTH0_CALLBACK_URL
+)
 
 /**
  * Auth0 redirects here after the user logs in.
@@ -19,7 +26,7 @@ import { Loader2 } from 'lucide-react'
  *   5. We store our JWT in Redux — ProtectedRoute now works normally
  *   6. Navigate to /products — same as a regular login ✅
  */
-export default function Auth0CallbackPage() {
+function Auth0CallbackInner() {
   const { isAuthenticated, isLoading, error, getAccessTokenSilently } = useAuth0()
   const navigate   = useNavigate()
   const dispatch   = useAppDispatch()
@@ -70,4 +77,11 @@ export default function Auth0CallbackPage() {
       </div>
     </div>
   )
+}
+
+// Guard: if Auth0 is not configured (production), redirect to login instead of
+// calling useAuth0() without a provider — which would throw React error #527.
+export default function Auth0CallbackPage() {
+  if (!auth0Enabled) return <Navigate to="/login" replace />
+  return <Auth0CallbackInner />
 }

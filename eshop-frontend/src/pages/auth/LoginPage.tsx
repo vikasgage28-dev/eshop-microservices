@@ -5,6 +5,40 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { useAuth0 } from '@auth0/auth0-react'
 
+// Auth0 is only available when all three env vars are present (local dev with .env.local).
+// In production (Azure SWA) these are not set — social login is not yet configured.
+const auth0Enabled = !!(
+  import.meta.env.VITE_AUTH0_DOMAIN &&
+  import.meta.env.VITE_AUTH0_CLIENT_ID &&
+  import.meta.env.VITE_AUTH0_CALLBACK_URL
+)
+
+// Isolated component so useAuth0() is only called when Auth0Provider is in the tree.
+function Auth0LoginButtons() {
+  const { loginWithRedirect } = useAuth0()
+  return (
+    <div className="flex flex-col gap-3">
+      <Button
+        variant="outline"
+        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+        onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2', prompt: 'login' } })}
+      >
+        <img src="https://www.google.com/favicon.ico" className="w-5 h-5" />
+        Continue with Google
+      </Button>
+
+      <Button
+        variant="outline"
+        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+        onClick={() => loginWithRedirect({ authorizationParams: { connection: 'github', prompt: 'login' } })}
+      >
+        <img src="https://github.com/favicon.ico" className="w-5 h-5" />
+        Continue with GitHub
+      </Button>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login, isLoading, error, isAuthenticated, isAdmin, requires2FA, clearError } = useAuth()
@@ -12,7 +46,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
-  const { loginWithRedirect } = useAuth0()
 
   useEffect(() => {
     if (isAuthenticated) navigate(isAdmin ? '/dashboard' : '/products', { replace: true })
@@ -96,33 +129,17 @@ export default function LoginPage() {
             {isLoading ? 'Signing in…' : 'Sign In'}
           </Button>
         </form>
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-sm text-gray-400">or</span>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-
-        {/* Social Login Buttons */}
-        <div className="flex flex-col gap-3">
-          <Button
-            variant="outline"
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
-            onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2', prompt: 'login' } })}
-          >
-            <img src="https://www.google.com/favicon.ico" className="w-5 h-5" />
-            Continue with Google
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
-            onClick={() => loginWithRedirect({ authorizationParams: { connection: 'github', prompt: 'login' } })}
-          >
-            <img src="https://github.com/favicon.ico" className="w-5 h-5" />
-            Continue with GitHub
-          </Button>
-        </div>
+        {/* Social Login — only rendered when Auth0Provider is available (local dev) */}
+        {auth0Enabled && (
+          <>
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-sm text-gray-400">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <Auth0LoginButtons />
+          </>
+        )}
 
         <p className="mt-6 text-center text-sm text-gray-500">
           No account?{' '}
