@@ -124,30 +124,45 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ## 📍 CURRENT PHASE — 15: Cloud Deployment (AKS + Full Production Stack)
 
+> **⚡ REVISED STAGE ORDER — Cost optimisation decision (Aug 2026)**
+> All AKS-dependent stages grouped together so the cluster runs in one continuous block,
+> then stopped permanently until Stage 9 (Container Apps) which uses a different platform.
+> Saves ~₹15,000+ by avoiding repeated cluster start/stop across months.
+> Entra ID + B2C OAuth redirect URIs will point to the Container Apps deployment.
+
+### 🔵 BATCH 1 — AKS (cluster needed — do all together, stop between sessions)
+
 | Stage | Topic | Cost | Status |
 |-------|-------|------|--------|
 | 1 | Dockerize — multi-stage Dockerfiles + docker-compose | 🟢 | ✅ |
 | 2 | Clean Azure slate — rg-eshop-microservices | 🟢 | ✅ |
 | 3 | Data layer — SQL x4 + Cosmos + Storage (blob + queues) | 🟢 | ✅ |
 | 4 | Secrets + central config — Key Vault + App Config | 🟢 | ✅ |
-| 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
+| 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹60/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (~90% — Ingress live, JWT auth added; HPA + frontend remain)** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (~95% — HPA done; React SWA + E2E test remain)** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
-| 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
-| 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
-| 11 | Azure AD B2C — consumer identity | 🟢 | ⏳ |
-| 12 | Istio service mesh — mTLS zero-trust | 🟢 | ⏳ |
-| 13 | Workload Identity + KEDA | 🟢 | ⏳ |
-| 14 | Observability — App Insights + Log Analytics | 🟢 | ⏳ |
-| 15 | Helm charts | 🟢 | ⏳ |
-| 16 | DNS + SSL + Azure Front Door | 🟡 ~₹40/mo | ⏳ |
-| 17 | Azure Load Testing | 🟢 | ⏳ |
-| 18 | GitOps — ArgoCD | 🟢 | ⏳ |
-| 19 | Multi-environment DEV → STAGING → PROD | 🟢 | ⏳ |
+| 8c | Istio service mesh — mTLS zero-trust (MOVED UP from Stage 12) | 🟢 | ⏳ |
+| 8d | KEDA — event-driven autoscaling (queue depth, not just CPU) | 🟢 | ⏳ |
+| 8e | Observability — App Insights + Log Analytics + distributed tracing | 🟢 | ⏳ |
+| 8f | Helm Charts — package + version all microservice deployments | 🟢 | ⏳ |
+| 8g | DNS + SSL + Azure Front Door — HTTPS + custom domain + CDN/WAF | 🟡 ~₹40/mo | ⏳ |
+| 8h | Azure Load Testing — prove HPA + KEDA under real load | 🟢 | ⏳ |
+| 8i | GitOps — ArgoCD (Git is source of truth) | 🟢 | ⏳ |
+| 8j | Multi-environment DEV → STAGING → PROD with approval gates | 🟢 | ⏳ |
 
-> Cost while studying ~₹748/mo (no Azure SQL — SQL runs inside AKS pod!); ~₹500/mo when AKS node stopped (ACR + OS disk only).
+> **AKS cluster STOPPED after 8j. Not restarted until a future advanced stage if needed.**
+> Cost while cluster is running: ~₹748/mo. Cost stopped: ~₹2/day (ACR + disk only).
+
+### 🟣 BATCH 2 — Non-AKS (cluster OFF, ₹0 compute)
+
+| Stage | Topic | Cost | Status |
+|-------|-------|------|--------|
+| 9 | Azure Container Apps — same app, simpler platform, scale-to-zero | 🟢 | ⏳ |
+| 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
+| 11 | Azure AD B2C — consumer identity (OAuth redirect → Container Apps URL) | 🟢 | ⏳ |
+
 > Full per-stage deep-dive notes + completed Stage 1-6 LEARNED logs → `Learnings.md`.
 
 ---
@@ -323,7 +338,8 @@ Phase 6 — Final
 - **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
 - **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
 - **HPA (15.8.14) ✅ verified:** `k8s/catalog-api/hpa.yaml` (autoscaling/v2, 1→3 pods, 70% CPU). Load test drove utilization to **484%** → scaled to 3 → returned to 1 after the 300s stabilization window. **Caveat that matters more than the success:** 2 of the 3 pods stayed `Pending` — the single B2s node had no spare CPU, so scaling changed nothing. HPA scales pods and assumes capacity; **Cluster Autoscaler** scales nodes. Details in `Learnings.md`.
-- **Next action:** (a) remove `replicas: 1` from `k8s/catalog-api/deployment.yaml` — it now conflicts with the HPA (a later `kubectl apply` resets to 1, HPA scales back up, they fight); (b) persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP); then 15.8.15 React frontend to Azure SWA and 15.8.16 end-to-end test. `az aks stop` when pausing.
+- **Revised stage order:** All AKS-dependent stages grouped into one continuous block (8 → 8b → 8c Istio → 8d KEDA → 8e Observability → 8f Helm → 8g DNS/SSL → 8h Load Testing → 8i GitOps → 8j Multi-env), then cluster stops permanently. Container Apps (9), Entra ID (10), B2C (11) follow with ₹0 compute. Saves ~₹15,000+ vs the original interleaved order.
+- **Next action (Stage 8 finish):** (a) remove `replicas: 1` from `k8s/catalog-api/deployment.yaml` — conflicts with HPA; (b) persist TCP health-probe annotations in ingress-nginx Helm values — a plain `helm upgrade` wipes them and re-blackholes the public IP; (c) 15.8.15 React frontend → Azure SWA; (d) 15.8.16 end-to-end test; (e) `az aks stop`.
 
 ---
 
