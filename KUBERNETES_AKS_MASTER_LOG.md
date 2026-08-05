@@ -10,7 +10,8 @@
 **Current status:** Stage 8 (AKS deployment) ≈ 90% complete — cluster, SQL pod, Workload
 Identity, PEM key mounting, all 4 microservices deployed + verified end-to-end, and NGINX
 Ingress live on a public IP with all routes verified over the internet.
-Remaining: HPA, React frontend deploy, final end-to-end test.
+Remaining: React frontend deploy (Azure SWA), final end-to-end test.
+HPA ✅ done — see Phase 6 below.
 
 ---
 
@@ -230,11 +231,30 @@ kubectl/helm as a different account gives `connection refused to localhost:8080`
 anyone with the IP. This is pre-existing (missing `[Authorize]`), not caused by Ingress;
 Ingress simply exposed it. Needs fixing before this stays public.
 
-### Phase 6 — Final ⏳
-- Add HPA: `kubectl autoscale deployment catalog-api -n eshop --cpu-percent=70 --min=1 --max=3`
-- Deploy React frontend → Azure Static Web Apps
-- Full end-to-end test through the Ingress public IP
-- `az aks stop` once verified, to save cost
+### Phase 6 — Final 🔄
+
+**15.8.14 — HPA ✅ DONE**
+
+Manifest: `k8s/catalog-api/hpa.yaml` (autoscaling/v2, min 1 / max 3, CPU target 70%).
+metrics-server required no install — AKS ships it as a managed add-on in `kube-system`.
+
+Load test (busybox pod, 5 parallel `wget` loops → `http://catalog-api/api/products`):
+- Baseline: `2%/70%`, 1 replica
+- Under load: `2% → 24% → 484%` → `SuccessfulRescale "New size: 3"`
+- After load removed: held 3 replicas for the 300s stabilization window, then stepped `3→2→1` at 1 pod/min (rate policy)
+
+⚠️ **Key finding — HPA scaled, but it did NOT help:**
+Two of the three pods stayed `Pending` with `NODE <none>`. The single B2s node (2 vCPU, ~1.6 allocatable) was already full carrying SQL Server + 4 services + ingress-nginx. HPA counts pods it *asked* for, not pods the scheduler placed — it reported `3 current / 3 desired` and believed it had succeeded while the single running pod stayed at 484% CPU.
+
+**HPA scales PODS. Cluster Autoscaler scales NODES. Production needs both.**
+
+Also: `spec.replicas` removed from `catalog-api/deployment.yaml` — once an HPA owns a Deployment, the Deployment must not declare replica count or they fight on every `kubectl apply`.
+
+**15.8.15 — React frontend → Azure Static Web Apps ⏳**
+
+**15.8.16 — End-to-end test ⏳**
+
+**15.8.17 — `az aks stop` ⏳**
 
 ---
 
@@ -560,11 +580,11 @@ plain `Prefix` matches, not regex.
 | Ingress (path-based routing, NGINX) | ✅ | `k8s/ingress.yaml` live on `4.187.191.129`, all 6 paths verified publicly |
 | `ingressClassName` vs. deprecated ingress.class annotation | ✅ | `k8s/ingress.yaml` |
 | Azure LB health probes (HTTP vs. TCP) + LB/NSG diagnostics | ✅ | Battle Log Incident 4 |
-| HPA (Horizontal Pod Autoscaler) | ⏳ | Pending |
-| Helm charts | 🟡 | Consumed a public chart (`ingress-nginx`) + annotation overrides; not yet authored one (Stage 15) |
-| Service mesh (Istio, mTLS) | ⏳ | Pending (Stage 12) |
-| KEDA (event-driven autoscaling) | ⏳ | Pending (Stage 13) |
-| GitOps (ArgoCD) | ⏳ | Pending (Stage 18) |
+| HPA (Horizontal Pod Autoscaler) | ✅ | `k8s/catalog-api/hpa.yaml` — verified scale 1→3 under load; key lesson: HPA + Cluster Autoscaler are different things |
+| Helm charts | 🟡 | Consumed a public chart (`ingress-nginx`) + annotation overrides; not yet authored one (Stage 8f) |
+| Service mesh (Istio, mTLS) | ⏳ | Pending (Stage 8c — moved up, AKS batch) |
+| KEDA (event-driven autoscaling) | ⏳ | Pending (Stage 8d — moved up, AKS batch) |
+| GitOps (ArgoCD) | ⏳ | Pending (Stage 8i — moved up, AKS batch) |
 | Multi-node / multi-AZ HA | ⏳ | Not attempted (cost) |
 | Multi-environment namespaces/clusters | ⏳ | Pending (Stage 19) |
 
@@ -589,14 +609,16 @@ plain `Prefix` matches, not regex.
 | Date | Update |
 |---|---|
 | Initial | File created — documents Stage 8 Phases 1-4 (cluster, SQL pod, Workload Identity, PEM mounting, all 4 services deployed + verified) at ~80% complete. Ingress, HPA, and frontend deploy still pending. |
-| Phase 5 | **Ingress complete (~90%).** NGINX Ingress Controller installed via Helm (manual Helm install — winget broken; PATH set at Machine scope). Public IP `4.187.191.129`. Three fixes needed: corrected catalog route prefixes (`/api/products`, `/api/categories`, `/api/reviews` instead of `/api/catalog`), switched to `spec.ingressClassName: nginx`, and changed the Azure LB health probe from HTTP `/` to TCP (Incident 4 — the actual blocker). All 6 paths verified over the public internet. Surfaced a security gap: `/api/customers` and `/api/orders` are publicly readable with no auth. |
+| Phase 5 | **Ingress complete.** NGINX Ingress Controller installed via Helm (manual Helm install — winget broken; PATH set at Machine scope). Public IP `4.187.191.129`. Three fixes needed: corrected catalog route prefixes, switched to `spec.ingressClassName: nginx`, Azure LB health probe HTTP→TCP (Incident 4 — the actual blocker). All 6 paths verified over the public internet. Security gap found: `/api/customers` and `/api/orders` publicly readable with no auth. |
+| Phase 5 security fix | **JWT auth added to customer-api + ordering-api.** RS256 `[Authorize]` + `public.pem` subPath mount in both deployments. Verified: `401` without token, `200` with valid bearer token. Closes the public-read gap. |
+| Phase 6 (partial) | **HPA done.** `k8s/catalog-api/hpa.yaml` — autoscaling/v2, 1→3 pods, 70% CPU. Verified scale-up to 3 under load (484% utilization). Key finding: 2 of 3 pods stayed `Pending` — single B2s node has no spare capacity. HPA scales pods, Cluster Autoscaler scales nodes. `spec.replicas` removed from deployment. React SWA + E2E test still pending. |
 
-> **Next update trigger:** after HPA + frontend deploy; then a final update marking Stage 8
-> 100% complete.
+> **Next update trigger:** after React SWA deploy + E2E test — final update marking Stage 8 100% complete.
 >
-> **Open follow-ups carried forward:**
-> 1. Add `[Authorize]` to customer/order endpoints — currently public (see Phase 5 finding).
-> 2. Persist the TCP health-probe annotations in Helm values so `helm upgrade` can't wipe
->    them (see Incident 4 persistence caveat).
-> 3. `az aks stop` when done, to save cost — note the LB/public IP survives a stop/start,
->    but re-verify the probe annotations afterwards.
+> **Open follow-ups:**
+> 1. Persist the TCP health-probe annotations in ingress-nginx Helm values so `helm upgrade`
+>    can't wipe them (see Incident 4 persistence caveat).
+> 2. `az aks stop` after Stage 8 closes — cluster not needed again until Stage 8c (Istio).
+> 3. **Revised stage order:** all AKS stages (8b→8j: APIM, Istio, KEDA, Observability, Helm,
+>    DNS/SSL, Load Testing, GitOps, Multi-env) grouped before Container Apps (Stage 9).
+>    Saves ~₹15,000+ vs original interleaved order.

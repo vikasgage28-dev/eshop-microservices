@@ -2152,6 +2152,85 @@ What we changed:
 Standing principle going forward:
 → Defense in depth: even once APIM (8b) or Istio mTLS (Stage 12) lands, keep per-service
   validation. Gateway auth and service auth are complementary, not alternatives.
+
+Verified in-cluster (public IP 4.187.191.129):
+→ no token  → /api/customers, /api/orders → 401  (both were 200 before the fix)
+→ valid token from admin@eshop.com → /api/customers → 200
+→ Both together are the real proof. A 401 alone can just mean auth is misconfigured and
+  rejecting everything; you need the 200-with-token to show validation actually succeeds.
+
+LEARN: this is RS256's payoff made concrete — Identity.API signs with private.pem, and
+       Customer/Ordering verify with public.pem alone. No shared secret, and no network
+       callback to Identity on each request. With HS256 every service would need the one
+       secret that also mints tokens, so any compromised service could forge them.
+LEARN: az aks stop deallocates the node mid-flight, so pods can be left as Error /
+       ContainerStatusUnknown on restart. The ReplicaSet schedules healthy replacements
+       (same RS hash, new pod suffix), but K8s does not aggressively GC terminated pods
+       (default threshold 12,500) — clean up with:
+       kubectl delete pods -n eshop --field-selector status.phase=Failed
+LEARN: verify a JWT-at-startup change by reading pod logs first — services that load a PEM
+       during startup fail there before any request arrives, so a bad mount shows as
+       CrashLoopBackOff, not as a 500
+```
+
+---
+
+#### Stage 8 Phase 6 — HPA (15.8.16) — DONE, with a caveat worth more than the success
+
+```
+WHAT WAS DONE:
+→ k8s/catalog-api/hpa.yaml — autoscaling/v2, min 1 / max 3, CPU target 70%
+→ Declarative manifest (not `kubectl autoscale`) so it lives in git like everything else
+→ metrics-server was ALREADY installed — AKS ships it as a managed add-on in kube-system
+  (differs from minikube/vanilla clusters, where you install it yourself)
+
+THE RUN:
+→ baseline           : cpu 2%/70%, 1 replica
+→ load-gen busybox pod, 5 parallel wget loops against http://catalog-api/api/products
+→ 3% → 24% → 484%   → SuccessfulRescale "New size: 3"
+→ delete load-gen    → 484% → 90% → 2%
+→ scale-down held 5 min, then stepped 3 → 2 → 1 at 1 pod/min
+
+LEARN: HPA scales against the CPU *request*, not the limit. catalog-api requests 100m,
+       so the 70% target = 70m. Requests are therefore the scaling contract — set them
+       wrong and HPA scales at the wrong moment. A pod with no request can't be scaled
+       on CPU utilization at all.
+LEARN: desired = ceil(currentReplicas × currentMetric / targetMetric).
+       At 484% that's ceil(1 × 484/70) = 7 — maxReplicas: 3 capped it. maxReplicas is a
+       real safety net, not a formality.
+LEARN: scale-up and scale-down are deliberately ASYMMETRIC (behavior block):
+       scaleUp   stabilizationWindowSeconds: 0   → react immediately, users are waiting
+       scaleDown stabilizationWindowSeconds: 300 → hold the highest recent recommendation
+       Without the scale-down window a brief traffic dip kills pods needed 20s later,
+       and you flap continuously. HPA says so itself in `describe`:
+       AbleToScale True ScaleDownStabilized "recent recommendations were higher than
+       current one, applying the highest recent recommendation"
+LEARN: metrics LAG. metrics-server scrapes ~15s and reports a windowed average, so after
+       killing load the HPA still read 90% while `kubectl top pods` already showed 3m.
+       `kubectl top` is the raw measurement; HPA's TARGETS is an average of it. When they
+       disagree, believe `top` and wait.
+LEARN: policies throttle the RATE of change too — `Pods: 1 per 60s` on scale-down means
+       3 → 2 → 1 takes two minutes AFTER the 5-minute window, not one jump.
+
+⚠️ THE REAL LESSON — HPA scaled, but it did NOT help:
+→ 3 pods requested, only 1 Running. The other two: Pending, NODE <none>
+→ Cause: single B2s node (2 vCPU, ~1.6 allocatable) already carrying sql-server 250m +
+  4 services × 100m + ingress-nginx/kube-system. No room for two more 100m requests.
+→ `Deployment pods: 3 current / 3 desired` — HPA counts what it ASKED for, not what the
+  scheduler placed. It believes it succeeded.
+→ The 484% never dropped, because no extra capacity ever came online.
+
+LEARN: HPA and Cluster Autoscaler are DIFFERENT things and production needs both.
+       HPA scales PODS and assumes node capacity exists.
+       Cluster Autoscaler watches for Pending pods and adds NODES.
+       With only HPA, an under-provisioned cluster queues pods forever and the autoscaler
+       reports success while serving the same overloaded single replica.
+       (Not enabling CA here — a second node roughly doubles compute spend, and seeing the
+        Pending state is the more valuable outcome for learning.)
+LEARN: once an HPA owns a Deployment, the Deployment must NOT declare spec.replicas.
+       Otherwise `kubectl apply -f deployment.yaml` resets it and HPA scales it back —
+       they fight. HPA writes replica count INTO the Deployment spec, which is also why
+       the count survives `az aks stop` (it's in etcd, not in controller memory).
 ```
 
 | # | What | Cost | Status |
@@ -2179,8 +2258,8 @@ Standing principle going forward:
 | 15.8.13 | TEST services — kubectl port-forward each service | 🟢 Free | ✅ SQL Server via SSMS (127.0.0.1,14330) + identity-api login verified end-to-end (RS256 JWT issued for admin@eshop.com) |
 | 15.8.14 | INSTALL NGINX Ingress Controller (Helm) | 🟢 Free | ✅ winget Helm install broken → manual binary + Machine-scope PATH |
 | 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ✅ Live on 4.187.191.129, all 6 paths verified publicly. Three fixes: catalog route prefixes corrected, spec.ingressClassName: nginx, and Azure LB health probe HTTP→TCP (the actual blocker — Incident 4) |
-| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Code done, deploy pending — closes the public-read gap found during 15.8.15 testing |
-| 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ⏳ |
+| 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Deployed + verified — 401 without token, 200 with valid bearer token. Closes the public-read gap found during 15.8.15 testing |
+| 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ✅ k8s/catalog-api/hpa.yaml (autoscaling/v2). Verified: 2% → 484% under load → scaled 1→3 → back to 1 after the 300s window. Caveat: 2 of 3 pods stayed **Pending** — single B2s node has no spare CPU. HPA scales pods, Cluster Autoscaler scales nodes; you need both |
 | 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
 | 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |
 | 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped again after verifying login end-to-end |

@@ -124,30 +124,45 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ## 📍 CURRENT PHASE — 15: Cloud Deployment (AKS + Full Production Stack)
 
+> **⚡ REVISED STAGE ORDER — Cost optimisation decision (Aug 2026)**
+> All AKS-dependent stages grouped together so the cluster runs in one continuous block,
+> then stopped permanently until Stage 9 (Container Apps) which uses a different platform.
+> Saves ~₹15,000+ by avoiding repeated cluster start/stop across months.
+> Entra ID + B2C OAuth redirect URIs will point to the Container Apps deployment.
+
+### 🔵 BATCH 1 — AKS (cluster needed — do all together, stop between sessions)
+
 | Stage | Topic | Cost | Status |
 |-------|-------|------|--------|
 | 1 | Dockerize — multi-stage Dockerfiles + docker-compose | 🟢 | ✅ |
 | 2 | Clean Azure slate — rg-eshop-microservices | 🟢 | ✅ |
 | 3 | Data layer — SQL x4 + Cosmos + Storage (blob + queues) | 🟢 | ✅ |
 | 4 | Secrets + central config — Key Vault + App Config | 🟢 | ✅ |
-| 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹420/mo | ✅ |
+| 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹60/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (~90% — Ingress live, JWT auth added; HPA + frontend remain)** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (~95% — HPA done; React SWA + E2E test remain)** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
-| 9 | Azure Container Apps (same app, simpler platform) | 🟢 | ⏳ |
-| 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
-| 11 | Azure AD B2C — consumer identity | 🟢 | ⏳ |
-| 12 | Istio service mesh — mTLS zero-trust | 🟢 | ⏳ |
-| 13 | Workload Identity + KEDA | 🟢 | ⏳ |
-| 14 | Observability — App Insights + Log Analytics | 🟢 | ⏳ |
-| 15 | Helm charts | 🟢 | ⏳ |
-| 16 | DNS + SSL + Azure Front Door | 🟡 ~₹40/mo | ⏳ |
-| 17 | Azure Load Testing | 🟢 | ⏳ |
-| 18 | GitOps — ArgoCD | 🟢 | ⏳ |
-| 19 | Multi-environment DEV → STAGING → PROD | 🟢 | ⏳ |
+| 8c | Istio service mesh — mTLS zero-trust (MOVED UP from Stage 12) | 🟢 | ⏳ |
+| 8d | KEDA — event-driven autoscaling (queue depth, not just CPU) | 🟢 | ⏳ |
+| 8e | Observability — App Insights + Log Analytics + distributed tracing | 🟢 | ⏳ |
+| 8f | Helm Charts — package + version all microservice deployments | 🟢 | ⏳ |
+| 8g | DNS + SSL + Azure Front Door — HTTPS + custom domain + CDN/WAF | 🟡 ~₹40/mo | ⏳ |
+| 8h | Azure Load Testing — prove HPA + KEDA under real load | 🟢 | ⏳ |
+| 8i | GitOps — ArgoCD (Git is source of truth) | 🟢 | ⏳ |
+| 8j | Multi-environment DEV → STAGING → PROD with approval gates | 🟢 | ⏳ |
 
-> Cost while studying ~₹748/mo (no Azure SQL — SQL runs inside AKS pod!); ~₹500/mo when AKS node stopped (ACR + OS disk only).
+> **AKS cluster STOPPED after 8j. Not restarted until a future advanced stage if needed.**
+> Cost while cluster is running: ~₹748/mo. Cost stopped: ~₹2/day (ACR + disk only).
+
+### 🟣 BATCH 2 — Non-AKS (cluster OFF, ₹0 compute)
+
+| Stage | Topic | Cost | Status |
+|-------|-------|------|--------|
+| 9 | Azure Container Apps — same app, simpler platform, scale-to-zero | 🟢 | ⏳ |
+| 10 | Entra ID — "Login with Microsoft" for admins | 🟢 | ⏳ |
+| 11 | Azure AD B2C — consumer identity (OAuth redirect → Container Apps URL) | 🟢 | ⏳ |
+
 > Full per-stage deep-dive notes + completed Stage 1-6 LEARNED logs → `Learnings.md`.
 
 ---
@@ -258,7 +273,7 @@ Phase 5 — Ingress                                                           �
                 service.beta.kubernetes.io/port_80_health-probe_protocol=tcp
                 (and the same for port_443). Full post-mortem = Incident 4
                 in KUBERNETES_AKS_MASTER_LOG.md.
-  15.8.13a → Security gap found + fixed: JWT auth on customer/ordering      ✅ code done, deploy pending
+  15.8.13a → Security gap found + fixed: JWT auth on customer/ordering      ✅ DEPLOYED + VERIFIED
             Public testing revealed /api/customers and /api/orders returned
             200 with NO auth — customer PII and order data world-readable.
             Root cause: the documented "gateway owns auth" pattern assumed a
@@ -270,9 +285,38 @@ Phase 5 — Ingress                                                           �
             CustomersController and OrdersController + public.pem mounted
             from the identity-pem-keys Secret via subPath in both
             deployment.yaml files.
+            VERIFIED in-cluster: both pods start clean (no RSA/PEM errors,
+            EF migrations applied, Kestrel listening) → /api/customers and
+            /api/orders return 401 with no token, and 200 with a valid
+            bearer token from admin@eshop.com. Confirms the full RS256
+            chain across service boundaries: Identity.API signs with
+            private.pem, Customer/Ordering independently verify with
+            public.pem — no shared secret, no callback to Identity.
+            Also cleaned up stale Error/ContainerStatusUnknown pods left
+            behind by the earlier az aks stop (node deallocated mid-flight;
+            ReplicaSets had already scheduled healthy replacements).
 
 Phase 6 — Final
-  15.8.14 → Add HPA                                                        ⏳
+  15.8.14 → Add HPA                                                        ✅ VERIFIED (with an important caveat)
+            k8s/catalog-api/hpa.yaml — autoscaling/v2, min 1 / max 3,
+            CPU target 70% (= 70m, since catalog-api requests 100m —
+            HPA scales against the REQUEST, not the limit).
+            metrics-server needed no install: AKS ships it as a managed
+            add-on in kube-system.
+            Load test (busybox pod, 5 parallel wget loops against
+            http://catalog-api/api/products): 2% → 24% → 484% →
+            SuccessfulRescale "New size: 3". Killing the load returned it
+            to 1 after the 300s scale-down stabilization window, stepping
+            3→2→1 at 1 pod/min.
+            ⚠️ CAVEAT — the more valuable finding: only 1 of the 3 pods
+            ever ran. The other two sat Pending with NODE <none>, because
+            the single B2s node (2 vCPU, ~1.6 allocatable) was already
+            full. HPA reported "3 current / 3 desired" — it counts what it
+            asked for, not what the scheduler placed — so it believed it
+            had succeeded while CPU stayed pegged at 484%.
+            HPA scales PODS and assumes capacity exists; Cluster
+            Autoscaler scales NODES. Production needs both. Not enabling
+            CA here — a second node roughly doubles compute spend.
   15.8.15 → Deploy React frontend (Azure SWA)                              ⏳
   15.8.16 → End-to-end test                                                ⏳
   15.8.17 → Stop cluster (az aks stop)                                     ✅ Stopped again after verifying login end-to-end (this session)
@@ -290,10 +334,12 @@ Phase 6 — Final
 - **Seeded credentials (from `IdentityDataSeeder.cs`):** Admin → `admin@eshop.com` / `Admin@12345`; Customer → `alice@eshop.com` / `Customer@12345`.
 - **AKS cluster STOPPED again** (`az aks stop`) after verification, to save cost during the break. Resume with `az aks start --name aks-eshop --resource-group rg-eshop-microservices`.
 - **Phase 5 (Ingress) ✅ complete:** NGINX Ingress Controller live on public IP `4.187.191.129`, path-based routing to all 4 services, all 6 paths verified from the public internet. Blocker was the Azure LB HTTP health probe on `/` returning 404 → node dropped from rotation → traffic silently blackholed at TCP level. Fixed with TCP probe annotations on the controller Service (Incident 4 in `KUBERNETES_AKS_MASTER_LOG.md`).
-- **Security gap found + fixed (code committed pending):** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
+- **Security gap found + FIXED + VERIFIED:** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. Deployed and confirmed in-cluster: **401 without a token, 200 with a valid bearer token.** **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
 - **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
 - **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
-- **Next action:** commit + push the JWT auth changes (`develop` → merge to `main`) so `build-and-push.yml` rebuilds `customer-api` + `ordering-api` → `kubectl apply` both deployment.yaml → `kubectl rollout restart` → verify `/api/customers` and `/api/orders` now return **401** without a bearer token and 200 with one. Then persist the TCP health-probe annotations in the ingress-nginx Helm values (a plain `helm upgrade` will otherwise wipe them and re-blackhole the public IP), then Phase 6 (HPA, React frontend deploy, end-to-end test).
+- **HPA (15.8.14) ✅ verified:** `k8s/catalog-api/hpa.yaml` (autoscaling/v2, 1→3 pods, 70% CPU). Load test drove utilization to **484%** → scaled to 3 → returned to 1 after the 300s stabilization window. **Caveat that matters more than the success:** 2 of the 3 pods stayed `Pending` — the single B2s node had no spare CPU, so scaling changed nothing. HPA scales pods and assumes capacity; **Cluster Autoscaler** scales nodes. Details in `Learnings.md`.
+- **Revised stage order:** All AKS-dependent stages grouped into one continuous block (8 → 8b → 8c Istio → 8d KEDA → 8e Observability → 8f Helm → 8g DNS/SSL → 8h Load Testing → 8i GitOps → 8j Multi-env), then cluster stops permanently. Container Apps (9), Entra ID (10), B2C (11) follow with ₹0 compute. Saves ~₹15,000+ vs the original interleaved order.
+- **Next action (Stage 8 finish):** (a) remove `replicas: 1` from `k8s/catalog-api/deployment.yaml` — conflicts with HPA; (b) persist TCP health-probe annotations in ingress-nginx Helm values — a plain `helm upgrade` wipes them and re-blackholes the public IP; (c) 15.8.15 React frontend → Azure SWA; (d) 15.8.16 end-to-end test; (e) `az aks stop`.
 
 ---
 

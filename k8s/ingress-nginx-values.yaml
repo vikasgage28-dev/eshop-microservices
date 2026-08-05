@@ -1,0 +1,26 @@
+# ingress-nginx Helm values — eshop cluster overrides
+#
+# WHY THIS FILE EXISTS (Incident 4 — Aug 2026):
+# Azure Load Balancer health probes default to HTTP GET "/" on the NGINX
+# controller Service. NGINX returns 404 for "/" (no ingress rule maps to it),
+# so Azure removes the node from rotation → traffic is silently blackholed at
+# TCP level (not an HTTP error — connect itself fails).
+#
+# Fix: switch probes to TCP via Service annotations. These annotations were
+# originally applied live with `kubectl annotate` — meaning a plain
+# `helm upgrade` would regenerate the Service from the chart template,
+# DROP the annotations, and recreate Incident 4.
+#
+# Putting them here makes them part of the Helm release and survive upgrades.
+#
+# To apply:
+#   helm upgrade ingress-nginx ingress-nginx/ingress-nginx \
+#     --namespace ingress-nginx \
+#     --values k8s/ingress-nginx-values.yaml
+
+controller:
+  service:
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+      service.beta.kubernetes.io/port_443_health-probe_protocol: tcp
+      service.beta.kubernetes.io/port_80_health-probe_protocol: tcp

@@ -4,7 +4,8 @@ metadata:
   name: catalog-api
   namespace: eshop
 spec:
-  replicas: 1
+  # replicas intentionally omitted — owned by HPA (k8s/catalog-api/hpa.yaml)
+  # setting it here causes kubectl apply to fight the HPA on every deploy
   strategy:
     type: Recreate
   selector:
