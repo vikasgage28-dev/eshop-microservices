@@ -5,10 +5,20 @@ metadata:
   namespace: eshop
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
+    # cert-manager: automatically issue and renew a Let's Encrypt TLS certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Redirect all HTTP → HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - eshop-api.centralindia.cloudapp.azure.com
+      # cert-manager will create this Secret and populate it with the TLS cert
+      secretName: eshop-tls
   rules:
-    - http:
+    - host: eshop-api.centralindia.cloudapp.azure.com
+      http:
         paths:
           - path: /api/products
             pathType: Prefix

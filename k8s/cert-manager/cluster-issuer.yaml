@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt production — issues real trusted certificates
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: vikasgage28@outlook.com
+    privateKeySecretRef:
+      # Kubernetes Secret where cert-manager stores the ACME account private key
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            # Must match the ingress class used by ingress-nginx
+            ingressClassName: nginx
