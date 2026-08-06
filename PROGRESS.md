@@ -141,7 +141,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 | 5 | Container Registry — ACR (acreshop2026) | 🟡 ~₹60/mo | ✅ |
 | 6 | CI/CD pipelines + Trivy + CodeQL + versioning + path-based filters | 🟢 | ✅ |
 | 7 | **Kubernetes Concepts** (pure learning, no cluster) | 🟢 | ✅ |
-| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | 🔄 **IN PROGRESS (~95% — HPA done; React SWA + E2E test remain)** |
+| 8 | AKS deployment — all 4 services + SQL Server pod in K8s | 🟡 ~₹748/mo | ✅ **COMPLETE** |
 | 8b | APIM — optional enterprise layer in front of NGINX | 🟢 Consumption=FREE | ⏳ |
 | 8c | Istio service mesh — mTLS zero-trust (MOVED UP from Stage 12) | 🟢 | ⏳ |
 | 8d | KEDA — event-driven autoscaling (queue depth, not just CPU) | 🟢 | ⏳ |
@@ -181,7 +181,7 @@ Welcome Email, Ocelot + APIM gateway, App Insights. *(full logs → Learnings.md
 
 ---
 
-### 🔄 Stage 8: AKS Deployment — IN PROGRESS (~90% — all 4 services live + public Ingress + JWT auth; HPA/frontend remaining)
+### ✅ Stage 8: AKS Deployment — COMPLETE
 
 **Stage 8** — AKS cluster provisioning + SQL Server pod + deploy all 4 services live!
 
@@ -317,29 +317,80 @@ Phase 6 — Final
             HPA scales PODS and assumes capacity exists; Cluster
             Autoscaler scales NODES. Production needs both. Not enabling
             CA here — a second node roughly doubles compute spend.
-  15.8.15 → Deploy React frontend (Azure SWA)                              ⏳
-  15.8.16 → End-to-end test                                                ⏳
-  15.8.17 → Stop cluster (az aks stop)                                     ✅ Stopped again after verifying login end-to-end (this session)
+  15.8.15 → Deploy React frontend to Azure Static Web Apps (SWA)          ✅ COMPLETE
+            Created SWA resource (swa-eshop) via Azure CLI. Deployed
+            eshop-frontend from GitHub via the auto-generated workflow
+            .github/workflows/azure-static-web-apps-proud-plant-008c4b200.yml
+            SWA URL: https://proud-plant-008c4b200.7.azurestaticapps.net
+            Key issues resolved:
+            (a) React Auth0 #527 crash — Auth0Provider thrown when config
+                vars missing. Fixed by conditional rendering: only wrap in
+                Auth0Provider when all 3 VITE_AUTH0_* vars are present.
+                useAuth0() calls also extracted into guarded inner
+                components to prevent hook violation errors.
+            (b) React version mismatch — react + react-dom aligned to
+                19.2.7; mismatched peers caused CI build failures.
+            (c) Mixed Content block — SWA served over HTTPS; all calls to
+                http://4.187.191.129 blocked by browser. Solved by
+                adding HTTPS/TLS to AKS Ingress (see 15.8.16 below).
+            (d) Build-time env vars — SWA "Application Settings" are
+                runtime-only and cannot be read by Vite at build time.
+                Industry pattern: inject VITE_* vars into the GitHub
+                Actions workflow env block. Values managed as GitHub
+                Actions repository Variables (Settings → Secrets and
+                variables → Actions → Variables tab) — change URL by
+                editing the Variable in GitHub UI, no code change needed.
+            (e) CORS — added SWA origin to Azure App Configuration
+                Cors:AllowedOrigins, rollout-restarted all 4 pods.
+            (f) App version in footer — VITE_APP_VERSION read from
+                package.json at build time via a Node step in the workflow.
+                Footer shows v1.0.0. Future: bump package.json version
+                field → next deploy auto-updates footer. No workflow change.
+
+  15.8.16 → HTTPS/TLS on AKS Ingress (Mixed Content fix)                  ✅ COMPLETE
+            DNS: assigned label "eshop-api" to AKS public IP →
+            eshop-api.centralindia.cloudapp.azure.com (free Azure DNS).
+            cert-manager: installed via Helm (jetstack/cert-manager).
+            ClusterIssuer: k8s/cert-manager/cluster-issuer.yaml →
+            Let's Encrypt production (HTTP-01 ACME challenge).
+            Ingress updated: TLS block added, hostname wired, cert-manager
+            annotation set. Certificate issued in ~27 seconds.
+            HTTPS verified: Invoke-WebRequest https://eshop-api...
+            /api/products → 200. GitHub Variables updated to https URL.
+
+  15.8.17 → End-to-end test                                                ✅ VERIFIED
+            Login from SWA to Identity API over HTTPS: SUCCESS ✅
+            Dashboard loads real data from AKS. JWT auth chain confirmed
+            end-to-end: SWA (HTTPS) → NGINX Ingress (TLS terminate) →
+            identity-api → RS256 JWT issued → Redux store → protected pages.
+
+  15.8.18 → Stop cluster (az aks stop)                                     ✅ Done — stopped after E2E verified
 ```
 
 ---
 
 ## 🎯 Where We Stopped / Next Action
-- Phase 15 Stages 1-7 ✅ fully complete (Docker → Azure data → secrets → ACR → CI/CD → K8s concepts + raw YAML).
-- Stage 8 Phases 1-4 ✅ complete: AKS cluster, SQL-in-pod (with PVC), Key Vault updated, full Workload Identity chain wired into all 4 deployments, PEM keys mounted into identity-api, all 4 microservices deployed and verified Running with 0 restarts.
-- **CI/CD bug found + fixed:** `build-and-push.yml` path filters only matched each service's own folder, so shared `ServiceDefaults`/`Contracts` changes silently skipped rebuilding `customer-api`, `identity-api`, `ordering-api`. This meant a production fix (health checks mapped outside `IsDevelopment()`) never reached those 3 images → `/health` probe returned 404 → `CrashLoopBackOff`. Fixed by adding shared-project paths to each service's matrix filter; merged `develop → main`; all 4 images rebuilt and pushed to ACR tagged with commit `61a89d3`.
-- **All 4 pods confirmed Running, 0 restarts** after `kubectl rollout restart` pulled the fresh images.
-- **SQL Server connectivity solved:** `kubectl port-forward svc/sql-server 14330:1433` → SSMS via `127.0.0.1,14330` with "Trust Server Certificate" enabled (`localhost` didn't work reliably over the tunnel, `127.0.0.1` did). `kubectl exec` + `sqlcmd` remains the reliable fallback if the TDS handshake over port-forward misbehaves.
-- **Identity API fully verified end-to-end:** logs show clean startup, EF migrations applied, seeder ran, RSA/PEM keys loaded without error. `POST /api/auth/login` with seeded `admin@eshop.com` / `Admin@12345` returned a valid RS256-signed JWT + refresh token + `Admin` role — confirms `private.pem`/`public.pem` volume mounts and `JwtTokenService` are working correctly in AKS.
-- **Seeded credentials (from `IdentityDataSeeder.cs`):** Admin → `admin@eshop.com` / `Admin@12345`; Customer → `alice@eshop.com` / `Customer@12345`.
-- **AKS cluster STOPPED again** (`az aks stop`) after verification, to save cost during the break. Resume with `az aks start --name aks-eshop --resource-group rg-eshop-microservices`.
-- **Phase 5 (Ingress) ✅ complete:** NGINX Ingress Controller live on public IP `4.187.191.129`, path-based routing to all 4 services, all 6 paths verified from the public internet. Blocker was the Azure LB HTTP health probe on `/` returning 404 → node dropped from rotation → traffic silently blackholed at TCP level. Fixed with TCP probe annotations on the controller Service (Incident 4 in `KUBERNETES_AKS_MASTER_LOG.md`).
-- **Security gap found + FIXED + VERIFIED:** public testing showed `/api/customers` and `/api/orders` returned 200 with no token. Added RS256 JWT validation (`public.pem`) + `[Authorize]` to Customer.API and Ordering.API, mirroring Identity.API; `public.pem` mounted from the `identity-pem-keys` Secret via `subPath` in both deployments. Deployed and confirmed in-cluster: **401 without a token, 200 with a valid bearer token.** **This reverses the earlier "gateway owns auth, services stay open" decision** — see the amended note in `Learnings.md`.
-- **SQL Strategy confirmed:** Azure SQL abandoned. SQL Server runs as pod inside AKS. Data persisted via PVC on Azure Disk (~₹8/mo). Stops with AKS node = ₹0 idle cost ✅
-- **Connection strings** in Key Vault updated to: `Server=sql-server,1433;Database=<DbName>;...` (K8s Service DNS) ✅
-- **HPA (15.8.14) ✅ verified:** `k8s/catalog-api/hpa.yaml` (autoscaling/v2, 1→3 pods, 70% CPU). Load test drove utilization to **484%** → scaled to 3 → returned to 1 after the 300s stabilization window. **Caveat that matters more than the success:** 2 of the 3 pods stayed `Pending` — the single B2s node had no spare CPU, so scaling changed nothing. HPA scales pods and assumes capacity; **Cluster Autoscaler** scales nodes. Details in `Learnings.md`.
-- **Revised stage order:** All AKS-dependent stages grouped into one continuous block (8 → 8b → 8c Istio → 8d KEDA → 8e Observability → 8f Helm → 8g DNS/SSL → 8h Load Testing → 8i GitOps → 8j Multi-env), then cluster stops permanently. Container Apps (9), Entra ID (10), B2C (11) follow with ₹0 compute. Saves ~₹15,000+ vs the original interleaved order.
-- **Next action (Stage 8 finish):** (a) remove `replicas: 1` from `k8s/catalog-api/deployment.yaml` — conflicts with HPA; (b) persist TCP health-probe annotations in ingress-nginx Helm values — a plain `helm upgrade` wipes them and re-blackholes the public IP; (c) 15.8.15 React frontend → Azure SWA; (d) 15.8.16 end-to-end test; (e) `az aks stop`.
+
+### ✅ Stage 8 — COMPLETE (100%)
+
+All milestones finished and verified. Key outcomes:
+- **4 microservices** running in AKS behind NGINX Ingress with HTTPS/TLS (Let's Encrypt via cert-manager).
+- **React SWA** deployed at `https://proud-plant-008c4b200.7.azurestaticapps.net` — login, dashboard, protected routes all working end-to-end over HTTPS.
+- **AKS cluster STOPPED** (`az aks stop`) — resume with `az aks start --name aks-eshop --resource-group rg-eshop-microservices`.
+
+### Key decisions made this session:
+- **SWA build-time config:** VITE_* vars injected via GitHub Actions `env:` block — industry standard for Vite/SWA. Values are GitHub Actions repository Variables (change in GitHub UI, no code PR needed). SWA "Application Settings" are runtime-only and cannot be read at Vite build time.
+- **HTTPS via cert-manager + Let's Encrypt:** free wildcard-level certificate on `eshop-api.centralindia.cloudapp.azure.com`. No domain purchase. HTTP-01 ACME challenge solved automatically by cert-manager + NGINX Ingress.
+- **Frontend version:** read from `package.json` version field at build time → baked into footer via VITE_APP_VERSION. Bump `package.json` → redeploy → footer updates. No workflow changes ever needed.
+- **Version strategy:** frontend footer shows frontend version only (v1.0.0). Backend service versions exposed via `/health` endpoints — not in the user-facing UI. Each service deploys independently; they are never in sync.
+
+### Next action — Stage 8b: APIM (Optional Enterprise Layer)
+AKS cluster must be started before resuming any AKS stages:
+```powershell
+az aks start --name aks-eshop --resource-group rg-eshop-microservices
+az aks get-credentials --resource-group rg-eshop-microservices --name aks-eshop
+```
+Stage 8b (APIM) → 8c (Istio) → 8d (KEDA) → 8e (Observability) → 8f (Helm) → 8g (DNS/Front Door) → 8h (Load Testing) → 8i (GitOps) → 8j (Multi-env) → then `az aks stop` permanently.
 
 ---
 

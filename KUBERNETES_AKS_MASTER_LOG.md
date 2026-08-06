@@ -7,11 +7,11 @@
 > Companion to `PROGRESS.md` (session state) and `Learnings.md` (full project history).
 > **This file is living — update it every time AKS/K8s work happens, until Stage 8 is 100% done.**
 
-**Current status:** Stage 8 (AKS deployment) ≈ 90% complete — cluster, SQL pod, Workload
-Identity, PEM key mounting, all 4 microservices deployed + verified end-to-end, and NGINX
-Ingress live on a public IP with all routes verified over the internet.
-Remaining: React frontend deploy (Azure SWA), final end-to-end test.
-HPA ✅ done — see Phase 6 below.
+**Current status:** Stage 8 (AKS deployment) **100% COMPLETE** ✅
+All phases done: cluster, SQL pod, Workload Identity, PEM key mounting, all 4 microservices
+deployed + verified, NGINX Ingress live with HTTPS/TLS (cert-manager + Let's Encrypt),
+React frontend deployed on Azure Static Web Apps, and end-to-end login verified.
+Cluster stopped (`az aks stop`) — resume with `az aks start` before next AKS stage.
 
 ---
 
@@ -34,7 +34,10 @@ HPA ✅ done — see Phase 6 below.
 ```
 k8s/
 ├── namespace.yaml
-├── ingress.yaml                    (NGINX — path routing; live on 4.187.191.129)
+├── ingress.yaml                    (NGINX — TLS + path routing; cert-manager annotation;
+│                                    hostname: eshop-api.centralindia.cloudapp.azure.com)
+├── cert-manager/
+│   └── cluster-issuer.yaml         (Let's Encrypt production ClusterIssuer, HTTP-01)
 ├── sql-server/
 │   ├── storageclass.yaml           (disk.csi.azure.com, Standard_LRS, WaitForFirstConsumer)
 │   ├── pvc.yaml                    (32Gi ReadWriteOnce)
@@ -47,12 +50,13 @@ k8s/
 └── ordering-api/  (deployment.yaml, service.yaml, configmap.yaml)
 ```
 
-**Traffic flow (live):**
+**Traffic flow (live — HTTPS):**
 ```
-Internet → Azure Public IP 4.187.191.129
-        → Azure Load Balancer (`kubernetes` in MC_ node RG, Floating IP, TCP health probe)
-        → AKS node NodePort (80→30382, 443→31403)
-        → ingress-nginx-controller pod
+Browser (SWA HTTPS) → https://eshop-api.centralindia.cloudapp.azure.com
+        → Azure Public IP 4.187.191.129
+        → Azure Load Balancer (TCP health probe)
+        → AKS node NodePort (443→31403)
+        → ingress-nginx-controller pod (TLS terminated — Let's Encrypt cert)
         → path match per k8s/ingress.yaml:
   /api/products   → catalog-api   (ClusterIP :80 → pod :8080)
   /api/categories → catalog-api   (ClusterIP :80 → pod :8080)
@@ -62,6 +66,16 @@ Internet → Azure Public IP 4.187.191.129
   /api/auth       → identity-api  (ClusterIP :80 → pod :8080)
                                        ↓
                           sql-server (ClusterIP :1433, PVC-backed)
+
+cert-manager watches Certificate object → renews Let's Encrypt cert automatically
+before expiry (every 60 days, renewed at 30 days left)
+```
+**Frontend (SWA):**
+```
+https://proud-plant-008c4b200.7.azurestaticapps.net  (Azure Static Web Apps — FREE tier)
+  → React SPA (Vite bundle — env vars baked at build time)
+  → VITE_API_*_URL = https://eshop-api.centralindia.cloudapp.azure.com (GitHub Actions Variables)
+  → staticwebapp.config.json → navigationFallback → /index.html (SPA routing)
 ```
 **Note:** catalog-api is reached via three separate path prefixes, not a single
 `/api/catalog` — its controllers are `[Route("api/products")]`, `[Route("api/categories")]`,
@@ -250,11 +264,53 @@ Two of the three pods stayed `Pending` with `NODE <none>`. The single B2s node (
 
 Also: `spec.replicas` removed from `catalog-api/deployment.yaml` — once an HPA owns a Deployment, the Deployment must not declare replica count or they fight on every `kubectl apply`.
 
-**15.8.15 — React frontend → Azure Static Web Apps ⏳**
+**15.8.15 — React frontend → Azure Static Web Apps ✅ DONE**
 
-**15.8.16 — End-to-end test ⏳**
+Created SWA resource `swa-eshop` via Azure CLI. GitHub Actions workflow auto-generated:
+`.github/workflows/azure-static-web-apps-proud-plant-008c4b200.yml`
 
-**15.8.17 — `az aks stop` ⏳**
+Key challenges and solutions (details in Battle Log Incidents 5-7):
+- Auth0 crash (React #527): conditional `Auth0Provider` + hook extraction → fixed
+- React version mismatch: aligned `react` + `react-dom` to `19.2.7` → fixed
+- Mixed Content (HTTP from HTTPS page): solved by adding HTTPS/TLS to Ingress (see 15.8.16)
+- Build-time env vars: SWA "Application Settings" are runtime-only; Vite needs vars at
+  build time → inject in GitHub Actions `env:` from GitHub Actions repository Variables
+- CORS: added SWA origin to Azure App Configuration → rollout restart all pods
+- App version in footer: `VITE_APP_VERSION` read from `package.json` via a Node step;
+  `package.json` version bumped to `1.0.0`
+
+**15.8.16 — HTTPS/TLS on AKS Ingress ✅ DONE**
+
+Assigned DNS label to AKS public IP: `eshop-api.centralindia.cloudapp.azure.com`
+```powershell
+az network public-ip update \
+  --name kubernetes-a931540c82fb94d31af3596519705b4a \
+  --resource-group mc_rg-eshop-microservices_aks-eshop_centralindia \
+  --dns-name eshop-api
+```
+Installed cert-manager:
+```powershell
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager --create-namespace --set crds.enabled=true
+```
+Applied `k8s/cert-manager/cluster-issuer.yaml` (Let's Encrypt production, HTTP-01 solver).
+Updated `k8s/ingress.yaml` with TLS block + `cert-manager.io/cluster-issuer: letsencrypt-prod`.
+Certificate `READY: True` in ~27 seconds. HTTPS verified.
+
+GitHub Variables updated:
+- `VITE_API_CATALOG_URL` → `https://eshop-api.centralindia.cloudapp.azure.com`
+- `VITE_API_CUSTOMER_URL` → `https://eshop-api.centralindia.cloudapp.azure.com`
+- `VITE_API_ORDERING_URL` → `https://eshop-api.centralindia.cloudapp.azure.com`
+- `VITE_API_IDENTITY_URL` → `https://eshop-api.centralindia.cloudapp.azure.com`
+
+**15.8.17 — End-to-end test ✅ VERIFIED**
+
+Login from SWA over HTTPS to AKS Identity API: ✅ SUCCESS
+Dashboard loaded with real data from AKS catalog-api. JWT auth chain confirmed.
+
+**15.8.18 — `az aks stop` ✅ Done**
+
+Cluster stopped after E2E verified. Resume: `az aks start --name aks-eshop --resource-group rg-eshop-microservices`
 
 ---
 
@@ -401,6 +457,104 @@ helm upgrade ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --reuse-
 - For any LoadBalancer Service fronting a reverse proxy, prefer a **TCP** health probe unless
   you deliberately expose a path guaranteed to return `2xx`.
 
+### 🔥 Incident 5 — React Auth0 crash on SWA (Error #527 / hook outside provider) — ✅ Resolved
+**Symptom:** SWA deployment showed a white screen with React error #527:
+`useAuth0 called outside Auth0Provider context`.
+**Root cause:** `Auth0Provider` was always rendered unconditionally. When deployed to SWA,
+the `VITE_AUTH0_*` environment variables were not present in the build (SWA Application
+Settings are runtime-only; Vite needs them at build time). With `domain=""` and `clientId=""`
+the provider initialization threw. Additionally, components like `LoginPage`, `ProfilePage`,
+and `Auth0CallbackPage` called `useAuth0()` at the module level — React's hook rules
+require that hooks only run inside their provider's render tree.
+
+**Fix (two-part):**
+1. Conditional provider rendering in `main.tsx`:
+```tsx
+const auth0Enabled = !!(domain && clientId && callbackUrl)
+// render Auth0Provider only when all 3 vars are present
+{auth0Enabled ? <Auth0Provider ...>{app}</Auth0Provider> : app}
+```
+2. Extracted `useAuth0()` calls into guarded inner components rendered only when
+`auth0Enabled` is true — prevents the hook violation when the provider is absent.
+
+**Lesson:** React hooks throw if called outside their context provider. For optional
+providers (e.g., Auth0 only in certain environments), always guard both the provider
+wrapper AND every hook call site. `Auth0Provider` with empty/missing config does not
+fail silently.
+
+---
+
+### 🔥 Incident 6 — Mixed Content block (HTTP calls from HTTPS SWA) — ✅ Resolved
+**Symptom:** After SWA deployed, browser console showed:
+```
+Mixed Content: The page at 'https://proud-plant-008c4b200.7.azurestaticapps.net'
+was loaded over HTTPS, but requested an insecure resource 'http://4.187.191.129/api/auth/login'.
+This request has been blocked; the content must be served over HTTPS.
+```
+No API calls reached the backend. Dashboard blank.
+
+**Root cause:** Azure SWA forces HTTPS (cannot opt out). Browser security policy blocks
+any HTTP (`http://`) fetch from an HTTPS page. Our AKS Ingress was HTTP-only on a raw IP.
+
+**Fix:** Enable HTTPS on the AKS Ingress:
+1. Assign Azure DNS label to public IP → `eshop-api.centralindia.cloudapp.azure.com`
+2. Install cert-manager → Let's Encrypt ClusterIssuer (HTTP-01 challenge)
+3. Update `ingress.yaml` with TLS block + `cert-manager.io/cluster-issuer` annotation
+4. Update all `VITE_API_*_URL` GitHub Variables to the new `https://` URL
+
+**Lesson:** A SPA hosted on HTTPS (SWA, Netlify, Vercel, GitHub Pages) CANNOT call any
+`http://` endpoint — browsers block it without exception. No workaround exists for this
+rule. The only fix is HTTPS on the backend. Treat TLS termination at the Ingress as
+mandatory when combining a hosted SPA with a cloud-hosted API.
+
+**Architecture note:** cert-manager + Let's Encrypt is free, automated, and renews
+certificates every ~60 days (at 30 days remaining). There is no manual renewal process.
+The HTTP-01 ACME challenge is solved by NGINX Ingress serving the challenge path
+automatically — no extra configuration needed once the ClusterIssuer is applied.
+
+---
+
+### 🔥 Incident 7 — CORS 405/block (SWA origin not in allowed origins list) — ✅ Resolved
+**Symptom:** After HTTPS was fixed, browser console showed:
+```
+Access to XMLHttpRequest at 'https://eshop-api.centralindia.cloudapp.azure.com/api/auth/login'
+from origin 'https://proud-plant-008c4b200.7.azurestaticapps.net' has been blocked by CORS policy:
+Response to preflight request doesn't pass access control check:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+**Root cause:** ASP.NET Core CORS middleware reads `Cors:AllowedOrigins` from Azure App
+Configuration at pod startup. The SWA origin had never been added, so all 4 pods had:
+```
+AllowedOrigins = ["http://localhost:5173", "http://localhost:5174"]
+```
+The SWA preflight (OPTIONS) request was rejected — no `Access-Control-Allow-Origin` header
+returned → browser blocked the actual request.
+
+**Fix:**
+1. Added `Cors:AllowedOrigins:2 = https://proud-plant-008c4b200.7.azurestaticapps.net`
+   to Azure App Configuration (`appconfig-eshop-dev`).
+2. `kubectl rollout restart deployment -n eshop` — all 4 pods restarted and re-read
+   App Config at startup, picking up the new origin.
+
+**Critical detail — why restart was required:**
+ASP.NET Core reads App Configuration ONCE at pod startup. It does NOT hot-reload CORS
+config at runtime. Changing App Config without restarting pods has zero effect on running
+pods. The pod must restart to re-read the config.
+
+**CORS flow in this project:**
+```
+Browser sends OPTIONS preflight → NGINX Ingress → service pod
+ASP.NET Core CORS middleware checks AllowedOrigins list (loaded at startup from App Config)
+If origin found → responds with Access-Control-Allow-Origin header → browser sends real request
+If origin missing → no header → browser blocks entire request
+```
+
+**Lesson:** When adding a new frontend origin (new environment, new SWA, localhost port),
+always update `Cors:AllowedOrigins` in App Configuration AND restart the affected pods.
+Changing App Config without a pod restart is the most common "CORS still broken after fix"
+mistake in this stack.
+
 ---
 
 **RS256 JWT signing chain (identity-api only):**
@@ -497,6 +651,54 @@ az acr repository show-tags --name acreshop2026 --repository eshop/identity-api
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/
 kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/cert-manager/cluster-issuer.yaml
+```
+
+### DNS label for AKS public IP (free Azure hostname)
+```powershell
+# Find the public IP resource (in the MC_ node resource group)
+az network public-ip list --query "[?ipAddress=='4.187.191.129'].{Name:name, ResourceGroup:resourceGroup}" -o table
+
+# Assign DNS label → results in <label>.centralindia.cloudapp.azure.com
+az network public-ip update `
+  --name <ip-resource-name> `
+  --resource-group mc_rg-eshop-microservices_aks-eshop_centralindia `
+  --dns-name eshop-api
+
+# Verify
+az network public-ip show --name <ip-resource-name> `
+  --resource-group mc_rg-eshop-microservices_aks-eshop_centralindia `
+  --query "dnsSettings.fqdn" -o tsv
+```
+
+### cert-manager (TLS certificate automation)
+```powershell
+# Add Jetstack Helm repo
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+# Install cert-manager with CRDs
+helm install cert-manager jetstack/cert-manager `
+  --namespace cert-manager --create-namespace --set crds.enabled=true
+
+# Verify pods
+kubectl get pods -n cert-manager
+
+# Apply ClusterIssuer
+kubectl apply -f k8s/cert-manager/cluster-issuer.yaml
+
+# Check ClusterIssuer ready
+kubectl get clusterissuer letsencrypt-prod
+
+# Watch certificate issuance (after ingress TLS block applied)
+kubectl get certificate -n eshop -w
+kubectl describe certificate -n eshop   # shows ACME challenge events
+```
+
+### HTTPS / TLS verification
+```powershell
+# Verify certificate is serving
+Invoke-WebRequest "https://eshop-api.centralindia.cloudapp.azure.com/api/products" -UseBasicParsing | Select-Object StatusCode
 ```
 
 ---
@@ -553,11 +755,45 @@ public IP per service. A single Ingress Controller = one public IP, routes by pa
 **Production reality:** Standard pattern; larger orgs sometimes use AGIC (Azure's
 Application Gateway Ingress Controller) instead of community NGINX for tighter Azure
 integration (WAF, Front Door), but the routing model is identical.
-**Trade-off accepted here:** HTTP only, no TLS and no hostname — routing is by bare IP +
-path. Production would put a DNS name and a cert on this (cert-manager + Let's Encrypt, or
-Azure Front Door in front). Also note the Ingress-level annotation
-`nginx.ingress.kubernetes.io/use-regex: "true"` is currently set but unused — all paths are
-plain `Prefix` matches, not regex.
+**Trade-off accepted here:** Initially HTTP-only on a bare IP. Full HTTPS+DNS added in
+Stage 8 Phase 6 using cert-manager + Let's Encrypt. Production-grade: a DNS name, a
+TLS cert managed by cert-manager, and automatic renewal.
+
+### HTTPS/TLS via cert-manager + Let's Encrypt (vs. Azure Front Door / Azure App Gateway)
+**Why:** cert-manager is free, open-source, and integrates natively with Kubernetes.
+Let's Encrypt issues free, browser-trusted certificates. Automatic renewal via the ACME
+protocol (HTTP-01 challenge handled by NGINX Ingress). Zero manual certificate work.
+**Production reality:** cert-manager is the de facto standard for TLS in Kubernetes.
+Used by thousands of production clusters. Renewal is fully automated. For enterprise
+requirements (WAF, CDN, multi-region failover), Azure Front Door sits in front and
+provides its own managed certificate — cert-manager still handles the AKS side.
+**Why not Azure-managed certs here:** Azure App Service Managed Certificates only work
+with App Service, not AKS. Azure Front Door managed certs need custom domain ownership.
+The Azure-provided `*.cloudapp.azure.com` subdomain works perfectly with Let's Encrypt
+HTTP-01 because Azure allows the DNS label assignment.
+
+### Azure Static Web Apps (SWA) for frontend vs. Docker-in-AKS
+**Why:** SWA is FREE (F1 tier), provides global CDN, GitHub Actions CI/CD out of the box,
+and HTTPS by default. Running the React app as a container in AKS wastes ~128Mi memory on
+the node that's already full.
+**Production reality:** Hosting a React SPA on SWA, Vercel, Netlify, or an Azure Storage
+static website + CDN is the universal industry pattern. SPAs have no server-side process —
+they're just static files. A container brings no value for static content.
+**Key constraint:** Vite env vars (`VITE_*`) are baked into the JS bundle at build time,
+not at runtime. SWA "Application Settings" are runtime-only env vars and cannot be read by
+Vite during `npm run build`. Industry solution: inject `VITE_*` in the GitHub Actions `env:`
+block from repository Variables — change the URL in GitHub UI, trigger a redeploy. No code
+PR needed.
+
+### Frontend versioning (package.json → VITE_APP_VERSION → footer)
+**Why:** The footer shows the deployed frontend version for user-facing traceability.
+Each service (catalog-api, identity-api, etc.) deploys independently with its own version.
+Showing backend versions in the user-facing footer is confusing and meaningless to users.
+**Pattern:** `package.json` `"version"` field is the single source of truth for the frontend
+version. A Node step in the GitHub Actions workflow reads it at build time and injects it as
+`VITE_APP_VERSION`. Bump `package.json` → redeploy → footer updates. No workflow changes.
+**Backend versions:** exposed via `/health` endpoints read by Kubernetes, Azure Monitor, and
+Prometheus — never in the user-facing UI.
 
 ---
 
@@ -581,7 +817,15 @@ plain `Prefix` matches, not regex.
 | `ingressClassName` vs. deprecated ingress.class annotation | ✅ | `k8s/ingress.yaml` |
 | Azure LB health probes (HTTP vs. TCP) + LB/NSG diagnostics | ✅ | Battle Log Incident 4 |
 | HPA (Horizontal Pod Autoscaler) | ✅ | `k8s/catalog-api/hpa.yaml` — verified scale 1→3 under load; key lesson: HPA + Cluster Autoscaler are different things |
-| Helm charts | 🟡 | Consumed a public chart (`ingress-nginx`) + annotation overrides; not yet authored one (Stage 8f) |
+| cert-manager + Let's Encrypt (TLS automation) | ✅ | Installed via Helm; ClusterIssuer (HTTP-01); certificate issued in ~27s; auto-renewal wired |
+| TLS termination at Ingress | ✅ | `k8s/ingress.yaml` TLS block + `cert-manager.io/cluster-issuer` annotation; HTTPS verified end-to-end |
+| Azure DNS label for AKS public IP | ✅ | Free Azure-provided hostname (`eshop-api.centralindia.cloudapp.azure.com`) via `az network public-ip update --dns-name` |
+| Azure Static Web Apps (SWA) deployment | ✅ | GitHub Actions CI/CD, VITE_* vars injected at build time from GitHub Actions Variables, `staticwebapp.config.json` SPA fallback |
+| Vite build-time env var injection (SWA pattern) | ✅ | GitHub Actions `env:` block → `${{ vars.VITE_API_URL }}` → baked into JS bundle; SWA App Settings are runtime-only and do NOT work for Vite |
+| CORS in Kubernetes (App Config + pod restart) | ✅ | AllowedOrigins in Azure App Config; ASP.NET Core reads at startup only — config change requires pod restart to take effect |
+| React Auth0 conditional provider pattern | ✅ | Guard `Auth0Provider` + all `useAuth0()` call sites behind env var check — hook violation if provider absent |
+| Mixed Content (HTTPS → HTTP browser block) | ✅ | Diagnosed and resolved by adding HTTPS/TLS to Ingress; SPA on HTTPS cannot call HTTP APIs |
+| Helm charts | 🟡 | Consumed public charts (`ingress-nginx`, `cert-manager`) + annotation/value overrides; not yet authored one (Stage 8f) |
 | Service mesh (Istio, mTLS) | ⏳ | Pending (Stage 8c — moved up, AKS batch) |
 | KEDA (event-driven autoscaling) | ⏳ | Pending (Stage 8d — moved up, AKS batch) |
 | GitOps (ArgoCD) | ⏳ | Pending (Stage 8i — moved up, AKS batch) |
@@ -602,6 +846,19 @@ plain `Prefix` matches, not regex.
   probe is the right choice in front of a reverse proxy.
 - Used a second independent network path (mobile hotspot) as a deliberate isolation technique
   to eliminate client/network causes before investigating cloud infrastructure.
+- Set up end-to-end TLS: assigned an Azure DNS label to a public AKS IP, installed cert-manager
+  via Helm, configured a Let's Encrypt ClusterIssuer (HTTP-01), and updated the Ingress TLS
+  block — certificate issued automatically in ~27 seconds, auto-renews without manual work.
+- Diagnosed and resolved Mixed Content blocking (HTTPS SPA → HTTP API): can explain the
+  browser security rule, why no client-side workaround exists, and the correct solution
+  (TLS termination at the Ingress).
+- Deployed a React SPA to Azure Static Web Apps with build-time environment variable
+  injection: can explain why SWA Application Settings are runtime-only and therefore cannot
+  be used for Vite builds, and the correct industry pattern (GitHub Actions Variables →
+  `env:` block → `VITE_*` baked into bundle).
+- Debugged a React hook violation (#527) in a conditional provider scenario: diagnosed that
+  `useAuth0()` throws when called outside `Auth0Provider`, and fixed it with conditional
+  rendering + hook extraction into guarded inner components.
 
 ---
 
@@ -612,13 +869,14 @@ plain `Prefix` matches, not regex.
 | Phase 5 | **Ingress complete.** NGINX Ingress Controller installed via Helm (manual Helm install — winget broken; PATH set at Machine scope). Public IP `4.187.191.129`. Three fixes needed: corrected catalog route prefixes, switched to `spec.ingressClassName: nginx`, Azure LB health probe HTTP→TCP (Incident 4 — the actual blocker). All 6 paths verified over the public internet. Security gap found: `/api/customers` and `/api/orders` publicly readable with no auth. |
 | Phase 5 security fix | **JWT auth added to customer-api + ordering-api.** RS256 `[Authorize]` + `public.pem` subPath mount in both deployments. Verified: `401` without token, `200` with valid bearer token. Closes the public-read gap. |
 | Phase 6 (partial) | **HPA done.** `k8s/catalog-api/hpa.yaml` — autoscaling/v2, 1→3 pods, 70% CPU. Verified scale-up to 3 under load (484% utilization). Key finding: 2 of 3 pods stayed `Pending` — single B2s node has no spare capacity. HPA scales pods, Cluster Autoscaler scales nodes. `spec.replicas` removed from deployment. React SWA + E2E test still pending. |
+| Phase 6 (complete) — Stage 8 DONE ✅ | **React SWA deployed + HTTPS/TLS + E2E verified.** SWA: `https://proud-plant-008c4b200.7.azurestaticapps.net`. Incidents 5 (Auth0 #527), 6 (Mixed Content), 7 (CORS) all diagnosed and resolved. cert-manager + Let's Encrypt TLS on Ingress. Hostname: `eshop-api.centralindia.cloudapp.azure.com`. GitHub Variables pattern for build-time VITE_* injection established. App version from package.json. Login end-to-end over HTTPS: ✅. AKS cluster stopped. Stage 8 = **100% complete**. |
 
-> **Next update trigger:** after React SWA deploy + E2E test — final update marking Stage 8 100% complete.
+> **Stage 8 is fully closed. Next: Stage 8b (APIM) when cluster is restarted.**
 >
-> **Open follow-ups:**
+> **Open follow-ups carried into future stages:**
 > 1. Persist the TCP health-probe annotations in ingress-nginx Helm values so `helm upgrade`
->    can't wipe them (see Incident 4 persistence caveat).
-> 2. `az aks stop` after Stage 8 closes — cluster not needed again until Stage 8c (Istio).
-> 3. **Revised stage order:** all AKS stages (8b→8j: APIM, Istio, KEDA, Observability, Helm,
+>    can't wipe them (see Incident 4 persistence caveat) — ideally done in Stage 8f (Helm).
+> 2. **Revised stage order:** all AKS stages (8b→8j: APIM, Istio, KEDA, Observability, Helm,
 >    DNS/SSL, Load Testing, GitOps, Multi-env) grouped before Container Apps (Stage 9).
 >    Saves ~₹15,000+ vs original interleaved order.
+> 3. Full purchase flow E2E (Cart → Checkout → Order History) — deferred; login confirmed ✅.

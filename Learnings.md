@@ -2114,6 +2114,33 @@ LEARN: Secret subPath mount — mounts ONE file into a directory without wiping 
 LEARN: "Gateway owns auth" only holds if services are unreachable from outside. Publishing
        them through an Ingress that does no token validation = zero auth. See the auth
        decision reversal note below.
+LEARN: cert-manager + Let's Encrypt = free, automated TLS on Kubernetes. HTTP-01 ACME
+       challenge is handled automatically by NGINX Ingress — no extra config required.
+       Certificate auto-renews every ~60 days; no manual renewal process.
+LEARN: Azure DNS label on AKS public IP — free hostname (*.region.cloudapp.azure.com) in
+       one CLI command. Required to use Let's Encrypt (needs a domain, not a raw IP).
+LEARN: Mixed Content rule (browser-enforced, no workaround) — a page loaded over HTTPS
+       cannot make HTTP (http://) requests. SWA forces HTTPS. The ONLY fix is HTTPS on
+       the backend. TLS termination at the Ingress is the right solution.
+LEARN: Vite VITE_* env vars are baked into the JS bundle at BUILD TIME, not runtime.
+       SWA "Application Settings" are runtime-only — useless for Vite. Industry pattern:
+       inject via GitHub Actions env: block from repository Variables. Change URL in GitHub
+       UI → trigger redeploy. Zero code change, zero PR needed.
+LEARN: ASP.NET Core reads App Configuration ONCE at pod startup. CORS AllowedOrigins is
+       not hot-reloaded. After changing App Config, you MUST `kubectl rollout restart` to
+       pick up the new origin. This is the #1 "CORS still broken after fix" mistake.
+LEARN: React Auth0 #527 — Auth0Provider with missing/empty config throws at initialization.
+       useAuth0() also throws when called outside a provider. Fix: conditional provider
+       rendering + extract useAuth0() calls into guarded inner components.
+LEARN: React version mismatches (react vs react-dom on different versions) cause CI build
+       failures with confusing peer dependency error messages. Always align both to the same
+       patch version in package.json.
+LEARN: Frontend version strategy — footer shows frontend version from package.json.
+       Backend service versions belong in /health endpoints + monitoring, NOT the user UI.
+       Each microservice deploys independently; their versions are never in sync.
+LEARN: staticwebapp.config.json navigationFallback → /index.html is required for SPA
+       routing on Azure Static Web Apps. Without it, direct URL navigation (F5 on /products)
+       returns 404 from the CDN.
 ```
 
 ```
@@ -2260,9 +2287,9 @@ LEARN: once an HPA owns a Deployment, the Deployment must NOT declare spec.repli
 | 15.8.15 | APPLY ingress.yaml — test path routing via public IP | 🟡 LB cost | ✅ Live on 4.187.191.129, all 6 paths verified publicly. Three fixes: catalog route prefixes corrected, spec.ingressClassName: nginx, and Azure LB health probe HTTP→TCP (the actual blocker — Incident 4) |
 | 15.8.15a | ADD JWT auth to customer-api + ordering-api ([Authorize] + public.pem mount) | 🟢 Free | ✅ Deployed + verified — 401 without token, 200 with valid bearer token. Closes the public-read gap found during 15.8.15 testing |
 | 15.8.16 | ADD HPA — Catalog.API scales 1→3 pods at 70% CPU | 🟢 Free | ✅ k8s/catalog-api/hpa.yaml (autoscaling/v2). Verified: 2% → 484% under load → scaled 1→3 → back to 1 after the 300s window. Caveat: 2 of 3 pods stayed **Pending** — single B2s node has no spare CPU. HPA scales pods, Cluster Autoscaler scales nodes; you need both |
-| 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ⏳ |
-| 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ⏳ |
-| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped again after verifying login end-to-end |
+| 15.8.17 | DEPLOY React frontend — Azure Static Web Apps | 🟢 Free | ✅ SWA: `https://proud-plant-008c4b200.7.azurestaticapps.net`. Resolved: Auth0 #527 crash (conditional provider + hook extraction), React 19.2.7 version alignment, Mixed Content (HTTPS→HTTP block → solved by TLS on Ingress), build-time VITE_* env injection via GitHub Actions Variables, CORS (added SWA origin to App Config + pod restart). App version from package.json. |
+| 15.8.18 | TEST end-to-end — login → browse → review → order → all working in AKS | 🟢 Free | ✅ Login from SWA over HTTPS to AKS Identity API: SUCCESS. Dashboard loading real data. JWT chain confirmed end-to-end: SWA → NGINX Ingress (TLS terminate) → identity-api → RS256 JWT. |
+| 15.8.19 | STOP AKS node — az aks stop (save cost when not studying) | 🟢 Free | ✅ Stopped after E2E verified. Stage 8 = 100% COMPLETE. |
 
 ---
 
