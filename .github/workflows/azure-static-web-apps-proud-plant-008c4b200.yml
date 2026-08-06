@@ -19,6 +19,10 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Read app version from package.json
+        id: version
+        run: echo "value=$(node -p "require('./eshop-frontend/package.json').version")" >> $GITHUB_OUTPUT
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -31,6 +35,9 @@ jobs:
           VITE_API_CUSTOMER_URL: ${{ vars.VITE_API_CUSTOMER_URL }}
           VITE_API_ORDERING_URL: ${{ vars.VITE_API_ORDERING_URL }}
           VITE_API_IDENTITY_URL: ${{ vars.VITE_API_IDENTITY_URL }}
+          # Read from package.json — bump "version" there to update the footer.
+          # No workflow changes needed for future releases.
+          VITE_APP_VERSION: ${{ steps.version.outputs.value }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROUD_PLANT_008C4B200 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
