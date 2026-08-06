@@ -22,6 +22,15 @@ jobs:
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          # Vite bakes VITE_* vars into the JS bundle at BUILD TIME.
+          # Values are managed as GitHub Actions repository Variables
+          # (repo Settings → Secrets and variables → Actions → Variables tab).
+          # To change the API URL: update the variable in GitHub UI — no code change needed.
+          VITE_API_CATALOG_URL: ${{ vars.VITE_API_CATALOG_URL }}
+          VITE_API_CUSTOMER_URL: ${{ vars.VITE_API_CUSTOMER_URL }}
+          VITE_API_ORDERING_URL: ${{ vars.VITE_API_ORDERING_URL }}
+          VITE_API_IDENTITY_URL: ${{ vars.VITE_API_IDENTITY_URL }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROUD_PLANT_008C4B200 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
