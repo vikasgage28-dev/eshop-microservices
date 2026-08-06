@@ -16,8 +16,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
-# .env.production is safe to commit — contains only the public Ingress IP, no secrets
-!.env.production
 
 # Editor directories and files
 .vscode/*
